@@ -1,0 +1,56 @@
+version: "3.7"
+services:
+  db:
+    image: "postgres:10.5"
+    restart: "unless-stopped"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "qpoker"
+  app:
+    build:
+      context: .
+      dockerfile: ./env/docker/go/Dockerfile
+      target: http_dev
+    depends_on:
+      - db
+    environment:
+      ENV: "dev"
+      PG_CONNECTION: "postgres://postgres:postgres@db:5432/qpoker?sslmode=disable"
+      TOKEN_SIGNING_VALUE: testsignvalue
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/src
+  ws:
+    build:
+      context: .
+      dockerfile: ./env/docker/go/Dockerfile
+      target: ws_dev
+    depends_on:
+      - db
+    environment:
+      ENV: "dev"
+      PG_CONNECTION: "postgres://postgres:postgres@db:5432/qpoker?sslmode=disable"
+      TOKEN_SIGNING_VALUE: testsignvalue
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./src:/src
+  migrator:
+    build:
+      context: .
+      dockerfile: ./env/docker/go/Dockerfile
+      target: migrator
+    depends_on:
+      - db
+    environment:
+      ENV: "dev"
+      PG_CONNECTION: "postgres://postgres:postgres@db:5432/qpoker?sslmode=disable"
+    restart: "no"
+    volumes:
+      - ./db:/go/db
