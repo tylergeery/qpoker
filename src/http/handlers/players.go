@@ -72,3 +72,37 @@ func CreatePlayer(c *fiber.Ctx) {
 	c.SendStatus(201)
 	c.JSON(player)
 }
+
+type playerLoginRequest struct {
+	Email string `json:"email"`
+	PW    string `json:"pw"`
+}
+
+// LoginPlayer creates a new player
+func LoginPlayer(c *fiber.Ctx) {
+	var req playerLoginRequest
+
+	err := c.BodyParser(&req)
+	if err != nil {
+		c.SendStatus(400)
+		c.JSON(formatErrors(err))
+		return
+	}
+
+	player, err := models.AuthenticatePlayer(req.Email, req.PW)
+	if err != nil {
+		c.SendStatus(400)
+		c.JSON(formatErrors(err))
+		return
+	}
+
+	player.Token, err = auth.CreateToken(player)
+	if err != nil {
+		c.SendStatus(500)
+		c.JSON(formatErrors(err))
+		return
+	}
+
+	c.SendStatus(200)
+	c.JSON(player)
+}

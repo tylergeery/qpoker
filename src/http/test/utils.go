@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var TestPass string = "testpw"
+
 // CreateTestPlayer creates a new player for a test
 func CreateTestPlayer() *models.Player {
 	ts := time.Now().UTC().UnixNano()
@@ -18,7 +20,7 @@ func CreateTestPlayer() *models.Player {
 		Username: fmt.Sprintf("testplayer_%d", ts),
 		Email:    fmt.Sprintf("testplayer_%d@test.com", ts),
 	}
-	_ = player.Create("testpw")
+	_ = player.Create(TestPass)
 
 	return player
 }

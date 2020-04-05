@@ -1,7 +1,7 @@
 package main
 
 import (
-	"qpoker/http/app"
+	"qpoker/http/handlers"
 	"qpoker/models"
 )
 
@@ -10,6 +10,6 @@ func main() {
 	db := models.ConnectToDB()
 	defer db.Close()
 
-	server := app.CreateApp()
-	server.Listen(8080)
+	app := handlers.CreateApp()
+	app.Listen(8080)
 }

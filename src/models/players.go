@@ -28,15 +28,30 @@ func GetPlayerFromEmail(email string) (*Player, error) {
 	return getPlayerByKey("email", email)
 }
 
+// AuthenticatePlayer returns a player if authenticated, otherwise an error
+func AuthenticatePlayer(email, pw string) (*Player, error) {
+	player, err := GetPlayerFromEmail(email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(player.pw), []byte(pw))
+	if err != nil {
+		return nil, err
+	}
+
+	return player, nil
+}
+
 func getPlayerByKey(key string, val interface{}) (*Player, error) {
 	player := &Player{}
 
 	err := ConnectToDB().QueryRow(fmt.Sprintf(`
-		SELECT id, username, email, created_at, updated_at
+		SELECT id, username, email, pw, created_at, updated_at
 		FROM player
 		WHERE %s = $1
 		LIMIT 1
-	`, key), val).Scan(&player.ID, &player.Username, &player.Email, &player.CreatedAt, &player.UpdatedAt)
+	`, key), val).Scan(&player.ID, &player.Username, &player.Email, &player.pw, &player.CreatedAt, &player.UpdatedAt)
 
 	return player, err
 }

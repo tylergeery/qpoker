@@ -1,11 +1,10 @@
-package test
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"qpoker/auth"
-	"qpoker/http/app"
 	"qpoker/http/test"
 	"qpoker/models"
 	"testing"
@@ -16,42 +15,42 @@ import (
 
 func TestPlayerCreateInvalid(t *testing.T) {
 	type TestCase struct {
-		body map[string]string
+		body     map[string]string
 		expected string
 	}
 	cases := []TestCase{
 		TestCase{
 			body: map[string]string{
 				"email": "test@qpoker.com",
-				"pw": "testpassword",
+				"pw":    "testpassword",
 			},
 			expected: "{\"errors\": [\"username requires at least 6 characters\"]}",
 		},
 		TestCase{
 			body: map[string]string{
 				"username": "testqpokerguy",
-				"pw": "testpassword",
+				"pw":       "testpassword",
 			},
 			expected: "{\"errors\": [\"Invalid email format: \"]}",
 		},
 		TestCase{
 			body: map[string]string{
-				"email": "akslfadfalasdfas",
+				"email":    "akslfadfalasdfas",
 				"username": "testqpokerguy",
-				"pw": "testpassword",
+				"pw":       "testpassword",
 			},
 			expected: "{\"errors\": [\"Invalid email format: akslfadfalasdfas\"]}",
 		},
 		TestCase{
 			body: map[string]string{
-				"email": "test@qpoker.com",
+				"email":    "test@qpoker.com",
 				"username": "testqpokerguy",
 			},
 			expected: "{\"errors\": [\"password requires at least 6 characters\"]}",
 		},
 	}
 
-	server := app.CreateApp()
+	server := CreateApp()
 
 	for _, c := range cases {
 		req := test.CreateTestRequest("POST", "/api/v1/players", map[string]string{}, c.body)
@@ -74,15 +73,15 @@ func TestCreatePlayerSuccess(t *testing.T) {
 	email := fmt.Sprintf("test+%d@qpoker.com", ts)
 	username := fmt.Sprintf("testqpokerguy_%d", ts)
 	body := map[string]string{
-		"email": email,
+		"email":    email,
 		"username": username,
-		"pw": "testpasstest",
+		"pw":       "testpasstest",
 	}
 	req := test.CreateTestRequest("POST", "/api/v1/players", nil, body)
-	server := app.CreateApp()
+	app := CreateApp()
 
 	// When
-	response, err := server.Test(req)
+	response, err := app.Test(req)
 	assert.NoError(t, err)
 
 	// Then
@@ -99,4 +98,40 @@ func TestCreatePlayerSuccess(t *testing.T) {
 	assert.Equal(t, player.ID, playerIDFromClaims)
 	assert.Greater(t, player.CreatedAt.Unix(), int64(0))
 	assert.Greater(t, player.UpdatedAt.Unix(), int64(0))
+}
+
+func TestPlayerLoginSuccess(t *testing.T) {
+	// Given
+	var loggedIn models.Player
+	var responseBody map[string]string
+
+	player := test.CreateTestPlayer()
+	body := map[string]string{
+		"email": player.Email,
+		"pw":    test.TestPass,
+	}
+	req := test.CreateTestRequest("POST", "/api/v1/players/login", nil, body)
+	app := CreateApp()
+
+	// When
+	response, err := app.Test(req)
+	assert.NoError(t, err)
+
+	// Then
+	content, err := ioutil.ReadAll(response.Body)
+	assert.NoError(t, err)
+
+	json.Unmarshal(content, &loggedIn)
+	json.Unmarshal(content, &responseBody)
+	playerIDFromClaims, _ := auth.GetPlayerIDFromAccessToken(loggedIn.Token)
+	_, ok := responseBody["pw"]
+
+	assert.False(t, ok)
+	assert.Equal(t, 200, response.StatusCode)
+	assert.Equal(t, loggedIn.ID, player.ID)
+	assert.Equal(t, loggedIn.Email, player.Email)
+	assert.Equal(t, loggedIn.Username, player.Username)
+	assert.Equal(t, player.ID, playerIDFromClaims)
+	assert.Equal(t, player.CreatedAt.Unix(), loggedIn.CreatedAt.Unix())
+	assert.Equal(t, player.UpdatedAt.Unix(), loggedIn.CreatedAt.Unix())
 }

@@ -1,8 +1,6 @@
-package app
+package handlers
 
 import (
-	"qpoker/http/handlers"
-
 	"github.com/gofiber/fiber"
 )
 
@@ -12,7 +10,7 @@ func CreateApp() *fiber.App {
 	app := fiber.New()
 
 	// Health
-	app.Get("/health", handlers.Health)
+	app.Get("/health", Health)
 
 	// Static Asset Routing
 
@@ -25,12 +23,12 @@ func CreateApp() *fiber.App {
 
 	// API Routing
 	apiV1 := app.Group("/api/v1")
-	apiV1.Post("/players", handlers.CreatePlayer)
-	// app.Post("/api/v1/players/login", handlers.LoginPlayer)
-	// app.Get("/api/v1/players/:id", middleware.Authorize, handlers.GetPlayer)
-	// app.Post("/api/v1/games", middleware.Authorize, handlers.CreateGame)
-	// app.Post("/api/v1/games/:id/join", middleware.Authorize, handlers.CreateGame)
-	// app.Get("/api/v1/games/:id", middleware.Authorize, handlers.GetGame)
+	apiV1.Post("/players", CreatePlayer)
+	apiV1.Post("/players/login", LoginPlayer)
+	// apiV1.Get("/api/v1/players/:id", middleware.Authorize, handlers.GetPlayer)
+	// apiV1.Post("/api/v1/games", middleware.Authorize, handlers.CreateGame)
+	// apiV1.Post("/api/v1/games/:id/join", middleware.Authorize, handlers.CreateGame)
+	// apiV1.Get("/api/v1/games/:id", middleware.Authorize, handlers.GetGame)
 
 	return app
 }
