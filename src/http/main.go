@@ -10,6 +10,6 @@ func main() {
 	db := models.ConnectToDB()
 	defer db.Close()
 
-	app.CreateApp()
-	app.Listen(8080)
+	server := app.CreateApp()
+	server.Listen(8080)
 }

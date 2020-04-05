@@ -7,12 +7,13 @@ import (
 	"qpoker/models"
 
 	"github.com/gofiber/fiber"
+	"github.com/goware/emailx"
 )
 
 type createPlayerRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
-	pw       string `json:"pw"`
+	PW       string `json:"pw"`
 }
 
 func (c createPlayerRequest) validate() error {
@@ -20,11 +21,13 @@ func (c createPlayerRequest) validate() error {
 		return errors.New("username requires at least 6 characters")
 	}
 
-	if len(c.pw) < 6 {
+	if len(c.PW) < 6 {
 		return errors.New("password requires at least 6 characters")
 	}
 
-	// TODO: validate email
+	if err := emailx.Validate(c.Email); err != nil {
+		return fmt.Errorf("Invalid email format: %s", c.Email)
+	}
 
 	return nil
 }
@@ -36,14 +39,14 @@ func CreatePlayer(c *fiber.Ctx) {
 	err := c.BodyParser(&req)
 	if err != nil {
 		c.SendStatus(400)
-		c.Send(fmt.Sprintf("Bad Request: %s", err))
+		c.JSON(formatErrors(err))
 		return
 	}
 
 	err = req.validate()
 	if err != nil {
 		c.SendStatus(400)
-		c.Send(fmt.Sprintf("Bad Request: %s", err))
+		c.JSON(formatErrors(err))
 		return
 	}
 
@@ -52,19 +55,20 @@ func CreatePlayer(c *fiber.Ctx) {
 		Email:    req.Email,
 	}
 
-	err = player.Create(req.pw)
+	err = player.Create(req.PW)
 	if err != nil {
 		c.SendStatus(500)
-		c.Send(fmt.Sprintf("Internal Error: %s", err))
+		c.JSON(formatErrors(err))
 		return
 	}
 
 	player.Token, err = auth.CreateToken(player)
 	if err != nil {
 		c.SendStatus(500)
-		c.Send(fmt.Sprintf("Internal Error: %s", err))
+		c.JSON(formatErrors(err))
 		return
 	}
 
+	c.SendStatus(201)
 	c.JSON(player)
 }

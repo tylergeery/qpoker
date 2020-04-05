@@ -3,6 +3,7 @@ package cards
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -19,7 +20,7 @@ func init() {
 
 // Card is a single card object
 type Card struct {
-	value int
+	value string
 	suit  string
 }
 
@@ -27,6 +28,49 @@ type Card struct {
 type Deck struct {
 	Cards []Card
 	index int
+}
+
+func getSuits() []string {
+	return []string{SUIT_CLUBS, SUIT_DIAMONDS, SUIT_HEARTS, SUIT_SPADES}
+}
+
+func getCards() []string {
+	cards := []string{}
+	cardmap := map[int]string{
+		1:  "A",
+		11: "J",
+		12: "Q",
+		13: "K",
+	}
+
+	for i := 1; i < 13; i++ {
+		card := strconv.Itoa(i)
+		if _card, ok := cardmap[i]; ok {
+			card = _card
+		}
+
+		cards = append(cards, card)
+	}
+
+	return cards
+}
+
+// NewDeck returns a new deck of cards for use
+func NewDeck() *Deck {
+	suits := getSuits()
+	cards := getCards()
+	deck := &Deck{
+		Cards: []Card{},
+		index: 0,
+	}
+
+	for _, suit := range suits {
+		for _, card := range cards {
+			deck.Cards = append(deck.Cards, Card{card, suit})
+		}
+	}
+
+	return deck
 }
 
 // Shuffle returns the deck shuffled

@@ -11,6 +11,9 @@ func CreateApp() *fiber.App {
 	// Start HTTP
 	app := fiber.New()
 
+	// Health
+	app.Get("/health", handlers.Health)
+
 	// Static Asset Routing
 
 	// Web Routing
@@ -21,7 +24,8 @@ func CreateApp() *fiber.App {
 	// app.Get("/:token", middleware.AuthorizeAndSetRedirect, handlers.PageJoin)
 
 	// API Routing
-	app.Post("/api/v1/players", handlers.CreatePlayer)
+	apiV1 := app.Group("/api/v1")
+	apiV1.Post("/players", handlers.CreatePlayer)
 	// app.Post("/api/v1/players/login", handlers.LoginPlayer)
 	// app.Get("/api/v1/players/:id", middleware.Authorize, handlers.GetPlayer)
 	// app.Post("/api/v1/games", middleware.Authorize, handlers.CreateGame)

@@ -1,32 +1,36 @@
 package main
 
+import (
+	"fmt"
+)
+
 const (
 	actionPlayerRegister = "register"
-	actionPlayerLeave = "leave"
+	actionPlayerLeave    = "leave"
 
-	actionGameBet = "bet"
+	actionGameBet   = "bet"
 	actionGameCheck = "check"
-	acitonGameFold = "fold"
+	acitonGameFold  = "fold"
 )
 
 // PlayerEvent represents a player connection action
 type PlayerEvent struct {
-	client *Client
+	Client *Client
 	Action string
 }
 
 // GameEvent represents a player gameplay action
 type GameEvent struct {
-	client *Client
+	Client *Client
 	Action string
 	Amount int64
 }
 
 // EventBus manages all server event action
 type EventBus struct {
-	clients map[int64]*Client
+	clients       map[int64]*Client
 	PlayerChannel chan PlayerEvent
-	GameChannel chan GameEvent
+	GameChannel   chan GameEvent
 }
 
 // NewEventBus returns a new EventBus
@@ -37,7 +41,7 @@ func NewEventBus() *EventBus {
 }
 
 func (e *EventBus) setClient(client *Client) {
-	e.clients[client.playerID] = client
+	e.clients[client.PlayerID] = client
 }
 
 func (e *EventBus) removeClient(playerID int64) {
@@ -48,7 +52,7 @@ func (e *EventBus) removeClient(playerID int64) {
 func (e *EventBus) ListenForEvents() {
 	for {
 		select {
-		case playerEvent := <- e.PlayerChannel:
+		case playerEvent := <-e.PlayerChannel:
 			fmt.Printf("PlayerAction: (%d %s)\n", playerEvent.Client.PlayerID, playerEvent.Action)
 			if playerEvent.Action == actionPlayerRegister {
 				e.setClient(playerEvent.Client)
@@ -56,7 +60,7 @@ func (e *EventBus) ListenForEvents() {
 			if playerEvent.Action == actionPlayerLeave {
 				e.removeClient(playerEvent.Client.PlayerID)
 			}
-		case gameEvent := <- e.GameChannel:
+		case gameEvent := <-e.GameChannel:
 			fmt.Printf("GameAction: (%d %s)\n", gameEvent.Client.PlayerID, gameEvent.Action)
 			// TODO: validate game action, update game state
 		}

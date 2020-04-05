@@ -1,5 +1,10 @@
 # QPoker
 
+A live video multi-player Texas HoldEm Poker game.
+
+Host your own poker game with your friends.
+
+
 ## API
 
 | Method | URL                             | Description                       
@@ -26,4 +31,15 @@ make test
 ```
 
 ## TODO
-- Add migration system
+- Create all API Endpoints
+  - Add tests
+- Add tests for websocket server
+- Add static pages
+- Add JS client
+- Features
+  - Holdem scoring
+  - Assigning chips
+  - Assets
+    - Card assets
+    - Table Asset
+  - Video Chat

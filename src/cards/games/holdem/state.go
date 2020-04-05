@@ -3,6 +3,7 @@ package holdem
 import (
 	"fmt"
 	"qpoker/cards"
+	"qpoker/cards/games"
 )
 
 const (
@@ -16,15 +17,15 @@ const (
 // HoldEm contains
 type HoldEm struct {
 	Board   []cards.Card
-	Deck    cards.Deck
-	Players []Player
+	Deck    *cards.Deck
+	Players []games.Player
 	Pot     Pot
 	State   string
 	dealer  int
 }
 
 // NewHoldEm creates and returns the resources for a new HoldEm
-func NewHoldEm(players []Player) *HoldEm {
+func NewHoldEm(players []games.Player) *HoldEm {
 	return &HoldEm{
 		Deck:    cards.NewDeck(),
 		Players: players,
@@ -39,13 +40,19 @@ func (h *HoldEm) Deal() *HoldEm {
 
 	// reset players cards
 	for i := range h.Players {
-		h.Players[i].Cards = make(cards.Card, 2)
+		h.Players[i].Cards = []cards.Card{}
 	}
 
 	// deal player cards
 	for i := 0; i < 2; i++ {
 		for j := 0; j < len(h.Players); j++ {
-			h.Players[j].Cards = append(h.Players[j].Cards, h.Deck.GetCard())
+			card, err := h.Deck.GetCard()
+			if err != nil {
+				fmt.Printf("Unexpected GetCard deal error: %s\n", err)
+				return h
+			}
+
+			h.Players[j].Cards = append(h.Players[j].Cards, card)
 		}
 	}
 
@@ -104,14 +111,14 @@ func (h *HoldEm) flop() {
 }
 
 func (h *HoldEm) turn() {
-	_ = h.Deck.GetCard() // Burn card
+	_, _ = h.Deck.GetCard() // Burn card
 
 	h.addCardToBoard()
 	h.State = stateTurn
 }
 
 func (h *HoldEm) river() {
-	_ = h.Deck.GetCard() // Burn card
+	_, _ = h.Deck.GetCard() // Burn card
 
 	h.addCardToBoard()
 	h.State = stateRiver

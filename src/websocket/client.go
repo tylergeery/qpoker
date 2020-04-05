@@ -13,12 +13,12 @@ import (
 type Client struct {
 	conn     *websocket.Conn
 	connOpen bool
-	playerID int64
+	PlayerID int64
 }
 
 // NewClient returns a new client
 func NewClient(conn *websocket.Conn) *Client {
-	return &Client{conn}
+	return &Client{conn: conn}
 }
 
 // Active returns whether the client is still active
@@ -51,7 +51,7 @@ func (c *Client) Authenticate() error {
 		return err
 	}
 
-	c.playerID = playerID
+	c.PlayerID = playerID
 
 	return nil
 }
@@ -71,7 +71,7 @@ func (c *Client) ReadMessages() {
 }
 
 func (c *Client) getMessage() (s string, err error) {
-	input, err := c.conn.ReadMessage()
+	_, input, err := c.conn.ReadMessage()
 	if err != nil {
 		fmt.Printf("Client read error: %s\n", err)
 		return

@@ -33,7 +33,8 @@ dev-player:  ## Create a local player
 	curl -XPOST -H 'Content-Type: application/json' -d '{"username": "player-$(ts)", "email": "player-$(ts)@test.com", "pw": "testpass"}' 'http://localhost:8080/api/v1/players' | jq
 
 test:  ## Run tests in local dev env
-	docker-compose exec -it app go test -count=1 ./...
+	docker-compose exec app go test -count=1 ./...
+	docker-compose exec ws go test -count=1 ./...
 
 check-%:
 	@if [ -z '${${*}}' ]; then echo 'Environment variable $* not set' && exit 1; fi

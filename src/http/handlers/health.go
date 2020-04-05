@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/bnkamalesh/webgo"
-	"net/http"
+	"github.com/gofiber/fiber"
 )
 
 // Health is a basic health check handler
-func Health(w http.ResponseWriter, r *http.Request) {
-	webgo.R200(w, "Success")
+func Health(c *fiber.Ctx) {
+	c.JSON(fiber.Map{
+		"status": "success",
+	})
 }

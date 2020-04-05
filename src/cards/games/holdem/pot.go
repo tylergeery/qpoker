@@ -4,13 +4,14 @@ import (
 	"qpoker/cards/games"
 )
 
+// Pot controls betting pot
 type Pot struct {
 	Bets   map[int64]int64
 	Totals map[int64]int64
 }
 
 // NewPot returns a new Pot instance for the current group of players
-func NewPot(players []*games.Players) Pot {
+func NewPot(players []*games.Player) Pot {
 	pot := Pot{
 		Bets:   map[int64]int64{},
 		Totals: map[int64]int64{},
