@@ -37,7 +37,5 @@ func connectToDB() *sql.DB {
 		log.Fatalf("Failed to ping DB via %s: %v", connURL, err)
 	}
 
-	log.Println("Connected to DB")
-
 	return db
 }

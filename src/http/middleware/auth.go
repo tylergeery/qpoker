@@ -23,6 +23,7 @@ func Authorize(c *fiber.Ctx) {
 
 	// add playerID to context
 	c.Locals("playerID", playerID)
+	c.Locals("token", token)
 	c.Next(nil)
 }
 

@@ -6,11 +6,11 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
-	"qpoker/http/test"
+	"qpoker/models"
 )
 
 func TestCreatingAndExtractingToken(t *testing.T) {
-	player := test.CreateTestPlayer()
+	player := &models.Player{ID: 444}
 	token, err := CreateToken(player)
 
 	assert.Nil(t, err)

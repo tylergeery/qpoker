@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"qpoker/http/middleware"
+
 	"github.com/gofiber/fiber"
 )
 
@@ -25,10 +27,13 @@ func CreateApp() *fiber.App {
 	apiV1 := app.Group("/api/v1")
 	apiV1.Post("/players", CreatePlayer)
 	apiV1.Post("/players/login", LoginPlayer)
-	// apiV1.Get("/api/v1/players/:id", middleware.Authorize, handlers.GetPlayer)
-	// apiV1.Post("/api/v1/games", middleware.Authorize, handlers.CreateGame)
-	// apiV1.Post("/api/v1/games/:id/join", middleware.Authorize, handlers.CreateGame)
-	// apiV1.Get("/api/v1/games/:id", middleware.Authorize, handlers.GetGame)
+	apiV1.Put("/players/:id", middleware.Authorize, UpdatePlayer)
+	apiV1.Get("/players/:id", middleware.Authorize, GetPlayer)
+	apiV1.Post("/games", middleware.Authorize, CreateGame)
+	apiV1.Put("/games/:gameID", middleware.Authorize, UpdateGame)
+	apiV1.Get("/games/:gameID", middleware.Authorize, GetGame)
+	// apiV1.Post("/games/:id/join", middleware.Authorize, handlers.CreateGame)
+	// apiV1.Get("/games/:id", middleware.Authorize, handlers.GetGame)
 
 	return app
 }

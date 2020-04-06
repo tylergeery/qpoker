@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"qpoker/auth"
 	"qpoker/models"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var TestPass string = "testpw"
+// TestPass hold the test password for tests in need of knowing it
+var TestPass = "testpw"
 
 // CreateTestPlayer creates a new player for a test
 func CreateTestPlayer() *models.Player {
@@ -21,6 +23,7 @@ func CreateTestPlayer() *models.Player {
 		Email:    fmt.Sprintf("testplayer_%d@test.com", ts),
 	}
 	_ = player.Create(TestPass)
+	player.Token, _ = auth.CreateToken(player)
 
 	return player
 }

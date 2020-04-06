@@ -10,6 +10,7 @@ require (
 	github.com/klauspost/compress v1.10.3 // indirect
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/lib/pq v1.3.0
+	github.com/metal3d/go-slugify v0.0.0-20160607203414-7ac2014b2f23
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/stretchr/testify v1.5.1

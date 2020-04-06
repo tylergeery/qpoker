@@ -10,11 +10,12 @@ import (
 
 func TestGetPlayerFromID(t *testing.T) {
 	// Given
+	pw := "anotherpw"
 	player := &Player{
 		Username: fmt.Sprintf("Test %d", time.Now().UTC().UnixNano()),
 		Email:    fmt.Sprintf("token%d", time.Now().UTC().UnixNano()),
 	}
-	player.Create("another")
+	player.Create(pw)
 
 	// When
 	fetchedPlayer, _ := GetPlayerFromID(player.ID)
@@ -23,7 +24,7 @@ func TestGetPlayerFromID(t *testing.T) {
 	assert.Equal(t, fetchedPlayer.ID, player.ID, fmt.Sprintf("Expected fetchedPlayer.ID (%d) to match player.ID (%d)", fetchedPlayer.ID, player.ID))
 	assert.Equal(t, fetchedPlayer.Username, player.Username, fmt.Sprintf("Expected fetchedPlayer.Username (%s) to match player.Username (%s)", fetchedPlayer.Username, player.Username))
 	assert.Equal(t, fetchedPlayer.Email, player.Email, fmt.Sprintf("Expected fetchedPlayer.Email (%s) to match player.Username (%s)", fetchedPlayer.Email, player.Email))
-	assert.NotEqual(t, fetchedPlayer.pw, player.pw, fmt.Sprintf("Expected fetchedPlayer.pw (%s) to be hashed", fetchedPlayer.pw))
+	assert.NotEqual(t, pw, player.pw, fmt.Sprintf("Expected fetchedPlayer.pw (%s) to be hashed", fetchedPlayer.pw))
 	assert.Equal(t, fetchedPlayer.CreatedAt.Unix(), player.CreatedAt.Unix(), fmt.Sprintf("Expected fetchedPlayer.CreatedAt (%d) to match player.CreatedAt (%d)", fetchedPlayer.CreatedAt.Unix(), player.CreatedAt.Unix()))
 	assert.Equal(t, fetchedPlayer.UpdatedAt.Unix(), player.UpdatedAt.Unix(), fmt.Sprintf("Expected fetchedPlayer.UpdatedAt (%d) to match player.UpdatedAt (%d)", fetchedPlayer.UpdatedAt.Unix(), player.UpdatedAt.Unix()))
 }

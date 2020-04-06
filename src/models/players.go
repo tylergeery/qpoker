@@ -56,6 +56,18 @@ func getPlayerByKey(key string, val interface{}) (*Player, error) {
 	return player, err
 }
 
+// SetPassword sets player password
+func (p *Player) SetPassword(pw string) error {
+	hashedPW, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	p.pw = string(hashedPW)
+
+	return nil
+}
+
 // Save the last player info
 func (p *Player) Save() error {
 	return p.update()
@@ -63,7 +75,7 @@ func (p *Player) Save() error {
 
 // Create a new player
 func (p *Player) Create(pw string) error {
-	hashedPW, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+	err := p.SetPassword(pw)
 	if err != nil {
 		return err
 	}
@@ -72,7 +84,7 @@ func (p *Player) Create(pw string) error {
 		INSERT INTO player (username, email, pw)
 		VALUES ($1, $2, $3)
 		RETURNING id, created_at, updated_at
-	`, p.Username, p.Email, hashedPW).Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
+	`, p.Username, p.Email, p.pw).Scan(&p.ID, &p.CreatedAt, &p.UpdatedAt)
 
 	return err
 }
