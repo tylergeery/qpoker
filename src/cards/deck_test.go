@@ -2,22 +2,65 @@ package cards
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewDeck(t *testing.T) {
-	// Ensure 52 cards
+	// Validate Deck
+	deck := NewDeck()
 
-	// Ensure 13 of each suit
+	cardsBySuit := map[byte][]int{
+		SuitClubs:    make([]int, 13),
+		SuitDiamonds: make([]int, 13),
+		SuitHearts:   make([]int, 13),
+		SuitSpades:   make([]int, 13),
+	}
+	for _, card := range deck.Cards {
+		cardsBySuit[card.Suit][card.Value-1] = card.Value
+	}
 
-	// Ensure nothing else
+	// Ensure a full deck
+	for _, cards := range cardsBySuit {
+		for i, val := range cards {
+			assert.Equal(t, i, val-1)
+		}
+	}
 }
 
 func TestDealAndShuffle(t *testing.T) {
-	// Deal a few cards
+	deck := NewDeck()
+	deck.Shuffle()
+	assert.Equal(t, 0, deck.index)
+
+	first, _ := deck.GetCard()
+	second, _ := deck.GetCard()
+	third, _ := deck.GetCard()
 
 	// Shuffle
+	deck.Shuffle()
+	assert.Equal(t, 0, deck.index)
 
-	// Ensure shuffled deck
+	first1, _ := deck.GetCard()
+	second2, _ := deck.GetCard()
+	third3, _ := deck.GetCard()
 
-	// Ensure different cards dealt
+	assert.NotEqual(t, first, first1)
+	assert.NotEqual(t, second, second2)
+	assert.NotEqual(t, third, third3)
+}
+
+func TestGetCardError(t *testing.T) {
+	deck := NewDeck()
+
+	for i := 0; i < 5; i++ {
+		deck.Shuffle()
+		for j := 0; j < 52; j++ {
+			_, err := deck.GetCard()
+			assert.NoError(t, err)
+		}
+
+		_, err := deck.GetCard()
+		assert.Error(t, err)
+	}
 }

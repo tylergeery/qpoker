@@ -9,13 +9,13 @@ Host your own poker game with your friends.
 
 | Method | URL                             | Description                       
 |--------|---------------------------------|-----------------------------------
-| GET    | /api/v1/users/:user_id                         | Get user
-| GET    | /api/v1/users/:user_id/games                   | Get a users' games
-| POST   | /api/v1/users                                  | Create user
+| GET    | /api/v1/players/:id                            | Get player
+| POST   | /api/v1/players                                | Create player
+| POST   | /api/v1/players/login                          | Player login
+| PUT    | /api/v1/players/:id                            | Update player
 | GET    | /api/v1/games/:game_id                         | Get game
 | POST   | /api/v1/games                                  | Create a game
-| GET    | /api/v1/games/:game_id/tables                  | Get all tables in a given game
-| GET    | /api/v1/games/:game_id/tables/:table_id        | Get table in game
+| PUT    | /api/v1/games/:game_id                         | Update a game
 
 
 ## Development
@@ -31,15 +31,33 @@ make test
 ```
 
 ## TODO
-- Create all API Endpoints
-  - Add tests
-- Add tests for websocket server
-- Add static pages
-- Add JS client
-- Features
+- Finish up Game logic
+  - GameManager
   - Holdem scoring
-  - Assigning chips
+- Admin 
+  - Seat assignments
+  - Assigning Chips
+  - Time Between hands
+- EventTracking
+  - action events
+  - admin events
+  - chat events
+- Add tests for websocket server
+- Client
+  - Add static pages
+    - Login/Register
+    - Table page
+  - JS
+    - Login/Register
+    - Table page
   - Assets
     - Card assets
-    - Table Asset
-  - Video Chat
+    - Table asset
+- Deploy somewhere
+- Write GameManager state to DB (in case of disconnect)
+- Autovaccuum games
+- Video Chat
+- Add use options
+  - Charge for hosting
+  - Free hosting w/ ads
+  - Host your own

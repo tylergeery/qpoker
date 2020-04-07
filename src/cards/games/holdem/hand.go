@@ -36,7 +36,7 @@ func NewHandEvaluator(hand Hand) *HandEvaluator {
 		if _, ok := counts[card.Value]; !ok {
 			counts[card.Value] = 0
 		}
-		counts[card.Value] += 1
+		counts[card.Value]++
 	}
 
 	for val, count := range counts {

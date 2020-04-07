@@ -2,25 +2,16 @@ package games
 
 import (
 	"fmt"
-	"qpoker/cards"
 )
-
-// Player holds the information about a player at a table
-type Player struct {
-	ID    int64
-	Cards []cards.Card
-	Stack int64
-}
 
 // Table holds the information about a given card table
 type Table struct {
-	Players  []Player
-	Dealer   int
-	Capacity int
+	Players  []*Player `json:"players"`
+	Capacity int       `json:"capacity"`
 }
 
 // AddPlayer to table
-func (t *Table) AddPlayer(player Player) error {
+func (t *Table) AddPlayer(player *Player) error {
 	if len(t.Players) == t.Capacity {
 		return fmt.Errorf("Table is full at %d players", t.Capacity)
 	}

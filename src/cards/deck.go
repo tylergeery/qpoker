@@ -7,10 +7,14 @@ import (
 )
 
 const (
-	SUIT_CLUBS    = 'C'
-	SUIT_DIAMONDS = 'D'
-	SUIT_HEARTS   = 'H'
-	SUIT_SPADES   = 'S'
+	// SuitClubs is byte character for clubs
+	SuitClubs = 'C'
+	// SuitDiamonds is byte character for diamonds
+	SuitDiamonds = 'D'
+	// SuitHearts is byte character for hearts
+	SuitHearts = 'H'
+	// SuitSpades is byte character for spades
+	SuitSpades = 'S'
 )
 
 // Card is a single card object
@@ -49,7 +53,7 @@ type Deck struct {
 }
 
 func getSuits() []byte {
-	return []byte{SUIT_CLUBS, SUIT_DIAMONDS, SUIT_HEARTS, SUIT_SPADES}
+	return []byte{SuitClubs, SuitDiamonds, SuitHearts, SuitSpades}
 }
 
 func getCards() []int {

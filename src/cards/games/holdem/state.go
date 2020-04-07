@@ -7,30 +7,47 @@ import (
 )
 
 const (
-	stateInit  = "Init"
-	stateDeal  = "Deal"
-	stateFlop  = "Flop"
-	stateTurn  = "Turn"
-	stateRiver = "River"
+	// StateInit initial game state
+	StateInit = "Init"
+	// StateDeal game state after all players have cards
+	StateDeal = "Deal"
+	// StateFlop game state after initial 3 cards flipped
+	StateFlop = "Flop"
+	// StateTurn game state after 4th card turned
+	StateTurn = "Turn"
+	// StateRiver game state after last card turned
+	StateRiver = "River"
 )
 
-// HoldEm contains
+// HoldEm contains game state
 type HoldEm struct {
-	Board   []cards.Card
-	Deck    *cards.Deck
-	Players []games.Player
-	Pot     Pot
-	State   string
-	dealer  int
+	Board   []cards.Card    `json:"board"`
+	Deck    *cards.Deck     `json:"-"`
+	Players []*games.Player `json:"-"`
+	Pot     Pot             `json:"pot"`
+	State   string          `json:"state"`
 }
 
+const (
+	// MaxPlayerCount is the max amount of players for HoldEm
+	MaxPlayerCount = 12
+)
+
 // NewHoldEm creates and returns the resources for a new HoldEm
-func NewHoldEm(players []games.Player) *HoldEm {
+func NewHoldEm(players []*games.Player) (*HoldEm, error) {
+	if len(players) <= 1 || len(players) > MaxPlayerCount {
+		return nil, fmt.Errorf("Invalid player count: %d", len(players))
+	}
+
 	return &HoldEm{
 		Deck:    cards.NewDeck(),
 		Players: players,
-		State:   stateInit,
-	}
+		State:   StateInit,
+	}, nil
+}
+
+func (h *HoldEm) nextPos(n int) int {
+	return (n + 1) % len(h.Players)
 }
 
 // Deal a new hand of holdem
@@ -56,14 +73,14 @@ func (h *HoldEm) Deal() *HoldEm {
 		}
 	}
 
-	h.State = stateDeal
+	h.State = StateDeal
 
 	return h
 }
 
 // Simulate game until completion
 func (h *HoldEm) Simulate() error {
-	for h.State != stateRiver {
+	for h.State != StateRiver {
 		err := h.Advance()
 		if err != nil {
 			return err
@@ -76,9 +93,9 @@ func (h *HoldEm) Simulate() error {
 // Advance game to next state
 func (h *HoldEm) Advance() error {
 	advanceStateMap := map[string]func(){
-		stateDeal: h.flop,
-		stateFlop: h.turn,
-		stateTurn: h.river,
+		StateDeal: h.flop,
+		StateFlop: h.turn,
+		StateTurn: h.river,
 	}
 
 	advance, ok := advanceStateMap[h.State]
@@ -107,19 +124,19 @@ func (h *HoldEm) flop() {
 		h.addCardToBoard()
 	}
 
-	h.State = stateFlop
+	h.State = StateFlop
 }
 
 func (h *HoldEm) turn() {
 	_, _ = h.Deck.GetCard() // Burn card
 
 	h.addCardToBoard()
-	h.State = stateTurn
+	h.State = StateTurn
 }
 
 func (h *HoldEm) river() {
 	_, _ = h.Deck.GetCard() // Burn card
 
 	h.addCardToBoard()
-	h.State = stateRiver
+	h.State = StateRiver
 }

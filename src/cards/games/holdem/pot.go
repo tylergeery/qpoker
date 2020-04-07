@@ -7,9 +7,9 @@ import (
 
 // Pot controls betting pot
 type Pot struct {
-	PlayerBets   map[int64]int64
-	PlayerTotals map[int64]int64
-	Total        int64
+	PlayerBets   map[int64]int64 `json:"player_bets"`
+	PlayerTotals map[int64]int64 `json:"player_totals"`
+	Total        int64           `json:"total"`
 }
 
 // NewPot returns a new Pot instance for the current group of players
