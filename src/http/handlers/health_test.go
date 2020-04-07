@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"qpoker/http/test"
+	"qpoker/test"
 	"testing"
 )
 

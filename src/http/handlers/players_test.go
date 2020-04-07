@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"qpoker/auth"
-	"qpoker/http/test"
 	"qpoker/models"
+	"qpoker/test"
 	"testing"
 	"time"
 

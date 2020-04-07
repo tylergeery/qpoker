@@ -17,11 +17,8 @@ func CreateApp() *fiber.App {
 	// Static Asset Routing
 
 	// Web Routing
-	// app.Get("/login", handlers.PageLogin)
-	// app.Get("/profile", handlers.PageProfile)
-	// app.Get("/signup", handlers.PageSignup)
-	// app.Get("/game/:id/settings", middleware.AuthorizeAndSetRedirect, handlers.PageGameSettings)
-	// app.Get("/:token", middleware.AuthorizeAndSetRedirect, handlers.PageJoin)
+	// app.Get("/", PageLanding)
+	// app.Get("/:slug", middleware.AuthorizeAndSetRedirect, PageGame)
 
 	// API Routing
 	apiV1 := app.Group("/api/v1")
@@ -32,8 +29,6 @@ func CreateApp() *fiber.App {
 	apiV1.Post("/games", middleware.Authorize, CreateGame)
 	apiV1.Put("/games/:gameID", middleware.Authorize, UpdateGame)
 	apiV1.Get("/games/:gameID", middleware.Authorize, GetGame)
-	// apiV1.Post("/games/:id/join", middleware.Authorize, handlers.CreateGame)
-	// apiV1.Get("/games/:id", middleware.Authorize, handlers.GetGame)
 
 	return app
 }

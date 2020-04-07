@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"qpoker/http/test"
 	"qpoker/models"
+	"qpoker/test"
 	"testing"
 	"time"
 

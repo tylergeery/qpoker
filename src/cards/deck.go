@@ -7,16 +7,39 @@ import (
 )
 
 const (
-	SUIT_CLUBS    = "C"
-	SUIT_DIAMONDS = "D"
-	SUIT_HEARTS   = "H"
-	SUIT_SPADES   = "S"
+	SUIT_CLUBS    = 'C'
+	SUIT_DIAMONDS = 'D'
+	SUIT_HEARTS   = 'H'
+	SUIT_SPADES   = 'S'
 )
 
 // Card is a single card object
 type Card struct {
-	value string
-	suit  string
+	Value int
+	Suit  byte
+	Char  byte
+}
+
+// ToString gets string representation of a card
+func (c Card) ToString() string {
+	return fmt.Sprintf("%c%c", c.Char, c.Suit)
+}
+
+// NewCard returns a card from card string value
+func NewCard(value int, suit byte) Card {
+	cardmap := map[int]byte{
+		1:  'A',
+		10: 'T',
+		11: 'J',
+		12: 'Q',
+		13: 'K',
+	}
+
+	if char, ok := cardmap[value]; ok {
+		return Card{value, suit, char}
+	}
+
+	return Card{value, suit, strconv.Itoa(value)[0]}
 }
 
 // Deck represent a single deck of cards
@@ -25,26 +48,15 @@ type Deck struct {
 	index int
 }
 
-func getSuits() []string {
-	return []string{SUIT_CLUBS, SUIT_DIAMONDS, SUIT_HEARTS, SUIT_SPADES}
+func getSuits() []byte {
+	return []byte{SUIT_CLUBS, SUIT_DIAMONDS, SUIT_HEARTS, SUIT_SPADES}
 }
 
-func getCards() []string {
-	cards := []string{}
-	cardmap := map[int]string{
-		1:  "A",
-		11: "J",
-		12: "Q",
-		13: "K",
-	}
+func getCards() []int {
+	cards := []int{}
 
-	for i := 1; i < 13; i++ {
-		card := strconv.Itoa(i)
-		if _card, ok := cardmap[i]; ok {
-			card = _card
-		}
-
-		cards = append(cards, card)
+	for i := 1; i <= 13; i++ {
+		cards = append(cards, i)
 	}
 
 	return cards
@@ -61,7 +73,7 @@ func NewDeck() *Deck {
 
 	for _, suit := range suits {
 		for _, card := range cards {
-			deck.Cards = append(deck.Cards, Card{card, suit})
+			deck.Cards = append(deck.Cards, NewCard(card, suit))
 		}
 	}
 
