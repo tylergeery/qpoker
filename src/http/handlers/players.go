@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"qpoker/auth"
+	"qpoker/http/utils"
 	"qpoker/models"
 	"strconv"
 
@@ -40,14 +41,14 @@ func CreatePlayer(c *fiber.Ctx) {
 	err := c.BodyParser(&req)
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
 	err = req.validate()
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -59,14 +60,14 @@ func CreatePlayer(c *fiber.Ctx) {
 	err = player.Create(req.PW)
 	if err != nil {
 		c.SendStatus(500)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
 	player.Token, err = auth.CreateToken(player)
 	if err != nil {
 		c.SendStatus(500)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -102,34 +103,34 @@ func UpdatePlayer(c *fiber.Ctx) {
 
 	if err != nil {
 		c.SendStatus(404)
-		c.JSON(formatErrors(fmt.Errorf("Uknown player ID type")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Uknown player ID type")))
 		return
 	}
 
 	if c.Locals("playerID") != playerID {
 		c.SendStatus(403)
-		c.JSON(formatErrors(fmt.Errorf("Not authorized to view user")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Not authorized to view user")))
 		return
 	}
 
 	player, err := models.GetPlayerFromID(playerID)
 	if err != nil {
 		c.SendStatus(403)
-		c.JSON(formatErrors(fmt.Errorf("Not authorized to view user")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Not authorized to view user")))
 		return
 	}
 
 	err = c.BodyParser(&req)
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
 	err = req.validate()
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -146,7 +147,7 @@ func UpdatePlayer(c *fiber.Ctx) {
 	err = player.Save()
 	if err != nil {
 		c.SendStatus(500)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -168,21 +169,21 @@ func LoginPlayer(c *fiber.Ctx) {
 	err := c.BodyParser(&req)
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
 	player, err := models.AuthenticatePlayer(req.Email, req.PW)
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
 	player.Token, err = auth.CreateToken(player)
 	if err != nil {
 		c.SendStatus(500)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -197,20 +198,20 @@ func GetPlayer(c *fiber.Ctx) {
 
 	if err != nil {
 		c.SendStatus(404)
-		c.JSON(formatErrors(fmt.Errorf("Uknown player ID type")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Uknown player ID type")))
 		return
 	}
 
 	if c.Locals("playerID") != playerID {
 		c.SendStatus(403)
-		c.JSON(formatErrors(fmt.Errorf("Not authorized to view user")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Not authorized to view user")))
 		return
 	}
 
 	player, err := models.GetPlayerFromID(playerID)
 	if err != nil {
 		c.SendStatus(403)
-		c.JSON(formatErrors(fmt.Errorf("Not authorized to view user")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Not authorized to view user")))
 		return
 	}
 

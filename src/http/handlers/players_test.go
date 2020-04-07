@@ -15,26 +15,26 @@ import (
 
 func TestPlayerCreateInvalid(t *testing.T) {
 	type TestCase struct {
-		body     map[string]string
+		body     map[string]interface{}
 		expected string
 	}
 	cases := []TestCase{
 		TestCase{
-			body: map[string]string{
+			body: map[string]interface{}{
 				"email": "test@qpoker.com",
 				"pw":    "testpassword",
 			},
 			expected: "{\"errors\": [\"username requires at least 6 characters\"]}",
 		},
 		TestCase{
-			body: map[string]string{
+			body: map[string]interface{}{
 				"username": "testqpokerguy",
 				"pw":       "testpassword",
 			},
 			expected: "{\"errors\": [\"Invalid email format: \"]}",
 		},
 		TestCase{
-			body: map[string]string{
+			body: map[string]interface{}{
 				"email":    "akslfadfalasdfas",
 				"username": "testqpokerguy",
 				"pw":       "testpassword",
@@ -42,7 +42,7 @@ func TestPlayerCreateInvalid(t *testing.T) {
 			expected: "{\"errors\": [\"Invalid email format: akslfadfalasdfas\"]}",
 		},
 		TestCase{
-			body: map[string]string{
+			body: map[string]interface{}{
 				"email":    "test@qpoker.com",
 				"username": "testqpokerguy",
 			},
@@ -72,7 +72,7 @@ func TestCreatePlayerSuccess(t *testing.T) {
 	ts := time.Now().UTC().UnixNano()
 	email := fmt.Sprintf("test+%d@qpoker.com", ts)
 	username := fmt.Sprintf("testqpokerguy_%d", ts)
-	body := map[string]string{
+	body := map[string]interface{}{
 		"email":    email,
 		"username": username,
 		"pw":       "testpasstest",
@@ -106,7 +106,7 @@ func TestPlayerUpdateSuccess(t *testing.T) {
 	var responseBody map[string]string
 
 	player := test.CreateTestPlayer()
-	body := map[string]string{
+	body := map[string]interface{}{
 		"email":    "sa" + player.Email,
 		"username": player.Username + "aa",
 		"pw":       "newlesspw",
@@ -143,7 +143,7 @@ func TestPlayerLoginSuccess(t *testing.T) {
 	var responseBody map[string]string
 
 	player := test.CreateTestPlayer()
-	body := map[string]string{
+	body := map[string]interface{}{
 		"email": player.Email,
 		"pw":    test.TestPass,
 	}

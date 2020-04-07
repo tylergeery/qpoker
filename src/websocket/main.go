@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -10,6 +12,7 @@ import (
 var eventBus *EventBus
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano())
 	eventBus = NewEventBus()
 
 	go eventBus.ListenForEvents()

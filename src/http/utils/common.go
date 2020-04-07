@@ -1,6 +1,7 @@
-package handlers
+package utils
 
-func formatErrors(errors ...error) map[string][]string {
+// FormatErrors puts errors into list under key "errors" for response
+func FormatErrors(errors ...error) map[string][]string {
 	response := map[string][]string{
 		"errors": []string{},
 	}

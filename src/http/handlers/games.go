@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"qpoker/http/utils"
 	"qpoker/models"
+	"strconv"
 
 	"github.com/gofiber/fiber"
 )
@@ -33,21 +35,21 @@ func CreateGame(c *fiber.Ctx) {
 	player, err := models.GetPlayerFromID(playerID)
 	if err != nil {
 		c.SendStatus(403)
-		c.JSON(formatErrors(fmt.Errorf("Unknown user")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown user")))
 		return
 	}
 
 	err = c.BodyParser(&req)
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
 	err = req.validate()
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -58,8 +60,9 @@ func CreateGame(c *fiber.Ctx) {
 	}
 	err = game.Save()
 	if err != nil {
+		fmt.Printf("Game save error: %s", err)
 		c.SendStatus(500)
-		c.JSON(formatErrors(err))
+		c.JSON(utils.FormatErrors(err))
 		return
 	}
 
@@ -84,10 +87,72 @@ func (req updateGameRequest) validate() error {
 
 // UpdateGame updates an existing game
 func UpdateGame(c *fiber.Ctx) {
+	var req updateGameRequest
 
+	playerID := c.Locals("playerID").(int64)
+	gameID, err := strconv.Atoi(c.Params("gameID"))
+	if err != nil {
+		c.SendStatus(404)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown game ID type")))
+		return
+	}
+
+	game, err := models.GetGameBy("id", gameID)
+	if err != nil || game.OwnerID != playerID {
+		c.SendStatus(404)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown game")))
+		return
+	}
+
+	err = c.BodyParser(&req)
+	if err != nil {
+		c.SendStatus(400)
+		c.JSON(utils.FormatErrors(err))
+		return
+	}
+
+	err = req.validate()
+	if err != nil {
+		c.SendStatus(400)
+		c.JSON(utils.FormatErrors(err))
+		return
+	}
+
+	if req.Capacity != 0 {
+		game.Capacity = req.Capacity
+	}
+	if req.Name != "" {
+		game.Name = req.Name
+	}
+
+	err = game.Save()
+	if err != nil {
+		c.SendStatus(400)
+		c.JSON(utils.FormatErrors(err))
+		return
+	}
+
+	c.SendStatus(200)
+	c.JSON(game)
 }
 
 // GetGame return a specified game
 func GetGame(c *fiber.Ctx) {
+	playerID := c.Locals("playerID").(int64)
+	gameID, err := strconv.Atoi(c.Params("gameID"))
+	if err != nil {
+		c.SendStatus(404)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown game ID type")))
+		return
+	}
 
+	game, err := models.GetGameBy("id", gameID)
+	if err != nil || game.OwnerID != playerID {
+		c.SendStatus(404)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown game")))
+		return
+	}
+
+	c.SendStatus(200)
+	c.JSON(game)
 }

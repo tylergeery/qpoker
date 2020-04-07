@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
-	"time"
 )
 
 const (
@@ -13,10 +12,6 @@ const (
 	SUIT_HEARTS   = "H"
 	SUIT_SPADES   = "S"
 )
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 // Card is a single card object
 type Card struct {

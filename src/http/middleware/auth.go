@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"qpoker/auth"
+	"qpoker/http/utils"
 	"strings"
 	"time"
 
@@ -16,9 +17,10 @@ func Authorize(c *fiber.Ctx) {
 
 	playerID, err := auth.GetPlayerIDFromAccessToken(token)
 	if err != nil {
-		fmt.Printf("Player token parse error: %s\n", err)
-		c.SendString(fmt.Sprintf("Forbidden: %s", err))
+		fmt.Printf("Player token (%s) parse error: %s\n", token, err)
 		c.SendStatus(403)
+		c.JSON(utils.FormatErrors(err))
+		return
 	}
 
 	// add playerID to context

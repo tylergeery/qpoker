@@ -19,6 +19,20 @@ type Game struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// GetGameBy returns a Game found from the id
+func GetGameBy(key string, val interface{}) (*Game, error) {
+	game := &Game{}
+
+	err := ConnectToDB().QueryRow(fmt.Sprintf(`
+		SELECT id, name, slug, owner_id, capacity, created_at, updated_at
+		FROM game
+		WHERE %s = $1
+		LIMIT 1
+	`, key), val).Scan(&game.ID, &game.Name, &game.Slug, &game.OwnerID, &game.Capacity, &game.CreatedAt, &game.UpdatedAt)
+
+	return game, err
+}
+
 // Save writes the Game object to the database
 func (g *Game) Save() error {
 	if g.ID == 0 {
@@ -35,7 +49,7 @@ func (g *Game) createSlug() {
 
 func (g *Game) insert() error {
 	err := ConnectToDB().QueryRow(`
-		INSERT INTO game (name, slug, ownerID, capacity)
+		INSERT INTO game (name, slug, owner_id, capacity)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`, g.Name, g.Slug, g.OwnerID, g.Capacity).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
@@ -49,11 +63,10 @@ func (g *Game) update() error {
 		SET
 			name = $2,
 			slug = $3,
-			ownerID = $4,
+			owner_id = $4,
 			capacity = $5,
 			updated_at = NOW()
 		WHERE id = $1
-		LIMIT 1
 		RETURNING updated_at
 	`, g.ID, g.Name, g.Slug, g.OwnerID, g.Capacity).Scan(&g.UpdatedAt)
 

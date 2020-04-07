@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"qpoker/auth"
@@ -11,6 +12,10 @@ import (
 	"strings"
 	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 // TestPass hold the test password for tests in need of knowing it
 var TestPass = "testpw"
@@ -28,8 +33,21 @@ func CreateTestPlayer() *models.Player {
 	return player
 }
 
+// CreateTestGame creates a new game for a test
+func CreateTestGame(player *models.Player) *models.Game {
+	ts := time.Now().UTC().UnixNano()
+	game := &models.Game{
+		Name:     fmt.Sprintf("Test Game %d", ts),
+		Capacity: 5,
+		OwnerID:  player.ID,
+	}
+	_ = game.Save()
+
+	return game
+}
+
 // CreateTestRequest creates a new test request
-func CreateTestRequest(action, endpoint string, headers, body map[string]string) *http.Request {
+func CreateTestRequest(action, endpoint string, headers map[string]string, body map[string]interface{}) *http.Request {
 	var request *http.Request
 
 	if body == nil {
