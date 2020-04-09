@@ -29,6 +29,29 @@ func (c Card) ToString() string {
 	return fmt.Sprintf("%c%c", c.Char, c.Suit)
 }
 
+// Connects determines whether a card connects to form a run with another
+func (c Card) Connects(next Card) bool {
+	if c.Value == 1 {
+		return next.Value == 2 || next.Value == 13
+	}
+
+	if next.Value == 1 {
+		return c.Value == 2 || c.Value == 13
+	}
+
+	return c.Value == (next.Value+1) || c.Value == (next.Value-1)
+}
+
+// MatchesValue is whether a card matches another by value
+func (c Card) MatchesValue(next Card) bool {
+	return c.Value == next.Value
+}
+
+// MatchesSuit is whether a card matches another by suit
+func (c Card) MatchesSuit(next Card) bool {
+	return c.Suit == next.Suit
+}
+
 // NewCard returns a card from card string value
 func NewCard(value int, suit byte) Card {
 	cardmap := map[int]byte{

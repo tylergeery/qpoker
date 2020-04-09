@@ -1,7 +1,6 @@
 package holdem
 
 import (
-	"qpoker/cards/games"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,11 +8,11 @@ import (
 
 func TestSimplePot(t *testing.T) {
 	// Given
-	player1 := &games.Player{ID: 1}
-	player2 := &games.Player{ID: 2}
-	player3 := &games.Player{ID: 3}
+	player1 := &Player{ID: 1}
+	player2 := &Player{ID: 2}
+	player3 := &Player{ID: 3}
 
-	pot := NewPot([]*games.Player{player1, player2, player3})
+	pot := NewPot([]*Player{player1, player2, player3})
 	pot.AddBet(player1.ID, 500)
 	pot.AddBet(player2.ID, 500)
 	pot.AddBet(player3.ID, 500)
@@ -33,20 +32,30 @@ func TestSimplePot(t *testing.T) {
 
 func TestComplexPot(t *testing.T) {
 	// Given
-	player1 := &games.Player{ID: 1}
-	player2 := &games.Player{ID: 2}
-	player3 := &games.Player{ID: 3}
-	player4 := &games.Player{ID: 4}
+	player1 := &Player{ID: 1}
+	player2 := &Player{ID: 2}
+	player3 := &Player{ID: 3}
+	player4 := &Player{ID: 4}
 
-	pot := NewPot([]*games.Player{player1, player2, player3, player4})
+	pot := NewPot([]*Player{player1, player2, player3, player4})
 	pot.AddBet(player4.ID, 100)
 	pot.AddBet(player1.ID, 500)
 	pot.AddBet(player2.ID, 500)
+
+	assert.Equal(t, pot.MaxBet(), int64(500))
+
 	pot.AddBet(player3.ID, 1000)
+
+	assert.Equal(t, pot.MaxBet(), int64(1000))
+
 	pot.AddBet(player4.ID, 822) // all in
 	pot.AddBet(player1.ID, 133) // all in
 	pot.AddBet(player2.ID, 500)
+
+	assert.Equal(t, pot.MaxBet(), int64(1000))
+
 	pot.ClearBets()
+	assert.Equal(t, pot.MaxBet(), int64(0))
 
 	pot.AddBet(player3.ID, 1000)
 	pot.AddBet(player2.ID, 1000)

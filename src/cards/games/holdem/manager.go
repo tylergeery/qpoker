@@ -2,103 +2,174 @@ package holdem
 
 import (
 	"fmt"
-	"qpoker/cards/games"
+	"qpoker/utils"
+)
+
+const (
+	// MaxPlayerCount is the max amount of players for HoldEm
+	MaxPlayerCount = 12
 )
 
 // GameOptions is a config object used to create a new GameManager
 type GameOptions struct {
-	Capacity    int   `json:"capacity"`
-	BigBlind    int64 `json:"big_blind"`
-	LittleBlind int64 `json:"little_blind"`
+	Capacity int   `json:"capacity"`
+	BigBlind int64 `json:"big_blind"`
 }
 
 // GameManager holds game state and manages game flow
 type GameManager struct {
-	Table       *games.Table `json:"table"`
-	State       *HoldEm      `json:"state"`
-	Active      int          `json:"active"`
-	Dealer      int          `json:"dealer"`
-	ToPlay      int64        `json:"to_play"`
-	BigBlind    int64        `json:"big_blind"`
-	LittleBlind int64        `json:"little_blind"`
+	State    *HoldEm `json:"state"`
+	Pot      *Pot    `json:"pot"`
+	BigBlind int64   `json:"big_blind"`
 }
 
 // NewGameManager returns a new GameManager
-func NewGameManager(players []*games.Player, options GameOptions) (*GameManager, error) {
-	state, err := NewHoldEm(players)
-	if err != nil {
-		return nil, err
+func NewGameManager(players []*Player, options GameOptions) (*GameManager, error) {
+	if len(players) <= 1 || len(players) > MaxPlayerCount {
+		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}
 
+	if options.Capacity > 0 && len(players) > options.Capacity {
+		return nil, fmt.Errorf("Player count (%d) is greater than capacity (%d)", len(players), options.Capacity)
+	}
+	table := NewTable(options.Capacity, players)
 	gm := &GameManager{
-		Table: &games.Table{
-			Players:  players,
-			Capacity: options.Capacity,
-		},
-		State:       state,
-		Active:      0,
-		Dealer:      0, // TODO: random?,
-		ToPlay:      0,
-		BigBlind:    options.BigBlind,
-		LittleBlind: options.LittleBlind,
+		State:    NewHoldEm(table),
+		BigBlind: options.BigBlind,
 	}
 
 	return gm, nil
 }
 
-func (g *GameManager) NextHand() {
-	g.Dealer = g.nextPos(g.Dealer)
-
-	// LittleBlind
-	g.Active = g.nextPos(g.Dealer)
-	g.playerBet(ActionNewBet(g.LittleBlind))
-
-	// BigBlind
-	g.Active = g.nextPos(g.Active)
-	g.playerBet(ActionNewBet(g.BigBlind))
-
-	g.ToPlay = g.BigBlind
-	g.Active = g.nextPos(g.Active)
-}
-
-func (g *GameManager) nextPos(pos int) int {
-	return (pos + 1) % len(g.State.Players)
-}
-
-func (g *GameManager) getRemainingPlayers() []*games.Player {
-	remaining := []*games.Player{}
-
-	for i := range g.State.Players {
-		if g.State.Players[i].Active {
-			remaining = append(remaining, g.State.Players[i])
-		}
+// NextHand moves game manager on to next hand
+func (g *GameManager) NextHand() error {
+	err := g.State.Deal()
+	if err != nil {
+		return err
 	}
 
-	return remaining
+	g.Pot = NewPot(g.State.Table.GetActivePlayers())
+
+	// little blind
+	g.playerBet(ActionNewBet(g.BigBlind / 2))
+	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+
+	// big blind
+	g.playerBet(ActionNewBet(g.BigBlind))
+	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+
+	return nil
 }
+
 func (g *GameManager) isComplete() bool {
-	playersRemaining := g.getRemainingPlayers()
+	playersRemaining := g.State.Table.GetActivePlayers()
 
 	if len(playersRemaining) <= 1 {
+		return true
+	}
+
+	if g.isRoundComplete() && g.State.State == StateRiver {
 		return true
 	}
 
 	return false
 }
 
+func (g *GameManager) isRoundComplete() bool {
+	playersRemaining := g.State.Table.GetActivePlayers()
+	activePlayer := g.State.Table.GetActivePlayer()
+
+	if activePlayer.State == PlayerStateBet {
+		return false
+	}
+
+	// Check if everyone has called/checked the next player
+	for i := range playersRemaining[1:] {
+		if activePlayer.ID == playersRemaining[i+1].ID {
+			continue
+		}
+
+		if playersRemaining[i+1].State == PlayerStateBet {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (g *GameManager) canBet() bool {
+	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
+		return false
+	}
+
+	return true
+}
+
+func (g *GameManager) canCall() bool {
+	if !g.canBet() {
+		return false
+	}
+
+	return g.Pot.MaxBet() > g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID]
+}
+
+func (g *GameManager) canCheck() bool {
+	return g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID]
+}
+
+func (g *GameManager) canFold() bool {
+	return !g.canCheck()
+}
+
 func (g *GameManager) playerBet(action Action) error {
+	if !g.canBet() {
+		return fmt.Errorf("Cannot bet")
+	}
+
+	if action.Amount < g.BigBlind {
+		return fmt.Errorf("Bet must be greater than big blind: %d, received: %d", g.BigBlind, action.Amount)
+	}
+
+	player := g.State.Table.GetActivePlayer()
+	amount := utils.MinInt64(action.Amount, player.Stack)
+
+	g.Pot.AddBet(player.ID, amount)
+	player.State = PlayerStateBet
+
 	return nil
 }
 
 func (g *GameManager) playerCall(action Action) error {
+	if !g.canCall() {
+		return fmt.Errorf("Cannot call")
+	}
+
+	player := g.State.Table.GetActivePlayer()
+	amount := g.Pot.MaxBet() - g.Pot.PlayerBets[player.ID]
+
+	g.Pot.AddBet(player.ID, amount)
+	player.State = PlayerStateCall
+
 	return nil
 }
 
 func (g *GameManager) playerCheck(action Action) error {
+	if !g.canCheck() {
+		return fmt.Errorf("Cannot check")
+	}
+
+	g.State.Table.GetActivePlayer().State = PlayerStateCheck
+
 	return nil
 }
 
 func (g *GameManager) playerFold(action Action) error {
+	if !g.canFold() {
+		return fmt.Errorf("Cannot fold")
+	}
+
+	g.State.Table.GetActivePlayer().State = PlayerStateFold
+
 	return nil
 }
 
@@ -109,8 +180,8 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool
 		return
 	}
 
-	if playerID != g.State.Players[g.Active].ID {
-		err = fmt.Errorf("User (%d) must wait for player (%d) to act", playerID, g.State.Players[g.Active].ID)
+	if playerID != g.State.Table.GetActivePlayer().ID {
+		err = fmt.Errorf("User (%d) must wait for player (%d) to act", playerID, g.State.Table.GetActivePlayer().ID)
 		return
 	}
 
@@ -126,9 +197,29 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool
 		return
 	}
 
-	g.Active = g.nextPos(g.Active)
-
 	complete = g.isComplete()
+	if complete {
+		g.Pot.GetPayouts(g.State.GetWinningIDs())
+		return
+	}
+
+	if g.isRoundComplete() {
+		g.State.Table.NextRound()
+		g.Pot.ClearBets()
+		return
+	}
+
+	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
 
 	return
+}
+
+// GetPlayerActions returns allowed active player actions
+func (g *GameManager) GetPlayerActions() map[string]bool {
+	return map[string]bool{
+		"can_bet":   g.canBet(),
+		"can_call":  g.canCall(),
+		"can_check": g.canCheck(),
+		"can_fold":  g.canFold(),
+	}
 }

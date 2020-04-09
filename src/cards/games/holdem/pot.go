@@ -1,19 +1,19 @@
 package holdem
 
 import (
-	"qpoker/cards/games"
 	"qpoker/utils"
 )
 
 // Pot controls betting pot
 type Pot struct {
+	Payouts      map[int64]int64 `json:"payouts"`
 	PlayerBets   map[int64]int64 `json:"player_bets"`
 	PlayerTotals map[int64]int64 `json:"player_totals"`
 	Total        int64           `json:"total"`
 }
 
 // NewPot returns a new Pot instance for the current group of players
-func NewPot(players []*games.Player) *Pot {
+func NewPot(players []*Player) *Pot {
 	pot := &Pot{
 		PlayerBets:   map[int64]int64{},
 		PlayerTotals: map[int64]int64{},
@@ -42,6 +42,19 @@ func (p *Pot) ClearBets() {
 	}
 }
 
+// MaxBet returns the max current bet
+func (p *Pot) MaxBet() int64 {
+	max := int64(0)
+
+	for _, bet := range p.PlayerBets {
+		if bet > max {
+			max = bet
+		}
+	}
+
+	return max
+}
+
 // GetPayouts returns the winning amounts for each user by winning priority
 func (p *Pot) GetPayouts(orderedPlayers []int64) map[int64]int64 {
 	p.ClearBets()
@@ -66,6 +79,8 @@ func (p *Pot) GetPayouts(orderedPlayers []int64) map[int64]int64 {
 
 		delete(p.PlayerTotals, playerID)
 	}
+
+	p.Payouts = payouts
 
 	return payouts
 }

@@ -1,10 +1,14 @@
 package holdem
 
 const (
-	ActionBet   = "Bet"
-	ActionCall  = "Call"
+	// ActionBet is a bet action
+	ActionBet = "Bet"
+	// ActionCall is a call action
+	ActionCall = "Call"
+	// ActionCheck is a check action
 	ActionCheck = "Check"
-	ActionFold  = "Fold"
+	// ActionFold is a fold action
+	ActionFold = "Fold"
 )
 
 // Action holds the info regarding a holdem action

@@ -3,7 +3,7 @@ package holdem
 import (
 	"fmt"
 	"qpoker/cards"
-	"qpoker/cards/games"
+	"sort"
 )
 
 const (
@@ -21,61 +21,56 @@ const (
 
 // HoldEm contains game state
 type HoldEm struct {
-	Board   []cards.Card    `json:"board"`
-	Deck    *cards.Deck     `json:"-"`
-	Players []*games.Player `json:"-"`
-	Pot     Pot             `json:"pot"`
-	State   string          `json:"state"`
+	Board []cards.Card `json:"board"`
+	Deck  *cards.Deck  `json:"-"`
+	Table *Table       `json:"table"`
+	State string       `json:"state"`
 }
-
-const (
-	// MaxPlayerCount is the max amount of players for HoldEm
-	MaxPlayerCount = 12
-)
 
 // NewHoldEm creates and returns the resources for a new HoldEm
-func NewHoldEm(players []*games.Player) (*HoldEm, error) {
-	if len(players) <= 1 || len(players) > MaxPlayerCount {
-		return nil, fmt.Errorf("Invalid player count: %d", len(players))
-	}
-
+func NewHoldEm(table *Table) *HoldEm {
 	return &HoldEm{
-		Deck:    cards.NewDeck(),
-		Players: players,
-		State:   StateInit,
-	}, nil
-}
-
-func (h *HoldEm) nextPos(n int) int {
-	return (n + 1) % len(h.Players)
+		Deck:  cards.NewDeck(),
+		Table: table,
+		State: StateInit,
+	}
 }
 
 // Deal a new hand of holdem
-func (h *HoldEm) Deal() *HoldEm {
+func (h *HoldEm) Deal() error {
 	// shuffle cards
 	h.Deck.Shuffle()
 
+	// reset table
+	err := h.Table.NextHand()
+	if err != nil {
+		return err
+	}
+
+	// reset board
+	h.Board = []cards.Card{}
+
 	// reset players cards
-	for i := range h.Players {
-		h.Players[i].Cards = []cards.Card{}
+	players := h.Table.GetActivePlayers()
+	for i := range players {
+		players[i].Cards = []cards.Card{}
 	}
 
 	// deal player cards
 	for i := 0; i < 2; i++ {
-		for j := 0; j < len(h.Players); j++ {
+		for j := 0; j < len(players); j++ {
 			card, err := h.Deck.GetCard()
 			if err != nil {
-				fmt.Printf("Unexpected GetCard deal error: %s\n", err)
-				return h
+				return fmt.Errorf("Unexpected GetCard deal error: %s\n", err)
 			}
 
-			h.Players[j].Cards = append(h.Players[j].Cards, card)
+			players[j].Cards = append(players[j].Cards, card)
 		}
 	}
 
 	h.State = StateDeal
 
-	return h
+	return nil
 }
 
 // Simulate game until completion
@@ -106,6 +101,22 @@ func (h *HoldEm) Advance() error {
 	advance()
 
 	return nil
+}
+
+// GetWinningIDs returns the hand winners in order
+func (h *HoldEm) GetWinningIDs() []int64 {
+	players := h.Table.GetActivePlayers()
+	scores := []int64{}
+	playerIDs := []int64{}
+
+	for i := range players {
+		scores = append(scores, Evaluate(Hand{append(h.Board, players[i].Cards...)}))
+		playerIDs = append(playerIDs, players[i].ID)
+	}
+
+	sort.Slice(playerIDs, func(i, j int) bool { return scores[i] > scores[j] })
+
+	return playerIDs
 }
 
 func (h *HoldEm) addCardToBoard() {
