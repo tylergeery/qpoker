@@ -48,11 +48,10 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventBus.PlayerChannel <- PlayerEvent{client, actionPlayerRegister}
+	eventBus.PlayerChannel <- PlayerEvent{client, ActionPlayerRegister}
 
-	// client will spin hear until disconnected
+	// client will spin here until disconnected
 	client.ReadMessages()
 
-	// TODO: turn into channel event
-	eventBus.PlayerChannel <- PlayerEvent{client, actionPlayerLeave}
+	eventBus.PlayerChannel <- PlayerEvent{client, ActionPlayerLeave}
 }

@@ -133,6 +133,12 @@ func (t *Table) NextHand() error {
 // AddPlayer to table
 func (t *Table) AddPlayer(player *Player) error {
 	for i := range t.Players {
+		if t.Players[i] != nil && t.Players[i].ID == player.ID {
+			return fmt.Errorf("Player %d already exists at table", player.ID)
+		}
+	}
+
+	for i := range t.Players {
 		if t.Players[i] == nil {
 			t.Players[i] = player
 			return nil

@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"qpoker/auth"
+	"qpoker/models"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -14,6 +16,7 @@ type Client struct {
 	conn     *websocket.Conn
 	connOpen bool
 	PlayerID int64
+	GameID   int64
 }
 
 // NewClient returns a new client
@@ -40,17 +43,28 @@ func (c *Client) HandleShutdown() {
 
 // Authenticate ensures that the player first sends a valid token
 func (c *Client) Authenticate() error {
+	var authEvent AuthEvent
+
 	msg, err := c.getMessage()
 	if err != nil {
 		return err
 	}
 
-	playerID, err := auth.GetPlayerIDFromAccessToken(msg)
+	json.Unmarshal([]byte(msg), &authEvent)
+
+	playerID, err := auth.GetPlayerIDFromAccessToken(authEvent.Token)
 	if err != nil {
 		fmt.Printf("Client authentication token read error: %s\n", err)
 		return err
 	}
 
+	game, err := models.GetGameBy("id", authEvent.GameID)
+	if err != nil {
+		fmt.Printf("Client authentication game fetch error: %s\n", err)
+		return err
+	}
+
+	c.GameID = game.ID
 	c.PlayerID = playerID
 
 	return nil

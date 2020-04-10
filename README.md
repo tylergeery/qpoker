@@ -31,20 +31,10 @@ make test
 ```
 
 ## TODO
-- Finish up Game logic
-  - GameManager
-  - Holdem scoring
-- Admin 
-  - Seat assignments
-  - Assigning Chips
-  - Time Between hands
-- EventTracking
-  - action events
-  - admin events
-  - chat events
 - Add tests for websocket server
 - Client
   - Add static pages
+    - Landing page
     - Login/Register
     - Table page
   - JS
@@ -53,8 +43,16 @@ make test
   - Assets
     - Card assets
     - Table asset
-- Deploy somewhere
+- Admin 
+  - Seat assignments
+  - Assigning Chips
+  - Time Between hands
+- EventTracking
+  - action events
+  - admin events
+  - chat events
 - Write GameManager state to DB (in case of disconnect)
+- Deploy somewhere
 - Autovaccuum games
 - Video Chat
 - Add use options
