@@ -21,7 +21,12 @@ func (h Hand) GetScore(handScore int) int64 {
 	score := int64(0)
 
 	for i, card := range h.Cards {
-		score += int64(math.Pow10(2*i)) * int64(card.Value)
+		pos, val := len(h.Cards)-i-1, card.Value
+		if val == 1 {
+			val = 14
+		}
+
+		score += int64(math.Pow10(2*pos)) * int64(val)
 	}
 
 	score += int64(math.Pow10(2*len(h.Cards))) * int64(handScore)
@@ -75,7 +80,19 @@ func NewHandEvaluator(hand Hand) *HandEvaluator {
 
 	// Sort values for ties
 	for count := range aggValueMap {
-		sort.Ints(aggValueMap[count])
+		sort.Slice(
+			aggValueMap[count],
+			func(i, j int) bool {
+				if aggValueMap[count][i] == 1 && aggValueMap[count][j] != 1 {
+					return true
+				}
+				if aggValueMap[count][j] == 1 && aggValueMap[count][i] != 1 {
+					return false
+				}
+
+				return aggValueMap[count][i] > aggValueMap[count][j]
+			},
+		)
 	}
 
 	// Evaluator always expects hand to be sorted
@@ -84,6 +101,9 @@ func NewHandEvaluator(hand Hand) *HandEvaluator {
 		func(i, j int) bool {
 			if hand.Cards[i].Value == 1 && hand.Cards[j].Value != 1 {
 				return true
+			}
+			if hand.Cards[j].Value == 1 && hand.Cards[i].Value != 1 {
+				return false
 			}
 
 			return hand.Cards[i].Value > hand.Cards[j].Value
@@ -181,6 +201,11 @@ func (h HandEvaluator) IsStraightFlush() (bool, Hand) {
 		}
 	}
 
+	if len(straight) == 4 && straight[3].Value == 2 && suited[0].Value == 1 {
+		straight = append(straight, suited[0])
+		return true, Hand{straight}
+	}
+
 	return false, h.Hand
 }
 
@@ -246,6 +271,11 @@ func (h HandEvaluator) IsStraight() (bool, Hand) {
 		}
 	}
 
+	if len(straight) == 4 && straight[3].Value == 2 && allCards[0].Value == 1 {
+		straight = append(straight, allCards[0])
+		return true, Hand{straight}
+	}
+
 	return false, h.Hand
 }
 
@@ -265,14 +295,14 @@ func (h HandEvaluator) IsThreeOfAKind() (bool, Hand) {
 
 // IsTwoPair checks for two pair
 func (h HandEvaluator) IsTwoPair() (bool, Hand) {
-	twoVals, twoOk := h.aggValueMap[3]
+	twoVals, twoOk := h.aggValueMap[2]
 
 	if !twoOk || len(twoVals) <= 1 {
 		return false, h.Hand
 	}
 
 	firstPairCards := h.getCardsByValue(twoVals[0])
-	secondPairCards := h.getCardsWithoutValue(twoVals[1])
+	secondPairCards := h.getCardsByValue(twoVals[1])
 	remCards := h.getCardsWithoutValue(twoVals[0])
 	nextHand := HandEvaluator{Hand: Hand{Cards: remCards}}
 	remCards = nextHand.getCardsWithoutValue(twoVals[1])
@@ -282,7 +312,7 @@ func (h HandEvaluator) IsTwoPair() (bool, Hand) {
 
 // IsPair checks for a pair
 func (h HandEvaluator) IsPair() (bool, Hand) {
-	twoVals, twoOk := h.aggValueMap[3]
+	twoVals, twoOk := h.aggValueMap[2]
 
 	if !twoOk {
 		return false, h.Hand

@@ -61,7 +61,7 @@ func (h *HoldEm) Deal() error {
 		for j := 0; j < len(players); j++ {
 			card, err := h.Deck.GetCard()
 			if err != nil {
-				return fmt.Errorf("Unexpected GetCard deal error: %s\n", err)
+				return fmt.Errorf("unexpected GetCard deal error: %s", err)
 			}
 
 			players[j].Cards = append(players[j].Cards, card)
@@ -108,6 +108,10 @@ func (h *HoldEm) GetWinningIDs() []int64 {
 	players := h.Table.GetActivePlayers()
 	scores := []int64{}
 	playerIDs := []int64{}
+
+	if len(players) == 1 {
+		return []int64{players[0].ID}
+	}
 
 	for i := range players {
 		scores = append(scores, Evaluate(Hand{append(h.Board, players[i].Cards...)}))

@@ -50,12 +50,14 @@ func (g *GameManager) NextHand() error {
 
 	g.Pot = NewPot(g.State.Table.GetActivePlayers())
 
-	// little blind
-	g.playerBet(ActionNewBet(g.BigBlind / 2))
+	// little
+	g.State.Table.GetActivePlayer().LittleBlind = true
+	g.playerBet(NewActionBet(g.BigBlind / 2))
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
 
 	// big blind
-	g.playerBet(ActionNewBet(g.BigBlind))
+	g.State.Table.GetActivePlayer().BigBlind = true
+	g.playerBet(NewActionBet(g.BigBlind))
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
 
 	return nil
@@ -77,24 +79,30 @@ func (g *GameManager) isComplete() bool {
 
 func (g *GameManager) isRoundComplete() bool {
 	playersRemaining := g.State.Table.GetActivePlayers()
-	activePlayer := g.State.Table.GetActivePlayer()
-
-	if activePlayer.State == PlayerStateBet {
-		return false
-	}
+	nextPlayer := playersRemaining[0]
 
 	// Check if everyone has called/checked the next player
-	for i := range playersRemaining[1:] {
-		if activePlayer.ID == playersRemaining[i+1].ID {
-			continue
+	for _, player := range playersRemaining {
+		// Everyone gets a chance to play
+		if player.State == PlayerStateInit {
+			return false
 		}
 
-		if playersRemaining[i+1].State == PlayerStateBet {
+		// If anybody besides the next player bet, keep going
+		if player.ID != nextPlayer.ID && player.State == PlayerStateBet {
 			return false
 		}
 	}
 
-	return true
+	if g.State.State != StateDeal {
+		return true
+	}
+
+	if !nextPlayer.BigBlind {
+		return true
+	}
+
+	return g.Pot.MaxBet() != g.BigBlind
 }
 
 func (g *GameManager) canBet() bool {
@@ -126,14 +134,12 @@ func (g *GameManager) playerBet(action Action) error {
 		return fmt.Errorf("Cannot bet")
 	}
 
-	if action.Amount < g.BigBlind {
-		return fmt.Errorf("Bet must be greater than big blind: %d, received: %d", g.BigBlind, action.Amount)
-	}
-
+	// TODO: validate bet amount, don't forget about little blind
 	player := g.State.Table.GetActivePlayer()
 	amount := utils.MinInt64(action.Amount, player.Stack)
 
 	g.Pot.AddBet(player.ID, amount)
+	player.Stack -= amount
 	player.State = PlayerStateBet
 
 	return nil
@@ -148,6 +154,7 @@ func (g *GameManager) playerCall(action Action) error {
 	amount := g.Pot.MaxBet() - g.Pot.PlayerBets[player.ID]
 
 	g.Pot.AddBet(player.ID, amount)
+	player.Stack -= amount
 	player.State = PlayerStateCall
 
 	return nil
@@ -204,7 +211,8 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool
 	}
 
 	if g.isRoundComplete() {
-		g.State.Table.NextRound()
+		g.State.Advance()
+		g.State.Table.NextRound(g.GetPlayerActions)
 		g.Pot.ClearBets()
 		return
 	}

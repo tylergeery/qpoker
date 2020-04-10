@@ -115,7 +115,7 @@ func TestPlayerUpdateSuccess(t *testing.T) {
 	app := CreateApp()
 
 	// When
-	response, err := app.Test(req)
+	response, err := app.Test(req, -1)
 	assert.NoError(t, err)
 
 	// Then

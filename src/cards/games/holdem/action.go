@@ -17,7 +17,22 @@ type Action struct {
 	Amount int64  `json:"amount"`
 }
 
-// ActionNewBet returns a new bet action
-func ActionNewBet(amount int64) Action {
+// NewActionBet returns a new bet action
+func NewActionBet(amount int64) Action {
 	return Action{ActionBet, amount}
+}
+
+// NewActionFold returns a new fold action
+func NewActionFold() Action {
+	return Action{Name: ActionFold}
+}
+
+// NewActionCall returns a new fold action
+func NewActionCall() Action {
+	return Action{Name: ActionCall}
+}
+
+// NewActionCheck returns a new fold action
+func NewActionCheck() Action {
+	return Action{Name: ActionCheck}
 }

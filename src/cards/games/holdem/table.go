@@ -2,6 +2,7 @@ package holdem
 
 import (
 	"fmt"
+	"qpoker/utils"
 )
 
 // Table holds the information about a given card table
@@ -23,6 +24,10 @@ func NewTable(capacity int, players []*Player) *Table {
 	tablePlayers := make([]*Player, capacity)
 
 	for i := range players {
+		if i >= capacity {
+			break
+		}
+
 		tablePlayers[i] = players[i]
 	}
 
@@ -42,6 +47,9 @@ func (t *Table) nextPos(pos int) int {
 	next := pos
 	for {
 		next = t.next(next)
+		if next == pos {
+			return -1
+		}
 
 		if next == pos {
 			fmt.Printf("Error: next pos could not find a next: %d, %d\n", pos, t.Capacity)
@@ -70,15 +78,15 @@ func (t *Table) GetActivePlayer() *Player {
 // GetActivePlayers returns the currently active players ordered by turn
 func (t *Table) GetActivePlayers() []*Player {
 	players := []*Player{}
+	playerIndexes := []int{}
 	start := t.activeIndex
 	next := t.nextPos(start)
 
-	for start != next {
+	for next != -1 && !utils.IntSliceHasValue(playerIndexes, next) {
 		players = append(players, t.Players[next])
+		playerIndexes = append(playerIndexes, next)
 		next = t.nextPos(next)
 	}
-
-	players = append(players, t.GetActivePlayer())
 
 	return players
 }
@@ -92,16 +100,15 @@ func (t *Table) ActivateNextPlayer(getActions func() map[string]bool) {
 }
 
 // NextRound moves the table focus to first bet for a new betting round
-func (t *Table) NextRound() {
-	t.ResetPlayerStates(PlayerStateInit, false)
-
-	t.activeIndex = t.nextPos(t.dealerIndex)
-	t.Active = t.getPlayerID(t.activeIndex)
+func (t *Table) NextRound(getActions func() map[string]bool) {
+	t.resetPlayerRoundStates()
+	t.activeIndex = t.dealerIndex
+	t.ActivateNextPlayer(getActions)
 }
 
 // NextHand prepares table for next hand
 func (t *Table) NextHand() error {
-	t.ResetPlayerStates(PlayerStateInit, true)
+	t.resetPlayerHandStates()
 
 	// Boot invalid stacks to pending
 	for i := range t.Players {
@@ -125,36 +132,52 @@ func (t *Table) NextHand() error {
 
 // AddPlayer to table
 func (t *Table) AddPlayer(player *Player) error {
-	if len(t.Players) == t.Capacity {
-		return fmt.Errorf("Table is full at %d players", t.Capacity)
+	for i := range t.Players {
+		if t.Players[i] == nil {
+			t.Players[i] = player
+			return nil
+		}
 	}
 
-	t.Players = append(t.Players, player)
-
-	return nil
+	return fmt.Errorf("Table is full at %d players", t.Capacity)
 }
 
 // RemovePlayer from table
-func (t *Table) RemovePlayer(playerID int64) {
+func (t *Table) RemovePlayer(playerID int64) error {
 	for i := range t.Players {
 		if t.Players[i] != nil && t.Players[i].ID == playerID {
-			t.Players = append(t.Players[:i], t.Players[i+1:]...)
-			return
+			t.Players[i] = nil
+			return nil
 		}
 	}
+
+	return fmt.Errorf("Player %d was not found at the table", playerID)
 }
 
-// ResetPlayerStates sets all player states back to state
-func (t *Table) ResetPlayerStates(state string, includeFolded bool) {
+func (t *Table) resetPlayerRoundStates() {
 	for i := range t.Players {
 		if t.Players[i] == nil {
 			continue
 		}
 
-		if !includeFolded && t.Players[i].State == "fold" {
+		if !t.Players[i].IsActive() {
 			continue
 		}
 
-		t.Players[i].State = state
+		t.Players[i].State = PlayerStateInit
+		t.Players[i].SetPlayerActions(nil)
+	}
+}
+
+func (t *Table) resetPlayerHandStates() {
+	for i := range t.Players {
+		if t.Players[i] == nil {
+			continue
+		}
+
+		t.Players[i].State = PlayerStateInit
+		t.Players[i].SetPlayerActions(nil)
+		t.Players[i].BigBlind = false
+		t.Players[i].LittleBlind = false
 	}
 }
