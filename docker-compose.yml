@@ -4,7 +4,7 @@ services:
     image: "postgres:10.5"
     restart: "unless-stopped"
     ports:
-      - "5432:5432"
+      - "5432"
     volumes:
       - ./db:/docker-entrypoint-initdb.d
     environment:
@@ -14,7 +14,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./env/docker/go/Dockerfile
+      dockerfile: ./env/go/Dockerfile
       target: http_dev
     depends_on:
       - db
@@ -23,13 +23,13 @@ services:
       PG_CONNECTION: "postgres://postgres:postgres@db:5432/qpoker?sslmode=disable"
       TOKEN_SIGNING_VALUE: testsignvalue
     ports:
-      - "8080:8080"
+      - "8080"
     volumes:
       - ./src:/src
   ws:
     build:
       context: .
-      dockerfile: ./env/docker/go/Dockerfile
+      dockerfile: ./env/go/Dockerfile
       target: ws_dev
     depends_on:
       - db
@@ -38,13 +38,24 @@ services:
       PG_CONNECTION: "postgres://postgres:postgres@db:5432/qpoker?sslmode=disable"
       TOKEN_SIGNING_VALUE: testsignvalue
     ports:
-      - "8081:8081"
+      - "8080"
     volumes:
       - ./src:/src
+  nginx:
+    image: nginx
+    restart: "always"
+    depends_on:
+      - app
+      - ws
+    ports:
+      - "8080:80"
+    volumes:
+      - ./client/assets:/www/assets/
+      - ./env/nginx/dev.conf:/etc/nginx/conf.d/default.conf
   migrator:
     build:
       context: .
-      dockerfile: ./env/docker/go/Dockerfile
+      dockerfile: ./env/go/Dockerfile
       target: migrator
     depends_on:
       - db

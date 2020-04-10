@@ -5,6 +5,8 @@ import (
 	"qpoker/http/handlers"
 	"qpoker/models"
 	"time"
+
+	"github.com/gofiber/template"
 )
 
 func main() {
@@ -15,5 +17,10 @@ func main() {
 	defer db.Close()
 
 	app := handlers.CreateApp()
+
+	// Settings
+	app.Settings.TemplateEngine = template.Mustache()
+	app.Settings.TemplateFolder = "/src/http/views/"
+
 	app.Listen(8080)
 }

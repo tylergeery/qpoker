@@ -17,7 +17,8 @@ func CreateApp() *fiber.App {
 	// Static Asset Routing
 
 	// Web Routing
-	// app.Get("/", PageLanding)
+	app.Get("/", PageLanding)
+	app.Get("/:slug", PageTable)
 	// app.Get("/:slug", middleware.AuthorizeAndSetRedirect, PageGame)
 
 	// API Routing

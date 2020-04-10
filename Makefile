@@ -7,7 +7,7 @@ ts := $(shell date +%Y%m%d-%H%M%S)
 up: dev-setup db-apply db-seed  ## Create local docker env
 
 dev-setup:
-	docker-compose up --build -d db app ws
+	docker-compose up --build -d nginx
 
 down:  ## Tear down local docker env
 	docker-compose down --remove-orphans
@@ -34,6 +34,9 @@ dev-player:  ## Create a local player
 
 test:  ## Run tests in local dev env
 	@docker-compose exec app go test -count=1 ./...
+
+js:  # Create client js
+	@cd client && /usr/bin/npx webpack
 
 check-%:
 	@if [ -z '${${*}}' ]; then echo 'Environment variable $* not set' && exit 1; fi

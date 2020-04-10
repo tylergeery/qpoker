@@ -18,7 +18,7 @@ func main() {
 	go eventBus.ListenForEvents()
 
 	http.HandleFunc("/", handleSocketConnection)
-	http.ListenAndServe(":8081", nil)
+	http.ListenAndServe(":8080", nil)
 }
 
 func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
@@ -54,4 +54,6 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 	client.ReadMessages()
 
 	eventBus.PlayerChannel <- PlayerEvent{client, ActionPlayerLeave}
+
+	fmt.Println("Websocket request terminated")
 }
