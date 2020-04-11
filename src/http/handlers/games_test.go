@@ -86,9 +86,13 @@ func TestCreateGameSuccess(t *testing.T) {
 
 	name := fmt.Sprintf("Test Game %d", ts)
 	capacity := 20
+	bigBlind := int64(100)
 	body := map[string]interface{}{
-		"name":     name,
-		"capacity": capacity,
+		"name": name,
+		"options": map[string]interface{}{
+			"capacity":  capacity,
+			"big_blind": bigBlind,
+		},
 	}
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", player.Token),
@@ -110,7 +114,8 @@ func TestCreateGameSuccess(t *testing.T) {
 	assert.Greater(t, game.ID, int64(0))
 	assert.Equal(t, name, game.Name)
 	assert.True(t, len(game.Slug) == 16)
-	assert.Equal(t, capacity, game.Capacity)
+	assert.Equal(t, capacity, game.Options.Capacity)
+	assert.Equal(t, bigBlind, game.Options.BigBlind)
 	assert.Greater(t, game.CreatedAt.Unix(), int64(0))
 	assert.Greater(t, game.UpdatedAt.Unix(), int64(0))
 }
@@ -122,8 +127,11 @@ func TestGameUpdateSuccess(t *testing.T) {
 	player := test.CreateTestPlayer()
 	game := test.CreateTestGame(player)
 	body := map[string]interface{}{
-		"name":     "temp " + game.Name,
-		"capacity": 10,
+		"name": "temp " + game.Name,
+		"options": map[string]interface{}{
+			"capacity":  10,
+			"big_blind": 60,
+		},
 	}
 	req := test.CreateTestRequest("PUT", fmt.Sprintf("/api/v1/games/%d", game.ID), map[string]string{"Authorization": fmt.Sprintf("Bearer %s", player.Token)}, body)
 	app := CreateApp()
@@ -141,7 +149,8 @@ func TestGameUpdateSuccess(t *testing.T) {
 	assert.Equal(t, 200, response.StatusCode)
 	assert.Equal(t, game.ID, updatedGame.ID)
 	assert.Equal(t, body["name"], updatedGame.Name)
-	assert.Equal(t, body["capacity"], updatedGame.Capacity)
+	assert.Equal(t, 10, updatedGame.Options.Capacity)
+	assert.Equal(t, int64(60), updatedGame.Options.BigBlind)
 	assert.Equal(t, game.Slug, updatedGame.Slug)
 	assert.Equal(t, updatedGame.CreatedAt.Unix(), game.CreatedAt.Unix())
 	assert.GreaterOrEqual(t, updatedGame.UpdatedAt.Unix(), game.UpdatedAt.Unix())
@@ -205,7 +214,7 @@ func TestGetGameSuccess(t *testing.T) {
 	assert.Equal(t, retrievedGame.ID, game.ID)
 	assert.Equal(t, retrievedGame.Name, game.Name)
 	assert.Equal(t, retrievedGame.Slug, game.Slug)
-	assert.Equal(t, retrievedGame.Capacity, game.Capacity)
+	assert.Equal(t, retrievedGame.Options.Capacity, game.Options.Capacity)
 	assert.Equal(t, game.CreatedAt.Unix(), retrievedGame.CreatedAt.Unix())
 	assert.Equal(t, game.UpdatedAt.Unix(), retrievedGame.CreatedAt.Unix())
 }

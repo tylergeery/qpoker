@@ -5,13 +5,11 @@ import (
 )
 
 // PageLanding renders the default app landing page
-func PageLanding(ctx *fiber.Ctx) {
-	ctx.Render("main.mustache", fiber.Map{})
+func PageLanding(c *fiber.Ctx) {
+	c.Render("main.mustache", fiber.Map{})
 }
 
 // PageTable renders a poker table
-func PageTable(ctx *fiber.Ctx) {
-	playerID := c.Locals("playerID")
-
-	ctx.Render("table.mustache", fiber.Map{})
+func PageTable(c *fiber.Ctx) {
+	c.Render("table.mustache", fiber.Map{})
 }

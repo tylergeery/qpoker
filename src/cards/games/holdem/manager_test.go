@@ -2,6 +2,7 @@ package holdem
 
 import (
 	"fmt"
+	"qpoker/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,7 @@ func TestNewGameError(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := NewGameManager(c.players, GameOptions{})
+		_, err := NewGameManager(c.players, models.GameOptions{})
 		assert.Equal(t, c.expected, err.Error())
 	}
 }
@@ -55,7 +56,7 @@ func TestPlayTooManyPlayers(t *testing.T) {
 		players = append(players, &Player{ID: int64(i)})
 	}
 
-	_, err := NewGameManager(players, GameOptions{Capacity: 4, BigBlind: 100})
+	_, err := NewGameManager(players, models.GameOptions{Capacity: 4, BigBlind: 100})
 	assert.Error(t, err)
 }
 
@@ -65,7 +66,7 @@ func TestPlayHandNotEnoughPlayersDueToStacks(t *testing.T) {
 		players = append(players, &Player{ID: int64(i)})
 	}
 
-	gm, err := NewGameManager(players, GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	err = gm.NextHand()
@@ -80,7 +81,7 @@ func TestPlayHandAllFold(t *testing.T) {
 		players = append(players, &Player{ID: int64(i), Stack: int64(200)})
 	}
 
-	gm, err := NewGameManager(players, GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	// 1 becomes dealer, 2 LB, 3 BB, 4 active
@@ -132,7 +133,7 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 		players = append(players, &Player{ID: int64(i), Stack: int64(200)})
 	}
 
-	gm, err := NewGameManager(players, GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	// 1 becomes dealer, 2 LB, 0 BB, 1 active

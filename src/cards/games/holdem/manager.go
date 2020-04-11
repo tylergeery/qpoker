@@ -2,6 +2,7 @@ package holdem
 
 import (
 	"fmt"
+	"qpoker/models"
 	"qpoker/utils"
 )
 
@@ -9,12 +10,6 @@ const (
 	// MaxPlayerCount is the max amount of players for HoldEm
 	MaxPlayerCount = 12
 )
-
-// GameOptions is a config object used to create a new GameManager
-type GameOptions struct {
-	Capacity int   `json:"capacity"`
-	BigBlind int64 `json:"big_blind"`
-}
 
 // GameManager holds game state and manages game flow
 type GameManager struct {
@@ -24,7 +19,7 @@ type GameManager struct {
 }
 
 // NewGameManager returns a new GameManager
-func NewGameManager(players []*Player, options GameOptions) (*GameManager, error) {
+func NewGameManager(players []*Player, options models.GameOptions) (*GameManager, error) {
 	if len(players) <= 1 || len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}
@@ -32,6 +27,7 @@ func NewGameManager(players []*Player, options GameOptions) (*GameManager, error
 	if options.Capacity > 0 && len(players) > options.Capacity {
 		return nil, fmt.Errorf("Player count (%d) is greater than capacity (%d)", len(players), options.Capacity)
 	}
+
 	table := NewTable(options.Capacity, players)
 	gm := &GameManager{
 		State:    NewHoldEm(table),
@@ -48,7 +44,11 @@ func (g *GameManager) NextHand() error {
 		return err
 	}
 
+	// TODO: pull latest game options
+
 	g.Pot = NewPot(g.State.Table.GetActivePlayers())
+
+	// TODO: handle case users cant afford blinds
 
 	// little
 	g.State.Table.GetActivePlayer().LittleBlind = true

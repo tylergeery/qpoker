@@ -10,8 +10,8 @@ import (
 )
 
 type createGameRequest struct {
-	Name     string `json:"name"`
-	Capacity int    `json:"capacity"`
+	Name    string             `json:"name"`
+	Options models.GameOptions `json:"options"`
 }
 
 func (req createGameRequest) validate() error {
@@ -20,8 +20,12 @@ func (req createGameRequest) validate() error {
 	}
 
 	// Allow -1 as an infinite capacity
-	if req.Capacity == 0 || req.Capacity < -1 {
-		return fmt.Errorf("Invalid capacity: %d", req.Capacity)
+	if req.Options.Capacity == 0 || req.Options.Capacity < -1 {
+		return fmt.Errorf("Invalid capacity: %d", req.Options.Capacity)
+	}
+
+	if req.Options.BigBlind <= 0 || req.Options.BigBlind%2 == 1 {
+		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
 	}
 
 	return nil
@@ -54,9 +58,8 @@ func CreateGame(c *fiber.Ctx) {
 	}
 
 	game := &models.Game{
-		Name:     req.Name,
-		OwnerID:  player.ID,
-		Capacity: req.Capacity,
+		Name:    req.Name,
+		OwnerID: player.ID,
 	}
 	err = game.Save()
 	if err != nil {
@@ -64,6 +67,18 @@ func CreateGame(c *fiber.Ctx) {
 		c.SendStatus(500)
 		c.JSON(utils.FormatErrors(err))
 		return
+	}
+
+	options := &models.GameOptionsRecord{
+		GameID:  game.ID,
+		Options: req.Options,
+	}
+	err = options.Save()
+	if err != nil {
+		fmt.Printf("Game options save error: %s", err)
+	}
+	if err == nil {
+		game.Options = options.Options
 	}
 
 	c.SendStatus(201)
@@ -78,8 +93,12 @@ func (req updateGameRequest) validate() error {
 	}
 
 	// Allow -1 as an infinite capacity
-	if req.Capacity < -1 {
-		return fmt.Errorf("Invalid capacity: %d", req.Capacity)
+	if req.Options.Capacity < -1 {
+		return fmt.Errorf("Invalid capacity: %d", req.Options.Capacity)
+	}
+
+	if req.Options.BigBlind < 0 || req.Options.BigBlind%2 == 1 {
+		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
 	}
 
 	return nil
@@ -118,14 +137,30 @@ func UpdateGame(c *fiber.Ctx) {
 		return
 	}
 
-	if req.Capacity != 0 {
-		game.Capacity = req.Capacity
+	if req.Options.Capacity != 0 {
+		game.Options.Capacity = req.Options.Capacity
+	}
+	if req.Options.BigBlind != 0 {
+		game.Options.BigBlind = req.Options.BigBlind
 	}
 	if req.Name != "" {
 		game.Name = req.Name
 	}
 
 	err = game.Save()
+	if err != nil {
+		c.SendStatus(400)
+		c.JSON(utils.FormatErrors(err))
+		return
+	}
+
+	optionsRecord, err := models.GetGameOptionsRecordBy("game_id", game.ID)
+	if err != nil {
+		optionsRecord = &models.GameOptionsRecord{GameID: game.ID}
+	}
+
+	optionsRecord.Options = game.Options
+	err = optionsRecord.Save()
 	if err != nil {
 		c.SendStatus(400)
 		c.JSON(utils.FormatErrors(err))

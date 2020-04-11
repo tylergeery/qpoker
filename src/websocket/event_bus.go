@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"qpoker/cards/games/holdem"
+	"qpoker/models"
 )
 
 const (
@@ -38,13 +39,17 @@ func NewEventBus() *EventBus {
 	}
 }
 
+func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) {
+	// TODO: reload game state if not present
+	players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
+	options := models.GameOptions{Capacity: 12, BigBlind: 50}
+	return holdem.NewGameManager(players, options)
+}
+
 func (e *EventBus) setClient(client *Client) {
 	controller, ok := e.games[client.GameID]
 	if !ok {
-		// TODO: reload game state if not present
-		players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
-		options := holdem.GameOptions{Capacity: 12, BigBlind: 50}
-		manager, err := holdem.NewGameManager(players, options)
+		manager, err := e.reloadGameState(client)
 		if err != nil {
 			fmt.Errorf("error creating GameManager: %s", err)
 			return

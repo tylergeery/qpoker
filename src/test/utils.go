@@ -37,9 +37,8 @@ func CreateTestPlayer() *models.Player {
 func CreateTestGame(player *models.Player) *models.Game {
 	ts := time.Now().UTC().UnixNano()
 	game := &models.Game{
-		Name:     fmt.Sprintf("Test Game %d", ts),
-		Capacity: 5,
-		OwnerID:  player.ID,
+		Name:    fmt.Sprintf("Test Game %d", ts),
+		OwnerID: player.ID,
 	}
 	_ = game.Save()
 
