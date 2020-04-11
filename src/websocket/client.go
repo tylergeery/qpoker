@@ -95,3 +95,14 @@ func (c *Client) getMessage() (s string, err error) {
 
 	return
 }
+
+// SendMessage sends a message to websocket client
+func (c *Client) SendMessage(msg []byte) error {
+	err := c.conn.WriteMessage(websocket.TextMessage, msg)
+	if err != nil {
+		fmt.Printf("Client write error: %s\n", string(msg))
+		return err
+	}
+
+	return nil
+}

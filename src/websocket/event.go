@@ -1,5 +1,9 @@
 package main
 
+import (
+	"qpoker/cards/games/holdem"
+)
+
 // Event is the event broadcasted to all clients
 type Event struct {
 	Type  string `json:"type"`
@@ -20,9 +24,9 @@ type AuthEvent struct {
 
 // GameEvent represents a player gameplay action
 type GameEvent struct {
-	PlayerID int64  `json:"-"`
-	Action   string `json:"action"`
-	Amount   int64  `json:"amount"`
+	GameID   int64         `json:"gameID"`
+	PlayerID int64         `json:"-"`
+	Action   holdem.Action `json:"action"`
 }
 
 // AdminEvent represent an admin gameplay action

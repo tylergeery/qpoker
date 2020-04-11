@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
 
 	"qpoker/cards/games/holdem"
@@ -40,13 +40,20 @@ func NewEventBus() *EventBus {
 }
 
 func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) {
-	// TODO: reload game state if not present
+	game, err := models.GetGameBy("id", client.GameID)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Check if game is complete
+	// TODO: convert model players to game players
 	players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
-	options := models.GameOptions{Capacity: 12, BigBlind: 50}
-	return holdem.NewGameManager(players, options)
+
+	return holdem.NewGameManager(players, game.Options)
 }
 
-func (e *EventBus) setClient(client *Client) {
+// SetClient adds client to EventBus
+func (e *EventBus) SetClient(client *Client) {
 	controller, ok := e.games[client.GameID]
 	if !ok {
 		manager, err := e.reloadGameState(client)
@@ -55,18 +62,18 @@ func (e *EventBus) setClient(client *Client) {
 			return
 		}
 
-		controller = &GameController{
-			clients: []*Client{},
-			manager: manager,
-		}
+		controller = &GameController{[]*Client{}, manager}
 		e.games[client.GameID] = controller
 	}
 
 	_ = controller.manager.State.Table.AddPlayer(&holdem.Player{ID: client.PlayerID})
 	controller.clients = append(controller.clients, client)
+
+	e.BroadcastState(client.GameID)
 }
 
-func (e *EventBus) removeClient(client *Client) {
+// RemoveClient removes a client from EventBus
+func (e *EventBus) RemoveClient(client *Client) {
 	controller, ok := e.games[client.GameID]
 	if !ok {
 		return
@@ -77,10 +84,47 @@ func (e *EventBus) removeClient(client *Client) {
 			controller.clients = append(controller.clients[:i], controller.clients[i+1:]...)
 		}
 	}
+
+	e.BroadcastState(client.GameID)
 }
 
-func (e *EventBus) broadcast(gameID int64) {
+// BroadcastState sends game state to all clients
+func (e *EventBus) BroadcastState(gameID int64) {
+	controller, ok := e.games[gameID]
+	if !ok {
+		return
+	}
 
+	// TODO: include relevant cards
+	state, err := json.Marshal(controller.manager)
+	if err != nil {
+		fmt.Printf("Error broadcasting game state: %s\n", err)
+		return
+	}
+
+	for i := range controller.clients {
+		controller.clients[i].SendMessage(state)
+	}
+}
+
+// PerformGameAction sends game state to all clients
+func (e *EventBus) PerformGameAction(gameEvent GameEvent) {
+	controller, ok := e.games[gameEvent.GameID]
+	if !ok {
+		return
+	}
+
+	complete, err := controller.manager.PlayerAction(gameEvent.PlayerID, gameEvent.Action)
+	if err != nil {
+		fmt.Printf("Error performing gameEvent: %+v, err: %s\n", gameEvent, err)
+		return
+	}
+
+	e.BroadcastState(gameEvent.GameID)
+
+	if complete {
+		// Start timer for next hand
+	}
 }
 
 // ListenForEvents starts the event bus waiting for channel events
@@ -89,17 +133,16 @@ func (e *EventBus) ListenForEvents() {
 		select {
 		case playerEvent := <-e.PlayerChannel:
 			fmt.Printf("PlayerAction: (%d %s)\n", playerEvent.Client.PlayerID, playerEvent.Action)
-			if playerEvent.Action == ActionPlayerRegister {
-				e.setClient(playerEvent.Client)
+			playerEventMap := map[string]func(*Client){
+				ActionPlayerRegister: e.SetClient,
+				ActionPlayerLeave:    e.RemoveClient,
 			}
-			if playerEvent.Action == ActionPlayerLeave {
-				e.removeClient(playerEvent.Client)
-			}
+			playerEventMap[playerEvent.Action](playerEvent.Client)
 		case adminEvent := <-e.AdminChannel:
 			fmt.Printf("AdminAction: (%s)", adminEvent.Action)
 		case gameEvent := <-e.GameChannel:
-			fmt.Printf("GameAction: (%s)\n", gameEvent.Action)
-			// TODO: validate game action, update game state
+			fmt.Printf("GameAction: (%+v)\n", gameEvent.Action)
+			e.PerformGameAction(gameEvent)
 		}
 	}
 }
