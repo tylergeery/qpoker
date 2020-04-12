@@ -90,7 +90,7 @@ func (g *GameOptionsRecord) insert() error {
 func (g *GameOptionsRecord) update() error {
 	err := ConnectToDB().QueryRow(`
 		UPDATE game_options
-		SET options = $2
+		SET options = $2, updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
 	`, g.ID, g.Options).Scan(&g.UpdatedAt)

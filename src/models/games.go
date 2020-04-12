@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"qpoker/utils"
+	"strings"
 	"time"
 
 	"github.com/metal3d/go-slugify"
@@ -30,6 +31,12 @@ func GetGameBy(key string, val interface{}) (*Game, error) {
 		LIMIT 1
 	`, key), val).Scan(&game.ID, &game.Name, &game.Slug, &game.OwnerID, &game.CreatedAt, &game.UpdatedAt)
 
+	if err != nil {
+		return game, err
+	}
+
+	game.Options, _ = GetGameOptionsForGame(game.ID)
+
 	return game, err
 }
 
@@ -44,7 +51,10 @@ func (g *Game) Save() error {
 }
 
 func (g *Game) createSlug() {
-	g.Slug = fmt.Sprintf("%s-%s", slugify.Marshal(g.Name)[:10], utils.GenerateSlug(5))
+	slug := fmt.Sprintf("%s-%s", slugify.Marshal(g.Name)[:10], utils.GenerateSlug(5))
+	slug = strings.TrimRight(slug, "-")
+
+	g.Slug = strings.ToLower(slug)
 }
 
 func (g *Game) insert() error {

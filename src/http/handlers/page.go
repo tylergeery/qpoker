@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"qpoker/models"
+	"strings"
+
 	"github.com/gofiber/fiber"
 )
 
@@ -11,5 +14,14 @@ func PageLanding(c *fiber.Ctx) {
 
 // PageTable renders a poker table
 func PageTable(c *fiber.Ctx) {
+	gameSlug := strings.ToLower(c.Params("slug"))
+
+	_, err := models.GetGameBy("slug", gameSlug)
+	if err != nil {
+		c.SendStatus(404)
+		c.Render("error.mustache", fiber.Map{})
+		return
+	}
+
 	c.Render("table.mustache", fiber.Map{})
 }

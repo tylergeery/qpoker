@@ -13,7 +13,20 @@ func TestGetGameBy(t *testing.T) {
 	game := CreateTestGame(player)
 
 	// When
-	fetchedGame, _ := GetGameBy("id", game.ID)
+	fetchedGame, err := GetGameBy("id", game.ID)
+	assert.NoError(t, err)
+
+	// Then
+	assert.Equal(t, fetchedGame.ID, game.ID)
+	assert.Equal(t, fetchedGame.Name, game.Name)
+	assert.Equal(t, fetchedGame.Slug, game.Slug)
+	assert.True(t, len(fetchedGame.Slug) == 16)
+	assert.Equal(t, fetchedGame.CreatedAt.Unix(), game.CreatedAt.Unix())
+	assert.Equal(t, fetchedGame.UpdatedAt.Unix(), game.UpdatedAt.Unix())
+
+	// When
+	fetchedGame, err = GetGameBy("slug", game.Slug)
+	assert.NoError(t, err)
 
 	// Then
 	assert.Equal(t, fetchedGame.ID, game.ID)
@@ -29,7 +42,7 @@ func TestGetGameBy(t *testing.T) {
 	game.Save()
 
 	fetchedGame, _ = GetGameBy("name", game.Name)
-	_, err := GetGameBy("name", oldGameName)
+	_, err = GetGameBy("name", oldGameName)
 
 	// Then
 	assert.Error(t, err)
