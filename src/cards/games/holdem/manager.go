@@ -2,6 +2,7 @@ package holdem
 
 import (
 	"fmt"
+	"qpoker/cards"
 	"qpoker/models"
 	"qpoker/utils"
 )
@@ -13,13 +14,17 @@ const (
 
 // GameManager holds game state and manages game flow
 type GameManager struct {
+	GameID   int64   `json:"game_id"`
 	State    *HoldEm `json:"state"`
 	Pot      *Pot    `json:"pot"`
 	BigBlind int64   `json:"big_blind"`
+
+	gameHand        *models.GameHand
+	gamePlayerHands map[int64]*models.GamePlayerHand
 }
 
 // NewGameManager returns a new GameManager
-func NewGameManager(players []*Player, options models.GameOptions) (*GameManager, error) {
+func NewGameManager(gameID int64, players []*Player, options models.GameOptions) (*GameManager, error) {
 	if len(players) <= 1 || len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}
@@ -30,6 +35,7 @@ func NewGameManager(players []*Player, options models.GameOptions) (*GameManager
 
 	table := NewTable(options.Capacity, players)
 	gm := &GameManager{
+		GameID:   gameID,
 		State:    NewHoldEm(table),
 		BigBlind: options.BigBlind,
 	}
@@ -46,21 +52,35 @@ func (g *GameManager) NextHand() error {
 
 	// TODO: pull latest game options
 
-	g.Pot = NewPot(g.State.Table.GetActivePlayers())
+	// Save hand and player hands
+	err = g.StartHand()
+	if err != nil {
+		return err
+	}
 
-	// TODO: handle case users cant afford blinds
+	g.Pot = NewPot(g.State.Table.GetActivePlayers())
 
 	// little
 	g.State.Table.GetActivePlayer().LittleBlind = true
-	g.playerBet(NewActionBet(g.BigBlind / 2))
+	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind/2, g.State.Table.GetActivePlayer().Stack)))
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
 
 	// big blind
 	g.State.Table.GetActivePlayer().BigBlind = true
-	g.playerBet(NewActionBet(g.BigBlind))
+	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)))
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
 
 	return nil
+}
+
+func (g *GameManager) cardsToStringArray(cardObjects []cards.Card) []string {
+	stringCards := make([]string, len(cardObjects))
+
+	for i, c := range cardObjects {
+		stringCards[i] = c.ToString()
+	}
+
+	return stringCards
 }
 
 func (g *GameManager) isComplete() bool {
@@ -175,6 +195,7 @@ func (g *GameManager) playerFold(action Action) error {
 		return fmt.Errorf("Cannot fold")
 	}
 
+	fmt.Printf("setting player state: %s\n", PlayerStateFold)
 	g.State.Table.GetActivePlayer().State = PlayerStateFold
 
 	return nil
@@ -206,7 +227,7 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool
 
 	complete = g.isComplete()
 	if complete {
-		g.Pot.GetPayouts(g.State.GetWinningIDs())
+		err = g.EndHand()
 		return
 	}
 
@@ -230,4 +251,93 @@ func (g *GameManager) GetPlayerActions() map[string]bool {
 		"can_check": g.canCheck(),
 		"can_fold":  g.canFold(),
 	}
+}
+
+// ShowVisibleCards marks remaining players as visible cards
+func (g *GameManager) ShowVisibleCards() {
+	activePlayers := g.State.Table.GetActivePlayers()
+
+	if len(activePlayers) <= 1 {
+		return
+	}
+
+	for _, player := range activePlayers {
+		player.CardsVisible = true
+	}
+}
+
+// StartHand saves the initial game state to the DB
+func (g *GameManager) StartHand() error {
+	g.gameHand = &models.GameHand{GameID: g.GameID}
+	err := g.gameHand.Save()
+	if err != nil {
+		return err
+	}
+
+	g.gamePlayerHands = map[int64]*models.GamePlayerHand{}
+	for _, player := range g.State.Table.GetActivePlayers() {
+		g.gamePlayerHands[player.ID] = &models.GamePlayerHand{
+			GameHandID:    g.gameHand.ID,
+			Cards:         g.cardsToStringArray(player.Cards),
+			PlayerID:      player.ID,
+			StartingStack: player.Stack,
+		}
+		err = g.gamePlayerHands[player.ID].Save()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// EndHand saves the ending game state to the DB
+func (g *GameManager) EndHand() error {
+	g.ShowVisibleCards()
+	payouts := g.Pot.GetPayouts(g.State.GetWinningIDs())
+
+	g.gameHand.Board = g.cardsToStringArray(g.State.Board)
+	g.gameHand.Payouts = payouts
+	g.gameHand.Bets = g.Pot.PlayerTotals
+
+	err := g.gameHand.Save()
+	if err != nil {
+		return err
+	}
+
+	for _, player := range g.State.Table.Players {
+		if player == nil {
+			continue
+		}
+
+		hand, ok := g.gamePlayerHands[player.ID]
+		if !ok {
+			continue
+		}
+
+		hand.EndingStack = player.Stack
+		if amount, ok := payouts[player.ID]; ok {
+			hand.EndingStack += amount
+		}
+
+		err = hand.Save()
+		if err != nil {
+			fmt.Printf("Error saving user hand: %s\n", err)
+		}
+	}
+
+	return nil
+}
+
+// GetVisibleCards returns client representation of cards for those visible
+func (g *GameManager) GetVisibleCards() map[int64][]string {
+	visibleCards := map[int64][]string{}
+
+	for _, player := range g.State.Table.Players {
+		if player != nil && player.CardsVisible {
+			visibleCards[player.ID] = g.cardsToStringArray(player.Cards)
+		}
+	}
+
+	return visibleCards
 }

@@ -14,7 +14,6 @@ type GamePlayerHand struct {
 	GameHandID    int64     `json:"game_hand_id"`
 	PlayerID      int64     `json:"player_id"`
 	Cards         []string  `json:"cards"`
-	CardsVisible  bool      `json:"cards_visible"`
 	StartingStack int64     `json:"starting_stack"`
 	EndingStack   int64     `json:"ending_stack"`
 	CreatedAt     time.Time `json:"created_at"`

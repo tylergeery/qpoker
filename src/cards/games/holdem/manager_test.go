@@ -3,6 +3,7 @@ package holdem
 import (
 	"fmt"
 	"qpoker/models"
+	"qpoker/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -45,7 +46,7 @@ func TestNewGameError(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := NewGameManager(c.players, models.GameOptions{})
+		_, err := NewGameManager(int64(0), c.players, models.GameOptions{})
 		assert.Equal(t, c.expected, err.Error())
 	}
 }
@@ -56,7 +57,7 @@ func TestPlayTooManyPlayers(t *testing.T) {
 		players = append(players, &Player{ID: int64(i)})
 	}
 
-	_, err := NewGameManager(players, models.GameOptions{Capacity: 4, BigBlind: 100})
+	_, err := NewGameManager(int64(0), players, models.GameOptions{Capacity: 4, BigBlind: 100})
 	assert.Error(t, err)
 }
 
@@ -66,7 +67,7 @@ func TestPlayHandNotEnoughPlayersDueToStacks(t *testing.T) {
 		players = append(players, &Player{ID: int64(i)})
 	}
 
-	gm, err := NewGameManager(players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(int64(0), players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	err = gm.NextHand()
@@ -75,22 +76,36 @@ func TestPlayHandNotEnoughPlayersDueToStacks(t *testing.T) {
 
 func TestPlayHandAllFold(t *testing.T) {
 	var nilMap map[string]bool
+	var player *models.Player
 
 	players := []*Player{}
 	for i := 0; i < 5; i++ {
-		players = append(players, &Player{ID: int64(i), Stack: int64(200)})
+		player = models.CreateTestPlayer()
+		players = append(players, &Player{ID: player.ID, Stack: int64(200)})
 	}
+	game := models.CreateTestGame(player)
 
-	gm, err := NewGameManager(players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	// 1 becomes dealer, 2 LB, 3 BB, 4 active
 	err = gm.NextHand()
 	assert.NoError(t, err)
 	assert.Equal(t, int64(100), players[3].Stack)
-	assert.Equal(t, int64(100), gm.Pot.PlayerBets[players[3].ID], fmt.Sprintf("%+v", gm.Pot.PlayerBets))
+	assert.Equal(t, int64(100), gm.Pot.PlayerBets[players[3].ID], fmt.Sprintf("%+v", gm.Pot))
 	assert.Equal(t, int64(150), players[2].Stack)
 	assert.Equal(t, int64(50), gm.Pot.PlayerBets[players[2].ID], fmt.Sprintf("%+v", gm.Pot.PlayerBets))
+
+	// check game hand saved expected values
+	assert.Greater(t, gm.gameHand.ID, int64(0))
+	assert.Equal(t, gm.gameHand.GameID, game.ID)
+	for i := 0; i < 5; i++ {
+		assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
+		assert.Equal(t, gm.gamePlayerHands[players[i].ID].GameHandID, gm.gameHand.ID)
+		assert.Equal(t, players[i].ID, gm.gamePlayerHands[players[i].ID].PlayerID)
+		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+	}
 
 	// Try to move out of turn
 	for i, player := range players {
@@ -125,20 +140,49 @@ func TestPlayHandAllFold(t *testing.T) {
 	complete, err = gm.PlayerAction(players[2].ID, NewActionFold())
 	assert.NoError(t, err)
 	assert.True(t, complete)
+
+	// check game hand final save expected values
+	expectedFinalStacks := []int64{200, 200, 150, 250, 200}
+	assert.Equal(t, 0, len(gm.gameHand.Board))
+	assert.Equal(t, int64(150), gm.gameHand.Payouts[players[3].ID])
+	assert.Equal(t, int64(100), gm.gameHand.Bets[players[3].ID])
+	assert.Equal(t, int64(50), gm.gameHand.Bets[players[2].ID])
+	assert.Equal(t, gm.gameHand.GameID, game.ID)
+	for i := 0; i < 5; i++ {
+		assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
+		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+		assert.Equal(t, expectedFinalStacks[i], gm.gamePlayerHands[players[i].ID].EndingStack, fmt.Sprintf("Final Player Hand: pos(%d) %+v\n", i, gm.gamePlayerHands[players[i].ID]))
+		assert.False(t, players[i].CardsVisible)
+	}
 }
 
 func TestPlayHandAllCheckAndCall(t *testing.T) {
+	var player *models.Player
 	players := []*Player{}
 	for i := 0; i < 3; i++ {
-		players = append(players, &Player{ID: int64(i), Stack: int64(200)})
+		player = models.CreateTestPlayer()
+		players = append(players, &Player{ID: player.ID, Stack: int64(200)})
 	}
+	game := models.CreateTestGame(player)
 
-	gm, err := NewGameManager(players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	// 1 becomes dealer, 2 LB, 0 BB, 1 active
 	err = gm.NextHand()
 	assert.NoError(t, err)
+
+	// check game hand saved expected values
+	assert.Greater(t, gm.gameHand.ID, int64(0))
+	assert.Equal(t, gm.gameHand.GameID, game.ID)
+	for i := 0; i < 3; i++ {
+		assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
+		assert.Equal(t, gm.gamePlayerHands[players[i].ID].GameHandID, gm.gameHand.ID)
+		assert.Equal(t, players[i].ID, gm.gamePlayerHands[players[i].ID].PlayerID)
+		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+	}
 
 	complete, err := gm.PlayerAction(players[1].ID, NewActionCall())
 	assert.NoError(t, err)
@@ -207,6 +251,25 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, complete)
 	assert.Equal(t, gm.State.State, StateRiver)
+
+	// check game hand final save expected values
+	min, max, expectedMin, expectedMax := int64(500), int64(0), int64(100), int64(400)
+	total, expectedTotal := int64(0), int64(3*200)
+	assert.Equal(t, 5, len(gm.gameHand.Board))
+	assert.Equal(t, gm.gameHand.GameID, game.ID)
+	for i := 0; i < 3; i++ {
+		assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
+		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+		assert.Equal(t, int64(100), gm.gameHand.Bets[players[i].ID])
+		min, max = utils.MinInt64(min, gm.gamePlayerHands[players[i].ID].EndingStack), utils.MaxInt64(max, gm.gamePlayerHands[players[i].ID].EndingStack)
+		total += gm.gamePlayerHands[players[i].ID].EndingStack
+		assert.True(t, players[i].CardsVisible)
+	}
+
+	assert.Equal(t, expectedMin, min)
+	assert.Equal(t, expectedMax, max)
+	assert.Equal(t, expectedTotal, total)
 }
 
 func TestPlayComplexHand(t *testing.T) {

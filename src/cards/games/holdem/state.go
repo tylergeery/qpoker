@@ -54,6 +54,7 @@ func (h *HoldEm) Deal() error {
 	players := h.Table.GetActivePlayers()
 	for i := range players {
 		players[i].Cards = []cards.Card{}
+		players[i].CardsVisible = false
 	}
 
 	// deal player cards

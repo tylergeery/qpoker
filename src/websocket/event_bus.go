@@ -22,6 +22,20 @@ type GameController struct {
 	manager *holdem.GameManager
 }
 
+// GameState controls the game state returned to clients
+type GameState struct {
+	Manager      *holdem.GameManager `json:"manager"`
+	VisibleCards map[int64][]string  `json:"visible_cards"`
+}
+
+// NewGameState returns the game state for clients
+func NewGameState(manager *holdem.GameManager) GameState {
+	return GameState{
+		Manager:      manager,
+		VisibleCards: manager.GetVisibleCards(),
+	}
+}
+
 // EventBus manages all server event action
 type EventBus struct {
 	games         map[int64]*GameController
@@ -46,10 +60,10 @@ func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) 
 	}
 
 	// TODO: Check if game is complete
-	// TODO: convert model players to game players
+	// TODO: pull latest game hand, recreate state from hand
 	players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
 
-	return holdem.NewGameManager(players, game.Options)
+	return holdem.NewGameManager(game.ID, players, game.Options)
 }
 
 // SetClient adds client to EventBus

@@ -1,6 +1,7 @@
 package holdem
 
 import (
+	"fmt"
 	"qpoker/utils"
 )
 
@@ -68,16 +69,26 @@ func (p *Pot) GetPayouts(orderedPlayers []int64) map[int64]int64 {
 			return payouts
 		}
 
-		payouts[playerID] = 0
-		playerAmount := p.PlayerTotals[playerID] - paid
-		paid += playerAmount
-		for _, otherPlayerTotal := range p.PlayerTotals {
-			amount := utils.MinInt64(otherPlayerTotal, playerAmount)
-			remaining -= amount
-			payouts[playerID] += amount
+		if _, ok := payouts[playerID]; ok {
+			fmt.Printf("Error: Player included twice for payouts: %+v\n", orderedPlayers)
+			continue
 		}
 
-		delete(p.PlayerTotals, playerID)
+		playerPayout := int64(0)
+		playerAmount := p.PlayerTotals[playerID] - paid
+		paid += playerAmount
+		for otherPlayerID, otherPlayerTotal := range p.PlayerTotals {
+			if _, ok := payouts[otherPlayerID]; ok {
+				// Other player beat this player, dont payout
+				continue
+			}
+
+			amount := utils.MinInt64(otherPlayerTotal, playerAmount)
+			remaining -= amount
+			playerPayout += amount
+		}
+
+		payouts[playerID] = playerPayout
 	}
 
 	p.Payouts = payouts
