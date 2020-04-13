@@ -113,7 +113,7 @@ func TestCreateGameSuccess(t *testing.T) {
 	assert.Equal(t, 201, response.StatusCode)
 	assert.Greater(t, game.ID, int64(0))
 	assert.Equal(t, name, game.Name)
-	assert.True(t, len(game.Slug) == 16)
+	assert.True(t, len(game.Slug) >= 16)
 	assert.Equal(t, capacity, game.Options.Capacity)
 	assert.Equal(t, bigBlind, game.Options.BigBlind)
 	assert.Greater(t, game.CreatedAt.Unix(), int64(0))

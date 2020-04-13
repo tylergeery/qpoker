@@ -51,8 +51,13 @@ func (g *Game) Save() error {
 }
 
 func (g *Game) createSlug() {
-	slug := fmt.Sprintf("%s-%s", slugify.Marshal(g.Name)[:10], utils.GenerateSlug(5))
-	slug = strings.TrimRight(slug, "-")
+	slug := slugify.Marshal(g.Name)
+	if len(slug) > 10 {
+		slug = slug[:10]
+	}
+
+	slug = strings.TrimSuffix(slug, "-")
+	slug = fmt.Sprintf("%s-%s", slug, utils.GenerateVariedLengthSlug(5, 15))
 
 	g.Slug = strings.ToLower(slug)
 }

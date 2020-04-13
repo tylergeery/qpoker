@@ -6,6 +6,7 @@ import (
 
 const slugBytes = "abcdefghijklmnopqrstuvwxyz123456789"
 
+// GenerateSlug create a slug of length n
 func GenerateSlug(n int) string {
 	b := make([]byte, n)
 	for i := range b {
@@ -13,4 +14,11 @@ func GenerateSlug(n int) string {
 	}
 
 	return string(b)
+}
+
+// GenerateVariedLengthSlug create a varied length slug between min and max
+func GenerateVariedLengthSlug(min, max int) string {
+	extra := rand.Intn(max - min)
+
+	return GenerateSlug(min + extra)
 }
