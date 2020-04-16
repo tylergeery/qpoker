@@ -35,8 +35,11 @@ dev-player:  ## Create a local player
 test:  ## Run tests in local dev env
 	@docker-compose exec app go test -count=1 ./...
 
-js:  # Create client js
+js:  ## Build client js
 	@cd client && /usr/bin/npx webpack
+
+js-watch:  ## Build client js (watching for changes)
+	@cd client && NODE_ENV=dev /usr/bin/npx webpack --watch
 
 check-%:
 	@if [ -z '${${*}}' ]; then echo 'Environment variable $* not set' && exit 1; fi
