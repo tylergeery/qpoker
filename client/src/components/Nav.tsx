@@ -25,17 +25,22 @@ export class Nav extends React.Component<NavProps, NavState> {
 
         if (userID && userToken) {
             // Send get user request
-            let req = new GetPlayerRequest();
-            let player = await req.request(userID, userToken);
+            let req = new GetPlayerRequest<Player>();
+            let player = await req.request({id: userID, userToken});
             if (req.success) {
                 this.setState({player});
             }
         }
     }
 
+    public logout() {
+        userStorage.removePlayer(this.state.player);
+        this.setState({player: null});
+    }
+
     public render() {
         return this.state && this.state.player ? (
-            <li><a href="#account">Account</a></li>
+            <li><a onClick={this.logout.bind(this)} href="#logout">Logout</a></li>
         ) : (
             <span>
                 <li><a onClick={this.props.onLoginClicked} href="#login">Log In</a></li>

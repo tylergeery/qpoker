@@ -1,6 +1,8 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 
+import { Errors } from "./Errors";
+
 type RegisterModalProps = {
     register: (values: object) => void;
     onLoginClick: (event: any) => void;
@@ -8,6 +10,7 @@ type RegisterModalProps = {
 
 type RegisterModalState = {
     isOpen: boolean;
+    errors: string[];
     values: {
         [key: string]: string;
     }
@@ -17,7 +20,7 @@ export class RegistrationModal extends React.Component<RegisterModalProps, Regis
     constructor(props: any) {
         super(props)
 
-        this.state = {isOpen: false, values: {}};
+        this.state = {isOpen: false, errors: [],  values: {}};
     }
 
     openModal() {
@@ -25,7 +28,7 @@ export class RegistrationModal extends React.Component<RegisterModalProps, Regis
     }
 
     closeModal() {
-        this.setState({isOpen: false});
+        this.setState({isOpen: false, errors: []});
     }
 
     isActive() {
@@ -64,6 +67,7 @@ export class RegistrationModal extends React.Component<RegisterModalProps, Regis
                 <h2>Register</h2>
 
                 <form>
+                    <Errors errors={this.state.errors} />
                     <div>
                         <label>
                             Username:

@@ -1,25 +1,15 @@
-import { Player } from "../objects/Player";
+import { RequestParams, BaseRequest } from "./base";
 
-export class GetPlayerRequest {
-    success: boolean
-
-    public getURL(id: string): string {
-        return 'http://localhost:8080/api/v1/players/' + id;
+export class GetPlayerRequest<T> extends BaseRequest<T> {
+    public getEndpoint(params: RequestParams): string {
+        return 'api/v1/players/' + params.id;
     }
 
-    public getHeaders(userToken: string): any {
-        return {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userToken}`
-        };
-    }
-
-    public async request(id: string, userToken: string): Promise<Player> {
-        let response = await fetch(this.getURL(id), {
+    public async request(params: RequestParams): Promise<T> {
+        let response = await fetch(this.getURL(params), {
             method: 'GET',
             credentials: 'include',
-            headers: this.getHeaders(userToken)
+            headers: this.getJSONHeaders(params)
         });
 
         this.success = response.ok;

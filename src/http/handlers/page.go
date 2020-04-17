@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"os"
 	"qpoker/models"
 	"strings"
 
@@ -11,6 +12,12 @@ import (
 
 func file(filename string) string {
 	return fmt.Sprintf("/src/http/views/%s.mustache", filename)
+}
+
+func pageVars(vars fiber.Map) fiber.Map {
+	vars["qpoker_host"] = os.Getenv("QPOKER_HOST")
+
+	return vars
 }
 
 // RenderPage renders mustache templates
@@ -47,11 +54,11 @@ func RenderPage(c *fiber.Ctx, filename string, bind fiber.Map) {
 
 // PageLanding renders the default app landing page
 func PageLanding(c *fiber.Ctx) {
-	RenderPage(c, "main", fiber.Map{
+	RenderPage(c, "main", pageVars(fiber.Map{
 		"title":       "App",
 		"stylesheets": []string{"main"},
 		"scripts":     []string{},
-	})
+	}))
 }
 
 // PageTable renders a poker table
@@ -61,13 +68,14 @@ func PageTable(c *fiber.Ctx) {
 	game, err := models.GetGameBy("slug", gameSlug)
 	if err != nil {
 		c.SendStatus(404)
-		RenderPage(c, "error", fiber.Map{})
+		RenderPage(c, "error", pageVars(fiber.Map{}))
 		return
 	}
 
-	RenderPage(c, "table", fiber.Map{
+	RenderPage(c, "table", pageVars(fiber.Map{
 		"title":       fmt.Sprintf("Table %s", game.Name),
 		"stylesheets": []string{"table"},
 		"scripts":     []string{"table"},
-	})
+		"gameID":      game.ID,
+	}))
 }

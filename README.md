@@ -9,13 +9,13 @@ Host your own poker game with your friends.
 
 | Method | URL                             | Description                       
 |--------|---------------------------------|-----------------------------------
-| GET    | /api/v1/players/:id                            | Get player
-| POST   | /api/v1/players                                | Create player
-| POST   | /api/v1/players/login                          | Player login
-| PUT    | /api/v1/players/:id                            | Update player
-| GET    | /api/v1/games/:game_id                         | Get game
-| POST   | /api/v1/games                                  | Create a game
-| PUT    | /api/v1/games/:game_id                         | Update a game
+| GET    | /api/v1/players/:id             | Get player
+| POST   | /api/v1/players                 | Create player
+| POST   | /api/v1/players/login           | Player login
+| PUT    | /api/v1/players/:id             | Update player
+| GET    | /api/v1/games/:game_id          | Get game
+| POST   | /api/v1/games                   | Create a game
+| PUT    | /api/v1/games/:game_id          | Update a game
 
 
 ## Development
@@ -35,11 +35,17 @@ make test
 - Client
   - Add static pages
     - Landing page
-    - Login/Register
+      - Hosting options
+      - Card games available
     - Table page
+      - Table rendering
   - JS
     - Login/Register
+      - Error flow
     - Table page
+      - Forced Login
+      - Game flow
+      - Game History
   - Assets
     - Card assets
     - Table asset

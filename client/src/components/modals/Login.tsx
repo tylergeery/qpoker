@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 
+import { Errors } from "./Errors";
 
 type LoginModalProps = {
     login: (values: object) => void;
@@ -9,6 +10,7 @@ type LoginModalProps = {
 
 type LoginModalState = {
     isOpen: boolean;
+    errors: string[];
     values: {
         [key: string]: string;
     }
@@ -18,7 +20,7 @@ export class LoginModal extends React.Component<LoginModalProps, LoginModalState
     constructor(props: any) {
         super(props);
 
-        this.state = { isOpen: false, values: {}};
+        this.state = { isOpen: false, errors: [], values: {}};
     }
 
     openModal() {
@@ -26,7 +28,7 @@ export class LoginModal extends React.Component<LoginModalProps, LoginModalState
     }
 
     closeModal() {
-        this.setState({isOpen: false});
+        this.setState({isOpen: false, errors: []});
     }
 
     isActive() {
@@ -65,6 +67,7 @@ export class LoginModal extends React.Component<LoginModalProps, LoginModalState
                 <h2>Login</h2>
 
                 <form>
+                    <Errors errors={this.state.errors} />
                     <div>
                         <label>
                             Email:

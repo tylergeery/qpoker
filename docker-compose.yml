@@ -22,6 +22,7 @@ services:
       ENV: "dev"
       PG_CONNECTION: "postgres://postgres:postgres@db:5432/qpoker?sslmode=disable"
       TOKEN_SIGNING_VALUE: testsignvalue
+      QPOKER_HOST: "http://localhost:8080"
     ports:
       - "8080"
     volumes:

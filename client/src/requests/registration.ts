@@ -1,29 +1,18 @@
-import { Player } from "../objects/Player";
+import { RequestParams, BaseRequest } from "./base";
 
-export class RegistrationRequest {
-    success: boolean
-
-    public getURL(): string {
-        return 'http://localhost:8080/api/v1/players';
+export class RegistrationRequest<T> extends BaseRequest<T> {
+    public getEndpoint(params: RequestParams): string {
+        return 'api/v1/players';
     }
 
-    public getHeaders(): any {
-        return {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        };
-    }
-
-    public async request(registrationData: object): Promise<Player> {
-        let response = await fetch(this.getURL(), {
+    public async request(params: RequestParams): Promise<T> {
+        let response = await fetch(this.getURL(params), {
             method: 'POST',
-            body: JSON.stringify(registrationData),
+            body: JSON.stringify(params.data),
             credentials: 'include',
-            headers: this.getHeaders()
+            headers: this.getJSONHeaders(params)
         });
 
-        this.success = response.ok;
-
-        return await response.json();
+        return this.handleResponse(response);
     }
 }

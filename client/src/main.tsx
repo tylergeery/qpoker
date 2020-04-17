@@ -7,17 +7,18 @@ import { RegistrationModal } from "./components/modals/Registration";
 import { LoginRequest } from "./requests/login";
 import { RegistrationRequest } from "./requests/registration";
 import { userStorage } from "./utils/storage";
+import { Player } from "./objects/Player";
 
 var registrationModal: RegistrationModal;
 var loginModal: LoginModal;
 var nav: Nav;
 
 async function submitLogin (loginData: object) {
-    const req = new LoginRequest();
-    const player = await req.request(loginData)
+    const req = new LoginRequest<Player>();
+    const player = await req.request({data: loginData})
 
-    if (!player || !player.id) {
-        debugger; // TODO: handle errors
+    if (!req.success) {
+        loginModal.setState({errors: req.errors});
         return
     }
 
@@ -27,11 +28,11 @@ async function submitLogin (loginData: object) {
 }
 
 async function submitRegistration (loginData: object) {
-    const req = new RegistrationRequest();
-    const player = await req.request(loginData)
+    const req = new RegistrationRequest<Player>();
+    const player = await req.request({data: loginData})
 
-    if (!player || !player.id) {
-        debugger; // TODO: handle errors
+    if (!req.success) {
+        registrationModal.setState({errors: req.errors});
         return
     }
 

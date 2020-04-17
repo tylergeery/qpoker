@@ -14,6 +14,15 @@ export class UserStorage {
         localStorage.setItem("user_token", player.token);
     }
 
+    removePlayer(player: Player) {
+        this.deleteToken();
+        this.deleteID();
+    }
+
+    deleteID() {
+        return localStorage.removeItem("user_id");
+    }
+
     deleteToken() {
         return localStorage.removeItem("user_token");
     }
