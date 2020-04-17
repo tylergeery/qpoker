@@ -34,7 +34,7 @@ export class Nav extends React.Component<NavProps, NavState> {
     }
 
     public logout() {
-        userStorage.removePlayer(this.state.player);
+        userStorage.removePlayer();
         this.setState({player: null});
     }
 

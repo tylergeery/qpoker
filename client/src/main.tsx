@@ -1,79 +1,36 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { Nav } from "./components/Nav";
-import { LoginModal } from "./components/modals/Login";
-import { RegistrationModal } from "./components/modals/Registration";
-import { LoginRequest } from "./requests/login";
-import { RegistrationRequest } from "./requests/registration";
+import { GameModal } from "./components/modals/Game";
 import { userStorage } from "./utils/storage";
-import { Player } from "./objects/Player";
 
-var registrationModal: RegistrationModal;
-var loginModal: LoginModal;
-var nav: Nav;
+let startGameButton = document.querySelector("#start-game-button")
+let gameModal: GameModal;
 
-async function submitLogin (loginData: object) {
-    const req = new LoginRequest<Player>();
-    const player = await req.request({data: loginData})
+let userStartGameEvent = () => {
+    let userID = userStorage.getID();
+    let userToken = userStorage.getToken();
 
-    if (!req.success) {
-        loginModal.setState({errors: req.errors});
+    if (!userID || !userToken) {
+        userStorage.removePlayer();
+        window.QPoker.InitLogin();
+        window.QPoker.OnPlayerFound.push(userStartGameEvent);
         return
     }
 
-    userStorage.setUser(player);
-    nav.setState({ player });
-    loginModal.closeModal();
+    window.QPoker.OnPlayerFound = window.QPoker.OnPlayerFound.slice(0, 1);
+    gameModal.setState({isOpen: true});
 }
 
-async function submitRegistration (loginData: object) {
-    const req = new RegistrationRequest<Player>();
-    const player = await req.request({data: loginData})
-
-    if (!req.success) {
-        registrationModal.setState({errors: req.errors});
-        return
-    }
-
-    userStorage.setUser(player);
-    nav.setState({ player });
-    registrationModal.closeModal();
-}
-
-const onLoginClick = (event: any) => {
-    registrationModal.closeModal();
-    loginModal.openModal();
-}
-
-const onRegisterClick = (event: any) => {
-    loginModal.closeModal();
-    registrationModal.openModal();
-}
+startGameButton.addEventListener('click',userStartGameEvent);
 
 ReactDOM.render(
-    <RegistrationModal
-        ref={(comp) => { registrationModal = comp; }}
-        register={submitRegistration}
-        onLoginClick={onLoginClick}
+    <GameModal
+        ref={(comp) => { gameModal = comp; }}
     />,
-    document.getElementById("registration-modal")
+    document.getElementById("game-modal")
 );
 
-ReactDOM.render(
-    <LoginModal
-        ref={(comp) => { loginModal = comp; }}
-        login={submitLogin}
-        onRegisterClick={onRegisterClick}
-    />,
-    document.getElementById("login-modal")
-);
-
-ReactDOM.render(
-    <Nav
-        ref={(comp) => { nav = comp; }}
-        onLoginClicked={onLoginClick}
-        onRegisterClicked={onRegisterClick}
-    />,
-    document.getElementById("nav-account")
-);
+// To communicate between entrypoints. TODO: move to a shared module
+window.QPoker.OnPlayerFound = window.QPoker.OnPlayerFound || [];
+window.QPoker.OnPlayerFound.push(userStorage.setUser.bind(userStorage));

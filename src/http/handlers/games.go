@@ -45,6 +45,7 @@ func CreateGame(c *fiber.Ctx) {
 
 	err = c.BodyParser(&req)
 	if err != nil {
+		fmt.Printf("JSON error parsing body (%s): %s\n", c.Fasthttp.Request.Body(), err)
 		c.SendStatus(400)
 		c.JSON(utils.FormatErrors(err))
 		return

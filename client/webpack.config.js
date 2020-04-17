@@ -33,6 +33,7 @@ module.exports = {
 
     entry: {
         main: './src/main.tsx',
+        common: './src/common.tsx',
         table: './src/table.tsx',
     },
     output: {

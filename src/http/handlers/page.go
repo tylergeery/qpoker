@@ -57,7 +57,7 @@ func PageLanding(c *fiber.Ctx) {
 	RenderPage(c, "main", pageVars(fiber.Map{
 		"title":       "App",
 		"stylesheets": []string{"main"},
-		"scripts":     []string{},
+		"scripts":     []string{"main"},
 	}))
 }
 
