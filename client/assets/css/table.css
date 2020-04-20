@@ -1,0 +1,25 @@
+.w100  { max-width: 100%; }
+.bg { z-index: 0; }
+.table-holder { position: relative; }
+
+.player { width: 60px; height: 60px; position: absolute; z-index: 10; }
+.player-0 { top: calc(15% - 30px); left: calc(50% - 30px); }
+
+.player-1 { top: calc(20% - 30px); right: calc(35% - 30px); }
+.player-11 { top: calc(20% - 30px); left: calc(35% - 30px); }
+
+.player-2 { top: calc(30% - 30px); right: calc(20% - 30px); }
+.player-10 { top: calc(30% - 30px); left: calc(20% - 30px); }
+
+.player-3 { top: calc(50% - 30px); right: calc(10% - 30px); }
+.player-9 { top: calc(50% - 30px); left: calc(10% - 30px); }
+
+.player-4 { bottom: calc(35% - 30px); right: calc(20% - 30px); }
+.player-8 { bottom: calc(35% - 30px); left: calc(20% - 30px); }
+
+.player-5 { bottom: calc(20% - 30px); right: calc(35% - 30px); }
+.player-7 { bottom: calc(20% - 30px); left: calc(35% - 30px); }
+
+.player-6 { bottom: calc(15% - 30px); left: calc(50% - 30px); }
+
+.card { width: 30px; }

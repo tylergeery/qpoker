@@ -18,9 +18,9 @@ const (
 
 // Card is a single card object
 type Card struct {
-	Value int
-	Suit  byte
-	Char  byte
+	Value int  `json:"value"`
+	Suit  byte `json:"suit"`
+	Char  byte `json:"char"`
 }
 
 // NewCard returns a card from card string value

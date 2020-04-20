@@ -1,5 +1,5 @@
 class GameOptions {
-    bigBlind: number;
+    big_blind: number;
     capacity: number;
 }
 
@@ -7,8 +7,9 @@ export class Game {
     id: number;
     name: string;
     slug: string;
-    ownerID: number;
+    owner_id: number;
     options: GameOptions;
-    createdAt: string;
-    updatedAt: string;
+    created_at: string;
+    updated_at: string;
 }
+    

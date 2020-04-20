@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
 )
@@ -24,15 +25,16 @@ type GameController struct {
 
 // GameState controls the game state returned to clients
 type GameState struct {
-	Manager      *holdem.GameManager `json:"manager"`
-	VisibleCards map[int64][]string  `json:"visible_cards"`
+	Manager *holdem.GameManager     `json:"manager"`
+	Cards   map[int64][]cards.Card  `json:"cards"`
+	Players map[int64]holdem.Player `json:"players"`
 }
 
 // NewGameState returns the game state for clients
 func NewGameState(manager *holdem.GameManager) GameState {
 	return GameState{
-		Manager:      manager,
-		VisibleCards: manager.GetVisibleCards(),
+		Manager: manager,
+		Cards:   manager.GetVisibleCards(),
 	}
 }
 
@@ -69,10 +71,11 @@ func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) 
 // SetClient adds client to EventBus
 func (e *EventBus) SetClient(client *Client) {
 	controller, ok := e.games[client.GameID]
+	fmt.Println("Set client:", controller)
 	if !ok {
 		manager, err := e.reloadGameState(client)
 		if err != nil {
-			fmt.Errorf("error creating GameManager: %s", err)
+			fmt.Printf("error creating GameManager: %s", err)
 			return
 		}
 
@@ -83,6 +86,7 @@ func (e *EventBus) SetClient(client *Client) {
 	_ = controller.manager.State.Table.AddPlayer(&holdem.Player{ID: client.PlayerID})
 	controller.clients = append(controller.clients, client)
 
+	fmt.Println("Broadcasting client state: add client")
 	e.BroadcastState(client.GameID)
 }
 
@@ -99,6 +103,7 @@ func (e *EventBus) RemoveClient(client *Client) {
 		}
 	}
 
+	fmt.Println("Broadcasting client state: remove client")
 	e.BroadcastState(client.GameID)
 }
 
@@ -110,7 +115,7 @@ func (e *EventBus) BroadcastState(gameID int64) {
 	}
 
 	// TODO: include relevant cards
-	state, err := json.Marshal(controller.manager)
+	state, err := json.Marshal(NewGameState(controller.manager))
 	if err != nil {
 		fmt.Printf("Error broadcasting game state: %s\n", err)
 		return

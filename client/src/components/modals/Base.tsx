@@ -40,7 +40,6 @@ export abstract class BaseModal<P> extends React.Component<P, ModalState> {
         let keys = event.target.name.split('.');
         let state = this.state.values;
 
-        console.log("recording value: ", keys, state);
         for (let i = 0, l = keys.length; i < l; i++) {
             if ((i+1) == l) {
                 state[keys[i]] = this.getValueType(event.target.type, event.target.value);
@@ -52,6 +51,5 @@ export abstract class BaseModal<P> extends React.Component<P, ModalState> {
 
             state = state[keys[i]];
         }
-        console.log("recorded value: ", keys, this.state.values);
     }
 }

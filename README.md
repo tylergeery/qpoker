@@ -40,12 +40,11 @@ make test
     - Table page
       - Table rendering
   - JS
-    - Login/Register
-      - Error flow
     - Table page
       - Forced Login
       - Game flow
       - Game History
+    - Add tests
   - Assets
     - Card assets
     - Table asset

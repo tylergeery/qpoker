@@ -25,7 +25,7 @@ type GameManager struct {
 
 // NewGameManager returns a new GameManager
 func NewGameManager(gameID int64, players []*Player, options models.GameOptions) (*GameManager, error) {
-	if len(players) <= 1 || len(players) > MaxPlayerCount {
+	if len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}
 
@@ -330,12 +330,12 @@ func (g *GameManager) EndHand() error {
 }
 
 // GetVisibleCards returns client representation of cards for those visible
-func (g *GameManager) GetVisibleCards() map[int64][]string {
-	visibleCards := map[int64][]string{}
+func (g *GameManager) GetVisibleCards() map[int64][]cards.Card {
+	visibleCards := map[int64][]cards.Card{}
 
 	for _, player := range g.State.Table.Players {
 		if player != nil && player.CardsVisible {
-			visibleCards[player.ID] = g.cardsToStringArray(player.Cards)
+			visibleCards[player.ID] = player.Cards
 		}
 	}
 

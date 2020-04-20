@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"qpoker/models"
@@ -72,10 +73,18 @@ func PageTable(c *fiber.Ctx) {
 		return
 	}
 
+	gameObject, err := json.Marshal(game)
+	if err != nil {
+		c.SendStatus(500)
+		RenderPage(c, "error", pageVars(fiber.Map{}))
+		return
+	}
+
+	fmt.Println(string(gameObject))
 	RenderPage(c, "table", pageVars(fiber.Map{
 		"title":       fmt.Sprintf("Table %s", game.Name),
 		"stylesheets": []string{"table"},
 		"scripts":     []string{"table"},
-		"gameID":      game.ID,
+		"game":        string(gameObject),
 	}))
 }

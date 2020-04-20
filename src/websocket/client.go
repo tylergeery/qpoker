@@ -52,6 +52,7 @@ func (c *Client) Authenticate() error {
 
 	json.Unmarshal([]byte(msg), &authEvent)
 
+	fmt.Printf("Client auth token: %s\n", string(authEvent.Token))
 	playerID, err := auth.GetPlayerIDFromAccessToken(authEvent.Token)
 	if err != nil {
 		fmt.Printf("Client authentication token read error: %s\n", err)

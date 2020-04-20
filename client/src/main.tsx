@@ -22,7 +22,7 @@ let userStartGameEvent = () => {
     gameModal.setState({isOpen: true});
 }
 
-startGameButton.addEventListener('click',userStartGameEvent);
+startGameButton.addEventListener('click', userStartGameEvent);
 
 ReactDOM.render(
     <GameModal
