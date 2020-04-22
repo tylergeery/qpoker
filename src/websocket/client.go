@@ -101,7 +101,7 @@ func (c *Client) getMessage() (s string, err error) {
 func (c *Client) SendMessage(msg []byte) error {
 	err := c.conn.WriteMessage(websocket.TextMessage, msg)
 	if err != nil {
-		fmt.Printf("Client write error: %s\n", string(msg))
+		fmt.Printf("Client write error: %s %s\n", err, string(msg))
 		return err
 	}
 

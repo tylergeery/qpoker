@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import { Player } from "../objects/Player";
+import { getPlayer } from "../helpers/player";
 import { userStorage } from "../utils/storage";
-import { GetPlayerRequest } from "../requests/getPlayer";
 
 type NavProps = {
     onLoginClicked: (event: any) => void;
@@ -20,16 +20,10 @@ export class Nav extends React.Component<NavProps, NavState> {
         this.state = {player: null};
     }
     public async componentDidMount() {
-        const userID = userStorage.getID();
-        const userToken = userStorage.getToken();
+        let player = await getPlayer();
 
-        if (userID && userToken) {
-            // Send get user request
-            let req = new GetPlayerRequest<Player>();
-            let player = await req.request({id: userID, userToken});
-            if (req.success) {
-                this.setState({player});
-            }
+        if (player) {
+            this.setState({player});
         }
     }
 

@@ -86,5 +86,6 @@ func PageTable(c *fiber.Ctx) {
 		"stylesheets": []string{"table"},
 		"scripts":     []string{"table"},
 		"game":        string(gameObject),
+		"gameOwner":   game.OwnerID,
 	}))
 }

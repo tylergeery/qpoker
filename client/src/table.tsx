@@ -4,6 +4,7 @@ import * as ReactDOM from "react-dom";
 import { Table } from "./components/Table";
 import { userStorage } from "./utils/storage";
 import { Game } from "./objects/Game";
+import { getPlayer } from "./helpers/player";
 
 if (!window.hasOwnProperty('QPoker')) {
     console.error("Could not find QPoker config");
@@ -17,11 +18,10 @@ declare global {
 window.QPoker = window.QPoker || {};
 let game: Game = window.QPoker.game;
 
-let tableRender = () => {
-    let userID = userStorage.getID();
-    let userToken = userStorage.getToken();
+let tableRender = async () => {
+    let player = await getPlayer();
 
-    if (!userID || !userToken) {
+    if (!player) {
         userStorage.removePlayer();
         window.QPoker.InitLogin();
         window.QPoker.OnPlayerFound.push(tableRender);
@@ -32,7 +32,7 @@ let tableRender = () => {
 
     window.QPoker.OnPlayerFound = [];
     ReactDOM.render(
-        <Table game={game} playerID={userStorage.getID()} playerToken={userStorage.getToken()} />,
+        <Table game={game} playerID={player.id.toString()} playerToken={player.token} />,
         document.getElementById("table")
     );
 }

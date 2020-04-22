@@ -1,20 +1,24 @@
-var suits = new String("CDHS")
 enum Suit {
-    CLUBS = suits.charCodeAt(0),
-    DIAMONDS = suits.charCodeAt(1),
-    SPADES = suits.charCodeAt(2),
-    HEARTS = suits.charCodeAt(3),
+    BLANK = 'B',
+    CLUBS = 'C',
+    DIAMONDS = 'D',
+    HEARTS = 'H',
+    SPADES = 'S',
 }
 
-class Card {
-    constructor(public value: string, public suit: Suit) {}
+export class Card {
+    constructor(public value: string, public suit: string, public char: string) {}
+
+    public imageName(): string {
+        return `${this.char}${this.suit}`;
+    }
 }
 
 type PlayerOptions = {
     [key: string]: boolean;
 }
 
-class GamePlayer {
+export class GamePlayer {
     id: number;
     stack: number;
     options: PlayerOptions;
@@ -63,7 +67,13 @@ class State {
     public static FromObj(stateObj: any): State {
         let state = new State();
 
-        state.board = stateObj.board;
+        state.board = stateObj.board.map((card: any) => {
+            return new Card(
+                card.value.toString(),
+                String.fromCharCode(card.suit),
+                String.fromCharCode(card.char),
+            )
+        });
         state.table = Table.FromObj(stateObj.table);
         state.state = stateObj.state;
 
@@ -126,8 +136,34 @@ export class EventState {
     public static FromJSON(jsonStr: string): EventState {
         let {manager, cards, players} = JSON.parse(jsonStr);
 
-        console.log("json:", jsonStr, manager, cards, players);
         return new EventState(manager, cards, players);
+    }
+
+    public getPlayerCards(playerID: number): Card[] {
+        if (!this.cards[playerID]) {
+            return [
+                new Card('1', Suit.BLANK, '1'),
+                new Card('1', Suit.BLANK, '1')
+            ];
+        }
+
+        return this.cards[playerID];
+    }
+
+    public getPlayer(playerID: string): GamePlayer {
+        for (let i=0; i < this.manager.state.table.players.length; i++) {
+            const player = this.manager.state.table.players[i];
+
+            if (!player) {
+                continue;
+            }
+
+            if (player.id.toString() !== playerID) {
+                continue;
+            }
+
+            return player;
+        }
     }
 }
 
