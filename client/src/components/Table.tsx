@@ -53,7 +53,6 @@ export class Table extends React.Component<TableProps, TableState> {
             <div className="row grey lighten-4 white-text nmb">
                 <div className="col s12 m7 l9">
                     <div className="row w100 table-holder nmb">
-                        <h5>{this.props.game ? this.props.game.name : ''}</h5>
                         {this.state.es.manager.state.table ? this.state.es.manager.state.table.players.map((player: any, i: number) => {
                             return player ? <Player player={player} index={i} gameState={this.state.es.manager.state.state} cards={this.state.es.getPlayerCards(player.id)} /> : '';
                         }) : ''}

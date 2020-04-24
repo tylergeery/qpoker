@@ -34,17 +34,18 @@ export class SideBar extends React.Component<SideBarProps, SideBarState> {
         this.setState({ selectedTab: event.target.innerHTML });
 
         // TODO: handle newly selected tab
+        event.stopPropagation();
     }
 
     public render() {
         return <div className="sidebar">
             <div className="row sidebar-nav">
                 {this.getNavOptions().map((label) => {
-                    return <button type="button"
+                    return <a href="#"
                                 className={classNames("btn-flat", { underline: this.state.selectedTab === label })}
                                 onClick={this.navSelect.bind(this)} >
                         {label}
-                    </button>;
+                    </a>;
                 })}
             </div>
         </div>;

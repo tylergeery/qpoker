@@ -63,8 +63,16 @@
 .sidebar-holder {
     position: relative;
 }
-.sidebar-nav button {
-    display: inline-block;
-    width: 33.33%;
+.sidebar-nav {
+    display: flex;
+    flex-direction: row;
+}
+.sidebar-nav a {
+    flex-grow: 1;
+    text-align: center;
     text-transform: capitalize;
+}
+
+.sidebar-nav a:active, .sidebar-nav a:hover, .sidebar-nav a:focus   {
+    background: none !important;
 }
