@@ -11,12 +11,17 @@ export type OptionsProps = {
 }
 
 export class TaskBar extends React.Component<OptionsProps, {}> {
-    public getAdminOptions(): string[] {
-        let options: string[] = [];
+    public getOptions(): string[] {
+        if (!this.props.player) {
+            return [];
+        }
+
+        let options: string[] = Object.keys(this.props.player.options || {});
 
         if (this.props.player.id == this.props.game.owner_id) {
             options.push('Start');
         }
+
         return options;
     }
 
@@ -28,7 +33,13 @@ export class TaskBar extends React.Component<OptionsProps, {}> {
             },
         };
 
-        this.props.sendAction(action)
+        this.props.sendAction(action);
+    }
+
+    public sendGameAction(type: string) {
+        // TODO: get action type
+        // TODO: get action data
+        //this.props.sendAction(action);
     }
 
     public render() {
@@ -36,23 +47,17 @@ export class TaskBar extends React.Component<OptionsProps, {}> {
         const keys = this.props.player && this.props.player.options ? Object.keys(this.props.player.options) : [];
 
         return !this.props.player ? '' : (
-            <div className={classNames("table-task-bar", {"active": keys.length > 0})}>
-                {keys.map((key) => {
-                    return <div>
-                        <label>
-                            {key}:
-                            <button type="button">{key}</button>
-                        </label>
-                    </div>;
-                })}
-                {this.getAdminOptions().map((key) => {
-                    return <div>
-                        <label>
-                            {key}:
-                            <button onClick={this.startGameAction.bind(this)} type="button">{key}</button>
-                        </label>
-                    </div>;
-                })}
+            <div className={classNames("table-task-bar indigo darken-4", {"active": keys.length > 0})}>
+                <div className="row">
+                    {this.getOptions().map((key) => {
+                        return <div>
+                            <label>
+                                {key}:
+                                <button onClick={this.startGameAction.bind(this)} type="button">{key}</button>
+                            </label>
+                        </div>;
+                    })}
+                </div>
             </div>
         );
     }

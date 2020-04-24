@@ -1,6 +1,7 @@
 export class ConnectionHandler {
     active: boolean;
     conn: WebSocket;
+    onDisconnect?: () => void;
     onMessageEvent: (evt: MessageEvent) => void;
     queue: string[]
 
@@ -9,13 +10,13 @@ export class ConnectionHandler {
         this.onMessageEvent = onMessageEvent;
         this.active = false;
         this.queue = [];
-
         this.setup();
     }
 
     private setup() {
         this.conn.onopen = (evt: Event) => {
             console.log("Connection open event: ", evt);
+            this.active = true;
             this.sendQueue();
         };
 
@@ -25,6 +26,9 @@ export class ConnectionHandler {
 
         this.conn.onclose = (evt: CloseEvent) => {
             console.log("Connection close event: ", evt);
+            if (this.onDisconnect) {
+                this.onDisconnect();
+            }
         };
     
         this.conn.onmessage = (evt: MessageEvent) => {

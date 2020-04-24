@@ -164,6 +164,8 @@ export class EventState {
 
             return player;
         }
+
+        return null;
     }
 }
 

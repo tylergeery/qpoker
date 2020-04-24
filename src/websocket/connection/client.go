@@ -1,15 +1,58 @@
-package main
+package connection
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"qpoker/auth"
+	"qpoker/cards/games/holdem"
 	"qpoker/models"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
+
+// ClientEvent represents a player gameplay action
+type ClientEvent struct {
+	Type string                 `json:"type"`
+	Data map[string]interface{} `json:"data"`
+}
+
+// IsAdminEvent tells whether the event is an admin action
+func (e ClientEvent) IsAdminEvent() bool {
+	return e.Type == ActionAdmin
+}
+
+// IsMsgEvent tells whether the event is an admin action
+func (e ClientEvent) IsMsgEvent() bool {
+	return e.Type == ActionMsg
+}
+
+// ToAdminEvent parses the game action from the GameEvent
+func (e ClientEvent) ToAdminEvent(c *Client) AdminEvent {
+	return AdminEvent{
+		Action: e.Data["action"].(string),
+		GameID: c.GameID,
+	}
+}
+
+// ToMsgEvent parses the game action from the GameEvent
+func (e ClientEvent) ToMsgEvent(c *Client) MsgEvent {
+	return MsgEvent{}
+}
+
+// ToGameEvent parses the game action from the GameEvent
+func (e ClientEvent) ToGameEvent(c *Client) GameEvent {
+	fmt.Printf("Got game event: %s\n", e.Data)
+	return GameEvent{
+		GameID:   c.GameID,
+		PlayerID: c.PlayerID,
+		Action: holdem.Action{
+			Name:   e.Data["name"].(string),
+			Amount: e.Data["amount"].(int64),
+		},
+	}
+}
 
 // Client holds connection information
 type Client struct {
@@ -17,6 +60,10 @@ type Client struct {
 	connOpen bool
 	PlayerID int64
 	GameID   int64
+
+	GameChannel    chan GameEvent
+	AdminChannel   chan AdminEvent
+	MessageChannel chan MsgEvent
 }
 
 // NewClient returns a new client
@@ -77,11 +124,28 @@ func (c *Client) ReadMessages() {
 		// TODO: play with read timeout
 		msg, err := c.getMessage()
 		if err != nil {
+			return
+		}
+
+		var event ClientEvent
+		err = json.Unmarshal([]byte(msg), &event)
+		if err != nil {
+			fmt.Printf("Could not unmarshal json action: %s\n", err)
 			continue
 		}
 
-		// TODO: turn msg into event
-		fmt.Println(msg)
+		if event.IsAdminEvent() {
+			c.AdminChannel <- event.ToAdminEvent(c)
+			continue
+		}
+
+		if event.IsMsgEvent() {
+			c.MessageChannel <- event.ToMsgEvent(c)
+			continue
+		}
+
+		action := event.ToGameEvent(c)
+		c.GameChannel <- action
 	}
 }
 

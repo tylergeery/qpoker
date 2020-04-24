@@ -1,58 +1,42 @@
-package main
+package connection
 
 import (
 	"encoding/json"
 	"fmt"
 
-	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
 )
 
-const (
-	// ActionPlayerRegister is the register action
-	ActionPlayerRegister = "register"
-
-	// ActionPlayerLeave is the leave action
-	ActionPlayerLeave = "leave"
-)
-
-// GameController handles logic for sending/receiving game events
-type GameController struct {
-	clients []*Client
-	manager *holdem.GameManager
-}
-
-// GameState controls the game state returned to clients
-type GameState struct {
-	Manager *holdem.GameManager     `json:"manager"`
-	Cards   map[int64][]cards.Card  `json:"cards"`
-	Players map[int64]holdem.Player `json:"players"`
-}
-
-// NewGameState returns the game state for clients
-func NewGameState(manager *holdem.GameManager) GameState {
-	return GameState{
-		Manager: manager,
-		Cards:   manager.GetVisibleCards(),
-	}
-}
+var eventBus *EventBus
 
 // EventBus manages all server event action
 type EventBus struct {
-	games         map[int64]*GameController
-	PlayerChannel chan PlayerEvent
-	GameChannel   chan GameEvent
-	AdminChannel  chan AdminEvent
+	games          map[int64]*GameController
+	PlayerChannel  chan PlayerEvent
+	GameChannel    chan GameEvent
+	AdminChannel   chan AdminEvent
+	MessageChannel chan MsgEvent
 }
 
 // NewEventBus returns a new EventBus
 func NewEventBus() *EventBus {
 	return &EventBus{
-		games:         map[int64]*GameController{},
-		PlayerChannel: make(chan PlayerEvent),
-		GameChannel:   make(chan GameEvent),
+		games:          map[int64]*GameController{},
+		PlayerChannel:  make(chan PlayerEvent),
+		GameChannel:    make(chan GameEvent),
+		AdminChannel:   make(chan AdminEvent),
+		MessageChannel: make(chan MsgEvent),
 	}
+}
+
+// StartEventBus creates and starts eventbus
+func StartEventBus() *EventBus {
+	eventBus = NewEventBus()
+
+	go eventBus.ListenForEvents()
+
+	return eventBus
 }
 
 func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) {
@@ -66,6 +50,26 @@ func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) 
 	players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
 
 	return holdem.NewGameManager(game.ID, players, game.Options)
+}
+
+func (e *EventBus) handleAdminEvent(event AdminEvent) {
+	switch event.Action {
+	case ActionAdminStart:
+		controller, ok := e.games[event.GameID]
+		if !ok {
+			fmt.Printf("Error finding controller for admin event: %d\n", event.GameID)
+			return
+		}
+
+		err := controller.manager.NextHand()
+		if err != nil {
+			fmt.Printf("Error starting game for admin: %s\n", err)
+		}
+
+		e.BroadcastState(event.GameID)
+	default:
+		fmt.Printf("Unknown admin event: %s\n", event.Action)
+	}
 }
 
 // SetClient adds client to EventBus
@@ -83,6 +87,10 @@ func (e *EventBus) SetClient(client *Client) {
 		e.games[client.GameID] = controller
 	}
 
+	client.GameChannel = e.GameChannel
+	client.AdminChannel = e.AdminChannel
+	client.MessageChannel = e.MessageChannel
+
 	_ = controller.manager.State.Table.AddPlayer(&holdem.Player{ID: client.PlayerID})
 	controller.clients = append(controller.clients, client)
 
@@ -97,9 +105,11 @@ func (e *EventBus) RemoveClient(client *Client) {
 		return
 	}
 
+	// TODO: this is broken
 	for i := range controller.clients {
 		if controller.clients[i] == client {
 			controller.clients = append(controller.clients[:i], controller.clients[i+1:]...)
+			return
 		}
 	}
 
@@ -158,10 +168,11 @@ func (e *EventBus) ListenForEvents() {
 			}
 			playerEventMap[playerEvent.Action](playerEvent.Client)
 		case adminEvent := <-e.AdminChannel:
-			fmt.Printf("AdminAction: (%s)", adminEvent.Action)
-		case gameEvent := <-e.GameChannel:
-			fmt.Printf("GameAction: (%+v)\n", gameEvent.Action)
-			e.PerformGameAction(gameEvent)
+			fmt.Printf("AdminAction: (%s)\n", adminEvent.Action)
+			e.handleAdminEvent(adminEvent)
+		case gameAction := <-e.GameChannel:
+			fmt.Printf("GameAction: (%+v)\n", gameAction.Action)
+			e.PerformGameAction(gameAction)
 		}
 	}
 }

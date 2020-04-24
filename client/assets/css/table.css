@@ -1,11 +1,14 @@
 .w100  { max-width: 100%; min-width: 100%; width: 100%; }
 .bg { z-index: 0; }
-.table-holder { position: relative; }
+.table-holder {
+    position: relative;
+    background-color: ivory;  /* TODO: pattern */
+}
 
 /* TODO: media queries */
 .table-holder h5 {
     position: absolute;
-    top: calc(50% - 125px);
+    top: calc(50% - 150px);
     left: calc(50% - 250px);
 
     border: 2px solid black;
@@ -41,3 +44,27 @@
 .player-6 { bottom: calc(15% - 30px); left: calc(50% - 30px); }
 
 .card { width: 30px; }
+
+
+/* Task Bar */
+.table-task-bar {
+    position: fixed;
+    bottom: 0;
+
+    width: 100%;
+    background-color: ivory;
+}
+.table-task-bar.active {
+    height: auto;
+}
+
+
+/* Sidebar */
+.sidebar-holder {
+    position: relative;
+}
+.sidebar-nav button {
+    display: inline-block;
+    width: 33.33%;
+    text-transform: capitalize;
+}

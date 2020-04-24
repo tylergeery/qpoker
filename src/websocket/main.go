@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"time"
 
+	"qpoker/websocket/connection"
+
 	"github.com/gorilla/websocket"
 )
 
-var eventBus *EventBus
+var eventBus *connection.EventBus
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	eventBus = NewEventBus()
-
-	go eventBus.ListenForEvents()
+	eventBus = connection.StartEventBus()
 
 	http.HandleFunc("/", handleSocketConnection)
 	http.ListenAndServe(":8080", nil)
@@ -27,7 +27,6 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 		WriteBufferSize: 1024,
 	}
 
-	fmt.Println("Websocket request received")
 	upgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
@@ -40,7 +39,7 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	// create client
-	client := NewClient(conn)
+	client := connection.NewClient(conn)
 	client.HandleShutdown()
 	err = client.Authenticate()
 	if err != nil {
@@ -48,12 +47,13 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	eventBus.PlayerChannel <- PlayerEvent{client, ActionPlayerRegister}
+	fmt.Println("Sending player channel event")
+	eventBus.PlayerChannel <- connection.PlayerEvent{client, connection.ActionPlayerRegister}
 
 	// client will spin here until disconnected
 	client.ReadMessages()
 
-	eventBus.PlayerChannel <- PlayerEvent{client, ActionPlayerLeave}
+	eventBus.PlayerChannel <- connection.PlayerEvent{client, connection.ActionPlayerLeave}
 
 	fmt.Println("Websocket request terminated")
 }
