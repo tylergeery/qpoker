@@ -20,6 +20,7 @@ const (
 // Player holds the information about a player at a table
 type Player struct {
 	ID           int64           `json:"id"`
+	Username     string          `json:"username"`
 	Cards        []cards.Card    `json:"-"`
 	CardsVisible bool            `json:"-"`
 	Stack        int64           `json:"stack"`

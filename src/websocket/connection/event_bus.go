@@ -3,12 +3,43 @@ package connection
 import (
 	"encoding/json"
 	"fmt"
-
+	"github.com/google/uuid"
+	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
 )
 
 var eventBus *EventBus
+
+// GameState controls the game state returned to clients
+type GameState struct {
+	Manager *holdem.GameManager     `json:"manager"`
+	Cards   map[int64][]cards.Card  `json:"cards"`
+	Players map[int64]holdem.Player `json:"players"`
+}
+
+// ChipRequest holds a chips request
+type ChipRequest struct {
+	ID string `json:"id"`
+	PlayerID int64 `json:"player_id"`
+	Amount int64 `json:"amount"`
+}
+
+// NewGameState returns the game state for clients
+func NewGameState(manager *holdem.GameManager) GameState {
+	return GameState{
+		Manager: manager,
+		Cards:   manager.GetVisibleCards(),
+	}
+}
+
+// GameController handles logic for sending/receiving game events
+type GameController struct {
+	clients []*Client
+	manager *holdem.GameManager
+	game    *models.Game
+	requests []
+}
 
 // EventBus manages all server event action
 type EventBus struct {
@@ -39,32 +70,85 @@ func StartEventBus() *EventBus {
 	return eventBus
 }
 
-func (e *EventBus) reloadGameState(client *Client) (*holdem.GameManager, error) {
+func (e *EventBus) reloadGameState(client *Client) error {
 	game, err := models.GetGameBy("id", client.GameID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// TODO: Check if game is complete
 	// TODO: pull latest game hand, recreate state from hand
 	players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
+	manager, err := holdem.NewGameManager(game.ID, players, game.Options)
+	if err != nil {
+		return err
+	}
 
-	return holdem.NewGameManager(game.ID, players, game.Options)
+	controller := &GameController{[]*Client{}, manager, game}
+	e.games[client.GameID] = controller
+
+	return nil
+}
+
+func (e *EventBus) broadcast(gameID, playerID int64, broadcastEvent BroadcastEvent) {
+	controller, ok := e.games[gameID]
+	if !ok {
+		return
+	}
+
+	state, err := json.Marshal(broadcastEvent)
+	if err != nil {
+		fmt.Printf("Error broadcasting game state: %s\n", err)
+		return
+	}
+
+	for i := range controller.clients {
+		if controller.clients[i].PlayerID != playerID {
+			continue
+		}
+
+		controller.clients[i].SendMessage(state)
+	}
 }
 
 func (e *EventBus) handleAdminEvent(event AdminEvent) {
+	fmt.Println("handleAdminEvent")
+	controller, ok := e.games[event.GameID]
+	if !ok {
+		fmt.Printf("Error: Could not find controller for game id (%d)\n", event.GameID)
+		return
+	}
+
+	fmt.Printf("validateAuthorized: %d, %+v\n", event.PlayerID, controller.game)
+	err := event.ValidateAuthorized(controller.game)
+	if err != nil {
+		return
+	}
+
+	fmt.Println("event.Action", event.Action)
 	switch event.Action {
-	case ActionAdminStart:
-		controller, ok := e.games[event.GameID]
-		if !ok {
-			fmt.Printf("Error finding controller for admin event: %d\n", event.GameID)
+	case ClientAdminStart:
+		err = controller.manager.NextHand()
+		if err != nil {
+			fmt.Printf("Error starting game for admin: %s\n", err)
 			return
 		}
 
-		err := controller.manager.NextHand()
-		if err != nil {
-			fmt.Printf("Error starting game for admin: %s\n", err)
-		}
+		e.BroadcastState(event.GameID)
+	case ClientChipRequest:
+		broadcastEvent := NewBroadcastEvent(
+			ActionAdmin,
+			map[string]interface{}{
+				"player": controller.manager.GetPlayer(event.PlayerID),
+				"amount": int64(event.Value.(float64)),
+			},
+		)
+
+		fmt.Printf("broadcast %+v %+v\n", controller.game, broadcastEvent)
+		e.broadcast(controller.game.ID, controller.game.OwnerID, broadcastEvent)
+	case ClientChipResponse:
+		amount := int64(event.Value.(float64))
+		controller.manager.GetPlayer(event.PlayerID).Stack += amount
 
 		e.BroadcastState(event.GameID)
 	default:
@@ -77,14 +161,13 @@ func (e *EventBus) SetClient(client *Client) {
 	controller, ok := e.games[client.GameID]
 	fmt.Println("Set client:", controller)
 	if !ok {
-		manager, err := e.reloadGameState(client)
+		err := e.reloadGameState(client)
 		if err != nil {
-			fmt.Printf("error creating GameManager: %s", err)
+			fmt.Printf("error reloading game state: %s", err)
 			return
 		}
 
-		controller = &GameController{[]*Client{}, manager}
-		e.games[client.GameID] = controller
+		controller = e.games[client.GameID]
 	}
 
 	client.GameChannel = e.GameChannel
@@ -125,7 +208,8 @@ func (e *EventBus) BroadcastState(gameID int64) {
 	}
 
 	// TODO: include relevant cards
-	state, err := json.Marshal(NewGameState(controller.manager))
+	broadcastEvent := NewBroadcastEvent(ActionGame, NewGameState(controller.manager))
+	state, err := json.Marshal(broadcastEvent)
 	if err != nil {
 		fmt.Printf("Error broadcasting game state: %s\n", err)
 		return

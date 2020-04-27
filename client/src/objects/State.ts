@@ -67,7 +67,7 @@ class State {
     public static FromObj(stateObj: any): State {
         let state = new State();
 
-        state.board = stateObj.board.map((card: any) => {
+        state.board = (stateObj.board || []).map((card: any) => {
             return new Card(
                 card.value.toString(),
                 String.fromCharCode(card.suit),
@@ -94,9 +94,9 @@ class Pot {
     public static FromObj(potObj: any): Pot {
         let pot = new Pot();
 
-        pot.payouts = potObj.payouts;
-        pot.playerBets = potObj.player_bets;
-        pot.playerTotals = potObj.player_totals;
+        pot.payouts = potObj.payouts || {};
+        pot.playerBets = potObj.player_bets || {};
+        pot.playerTotals = potObj.player_totals || {};
         pot.total = potObj.total;
 
         return pot;
@@ -113,30 +113,21 @@ class Manager {
 
         manager.bigBlind = managerObj.big_blind;
         manager.state = State.FromObj(managerObj.state);
-        manager.pot = Pot.FromObj(managerObj.pot);
+        manager.pot = Pot.FromObj(managerObj.pot || {});
 
         return manager;
     }
 }
 
 export class EventState {
-    manager: Manager;
-    cards: {
-        [key: number]: Card[];
-    }
-    players: {
-        [key: number]: Player;
-    }
-    constructor(manager: Manager, cards: any, players: any) {
-        this.manager = manager;
-        this.cards = cards;
-        this.players = players;
-    }
+    constructor(
+        public manager: Manager,
+        public cards: {[key: number]: Card[]},
+        public players: {[key: number]: Player}
+    ) {}
 
-    public static FromJSON(jsonStr: string): EventState {
-        let {manager, cards, players} = JSON.parse(jsonStr);
-
-        return new EventState(manager, cards, players);
+    public static FromObj(obj: any) {
+        return new EventState(Manager.FromObj(obj.manager), obj.cards, obj.players);
     }
 
     public getPlayerCards(playerID: number): Card[] {
@@ -169,8 +160,7 @@ export class EventState {
     }
 }
 
-export const defaultEventState = EventState.FromJSON(`
-{
+export const defaultEventState = EventState.FromObj({
     "manager": {
         "game_id": 0,
         "state": {
@@ -191,5 +181,4 @@ export const defaultEventState = EventState.FromJSON(`
     },
     "players": {},
     "cards": {}
-}
-`);
+});

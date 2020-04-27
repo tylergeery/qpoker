@@ -1,16 +1,14 @@
 package connection
 
 import (
-	"qpoker/cards"
+	"fmt"
 	"qpoker/cards/games/holdem"
+	"qpoker/models"
 )
 
 const (
 	// ActionAdmin is an admin type of event
 	ActionAdmin = "admin"
-
-	// ActionAdminStart is an admin start of game
-	ActionAdminStart = "start"
 
 	// ActionGame is a game type of event
 	ActionGame = "game"
@@ -24,33 +22,6 @@ const (
 	// ActionPlayerLeave is the leave action
 	ActionPlayerLeave = "leave"
 )
-
-// GameController handles logic for sending/receiving game events
-type GameController struct {
-	clients []*Client
-	manager *holdem.GameManager
-}
-
-// GameState controls the game state returned to clients
-type GameState struct {
-	Manager *holdem.GameManager     `json:"manager"`
-	Cards   map[int64][]cards.Card  `json:"cards"`
-	Players map[int64]holdem.Player `json:"players"`
-}
-
-// NewGameState returns the game state for clients
-func NewGameState(manager *holdem.GameManager) GameState {
-	return GameState{
-		Manager: manager,
-		Cards:   manager.GetVisibleCards(),
-	}
-}
-
-// Event is the event broadcasted to all clients
-type Event struct {
-	Type  string `json:"type"`
-	State string `json:"state"`
-}
 
 // PlayerEvent represents a player connection action
 type PlayerEvent struct {
@@ -73,10 +44,41 @@ type GameEvent struct {
 
 // AdminEvent represent an admin action
 type AdminEvent struct {
-	Action string
-	GameID int64
+	Action   string
+	GameID   int64
+	PlayerID int64
+	Value    interface{}
+}
+
+// ValidateAuthorized ensures game owner is making admin decision
+func (e AdminEvent) ValidateAuthorized(game *models.Game) error {
+	switch e.Action {
+	case ClientChipRequest:
+		return nil
+	default:
+		if e.PlayerID != game.OwnerID {
+			fmt.Println("Invalid authorization")
+			return fmt.Errorf("Invalid authorization for (%d), expected (%d)", e.PlayerID, game.OwnerID)
+		}
+	}
+
+	return nil
 }
 
 // MsgEvent represents a message event
 type MsgEvent struct {
+	Action   string
+	GameID   int64
+	PlayerID int64
+}
+
+// BroadcastEvent is the event broadcasted to all clients
+type BroadcastEvent struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
+
+// NewBroadcastEvent creates a new BroadcastEvent
+func NewBroadcastEvent(eventType string, data interface{}) BroadcastEvent {
+	return BroadcastEvent{eventType, data}
 }

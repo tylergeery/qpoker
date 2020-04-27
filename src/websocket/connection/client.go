@@ -12,6 +12,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	// ClientAdminStart is an admin start of game
+	ClientAdminStart = "start"
+
+	// ClientChipResponse is admin response to player's chip request
+	ClientChipResponse = "chip_response"
+
+	// ClientChipRequest is a player's request for chips
+	ClientChipRequest = "chip_request"
+)
+
 // ClientEvent represents a player gameplay action
 type ClientEvent struct {
 	Type string                 `json:"type"`
@@ -30,9 +41,16 @@ func (e ClientEvent) IsMsgEvent() bool {
 
 // ToAdminEvent parses the game action from the GameEvent
 func (e ClientEvent) ToAdminEvent(c *Client) AdminEvent {
-	return AdminEvent{
-		Action: e.Data["action"].(string),
-		GameID: c.GameID,
+	adminEvent := AdminEvent{
+		Action:   e.Data["action"].(string),
+		GameID:   c.GameID,
+		PlayerID: c.PlayerID,
+		Value:    e.Data["value"],
+	}
+
+	switch adminEvent.Action {
+	default:
+		return adminEvent
 	}
 }
 

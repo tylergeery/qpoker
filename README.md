@@ -35,32 +35,29 @@ make test
 - Client
   - Add static pages
     - Landing page
+      - Join game by code
       - Hosting options
+        - Charge for hosting
+        - Free hosting w/ ads
+        - Host your own
       - Card games available
-    - Table page
-      - Table rendering
+        - Holdem
+        - Gang gin
+        - Hearts
+        - TODO
   - JS
     - Table page
-      - Forced Login
       - Game flow
       - Game History
+      - Remove nav choices
     - Add tests
-  - Assets
-    - Card assets
-    - Table asset
-- Admin 
-  - Seat assignments
+- Admin Options
   - Assigning Chips
   - Time Between hands
-- EventTracking
-  - action events
-  - admin events
-  - chat events
-- Write GameManager state to DB (in case of disconnect)
+  - Selecting seats
 - Deploy somewhere
 - Autovaccuum games
+  - Rules around when games should be removed from memory
+  - How to handle client disconnects
+    - immediately, delay for reconnect?
 - Video Chat
-- Add use options
-  - Charge for hosting
-  - Free hosting w/ ads
-  - Host your own

@@ -6,6 +6,7 @@ require (
 	github.com/cbroglie/mustache v1.0.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gofiber/fiber v1.8.431
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.2
 	github.com/goware/emailx v0.2.0
 	github.com/klauspost/compress v1.10.3 // indirect

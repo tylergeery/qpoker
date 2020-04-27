@@ -1,21 +1,27 @@
+import { EventState } from "../objects/State";
+
 export class ConnectionHandler {
     active: boolean;
     conn: WebSocket;
+    subscribers: {
+        [key: string]: ((action: any) => void)[];
+    }
     onDisconnect?: () => void;
-    onMessageEvent: (evt: MessageEvent) => void;
     queue: string[]
 
-    constructor(conn: WebSocket, onMessageEvent: (evt: MessageEvent) => void) {
+    constructor(conn: WebSocket) {
         this.conn = conn;
-        this.onMessageEvent = onMessageEvent;
         this.active = false;
         this.queue = [];
-        this.setup();
+        this.subscribers = {
+            'admin': [],
+            'message': [],
+            'game': [],
+        }
     }
 
-    private setup() {
+    public init() {
         this.conn.onopen = (evt: Event) => {
-            console.log("Connection open event: ", evt);
             this.active = true;
             this.sendQueue();
         };
@@ -31,35 +37,51 @@ export class ConnectionHandler {
             }
         };
     
-        this.conn.onmessage = (evt: MessageEvent) => {
-            console.log("Connection message event: ", evt);
-            this.onMessageEvent(evt);
-        };
+        this.conn.onmessage = this.handleMessage.bind(this);
+    }
+
+    public subscribe(type: string, fn: (action: any) => void) {
+        this.subscribers[type].push(fn);
+    }
+
+    private publish(type: string, msg: any) {
+        this.subscribers[type].map((fn) => fn(msg));
     }
 
     public send(msg: string) {
         if (this.active) {
-            console.log("Sending message event:", msg)
             this.conn.send(msg);
             return
         }
 
-        console.log("Queueing message event:", msg)
         this.queue.push(msg);
+    }
+
+    private handleMessage(message: MessageEvent) {
+        let event = JSON.parse(message.data);
+
+        switch(event.type) {
+            case 'game':
+                let state = EventState.FromObj(event.data);
+
+                this.publish(event.type, state);
+                break;
+            default:
+                this.publish(event.type, message.data)
+        }
     }
 
     private sendQueue() {
         while (this.queue.length > 0) {
             let msg = this.queue.pop();
 
-            console.log("Sending message event:", msg)
             this.conn.send(msg);
         }
     }
 }
 
-export function NewConnectionHandler(onMessageEvent: (evt: MessageEvent) => void): ConnectionHandler {
+export function NewConnectionHandler(): ConnectionHandler {
     const ws = new WebSocket('ws://localhost:8080/ws');
 
-    return new ConnectionHandler(ws, onMessageEvent);
+    return new ConnectionHandler(ws);
 }
