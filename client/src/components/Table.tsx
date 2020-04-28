@@ -23,9 +23,6 @@ export class Table extends React.Component<TableProps, TableState> {
     constructor(props: any) {
         super(props);
         this.state = {es: defaultEventState};
-    }
-
-    public componentDidMount() {
         this.resetConnection();
     }
 
@@ -78,7 +75,7 @@ export class Table extends React.Component<TableProps, TableState> {
                     </div>
                 </div>
                 <div className="col s12 l3 sidebar-holder">
-                    <SideBar {...this.props} conn={this.conn}/>
+                    <SideBar {...this.props} conn={this.conn} es={this.state.es}/>
                 </div>
             </div>
         );

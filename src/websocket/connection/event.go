@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
+	"strconv"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -63,6 +66,29 @@ func (e AdminEvent) ValidateAuthorized(game *models.Game) error {
 	}
 
 	return nil
+}
+
+// GetChipRequest gets chip request from event
+func (e AdminEvent) GetChipRequest() ChipRequest {
+	value := int64(0)
+	switch e.Value.(type) {
+	case float64:
+		value = int64(e.Value.(float64))
+		break
+	case int64:
+		value = e.Value.(int64)
+		break
+	case string:
+		val, err := strconv.Atoi(e.Value.(string))
+		if err != nil {
+			fmt.Printf("Error handling chip request value: %s\n", err)
+		}
+		value = int64(val)
+	default:
+		value = e.Value.(int64)
+	}
+
+	return ChipRequest{uuid.New().String(), e.PlayerID, int64(value)}
 }
 
 // MsgEvent represents a message event

@@ -345,6 +345,10 @@ func (g *GameManager) GetVisibleCards() map[int64][]cards.Card {
 // GetPlayer returns a player from a table
 func (g *GameManager) GetPlayer(playerID int64) *Player {
 	for i := range g.State.Table.Players {
+		if g.State.Table.Players[i] == nil {
+			continue
+		}
+
 		if playerID == g.State.Table.Players[i].ID {
 			return g.State.Table.Players[i]
 		}

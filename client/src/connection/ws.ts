@@ -67,7 +67,7 @@ export class ConnectionHandler {
                 this.publish(event.type, state);
                 break;
             default:
-                this.publish(event.type, message.data)
+                this.publish(event.type, event)
         }
     }
 

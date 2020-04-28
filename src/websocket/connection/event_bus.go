@@ -3,7 +3,6 @@ package connection
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
@@ -13,16 +12,15 @@ var eventBus *EventBus
 
 // GameState controls the game state returned to clients
 type GameState struct {
-	Manager *holdem.GameManager     `json:"manager"`
-	Cards   map[int64][]cards.Card  `json:"cards"`
-	Players map[int64]holdem.Player `json:"players"`
+	Manager *holdem.GameManager    `json:"manager"`
+	Cards   map[int64][]cards.Card `json:"cards"`
 }
 
 // ChipRequest holds a chips request
 type ChipRequest struct {
-	ID string `json:"id"`
-	PlayerID int64 `json:"player_id"`
-	Amount int64 `json:"amount"`
+	ID       string `json:"id"`
+	PlayerID int64  `json:"player_id"`
+	Amount   int64  `json:"amount"`
 }
 
 // NewGameState returns the game state for clients
@@ -35,10 +33,10 @@ func NewGameState(manager *holdem.GameManager) GameState {
 
 // GameController handles logic for sending/receiving game events
 type GameController struct {
-	clients []*Client
-	manager *holdem.GameManager
-	game    *models.Game
-	requests []
+	clients  []*Client
+	manager  *holdem.GameManager
+	game     *models.Game
+	requests []ChipRequest
 }
 
 // EventBus manages all server event action
@@ -76,15 +74,21 @@ func (e *EventBus) reloadGameState(client *Client) error {
 		return err
 	}
 
+	player, err := models.GetPlayerFromID(client.PlayerID)
+	if err != nil {
+		return err
+	}
+
 	// TODO: Check if game is complete
 	// TODO: pull latest game hand, recreate state from hand
-	players := []*holdem.Player{&holdem.Player{ID: client.PlayerID}}
+	gamePlayer := &holdem.Player{ID: player.ID, Username: player.Username}
+	players := []*holdem.Player{gamePlayer}
 	manager, err := holdem.NewGameManager(game.ID, players, game.Options)
 	if err != nil {
 		return err
 	}
 
-	controller := &GameController{[]*Client{}, manager, game}
+	controller := &GameController{[]*Client{}, manager, game, []ChipRequest{}}
 	e.games[client.GameID] = controller
 
 	return nil
@@ -111,21 +115,62 @@ func (e *EventBus) broadcast(gameID, playerID int64, broadcastEvent BroadcastEve
 	}
 }
 
+func (e *EventBus) handleAdminChipRequest(event AdminEvent) {
+	controller := e.games[event.GameID]
+	request := event.GetChipRequest()
+	controller.requests = append(controller.requests, request)
+
+	if event.PlayerID == controller.game.OwnerID {
+		event.Value = request.ID
+		e.handleAdminChipResponse(event)
+		return
+	}
+
+	e.BroadcastRequests(controller)
+}
+
+func (e *EventBus) handleAdminChipResponse(event AdminEvent) {
+	controller := e.games[event.GameID]
+	id := event.Value.(string)
+	approved := true
+	if id[0] == '-' {
+		approved, id = false, id[1:]
+	}
+
+	found, chipRequest := false, ChipRequest{}
+	for i := range controller.requests {
+		if controller.requests[i].ID == id {
+			found, chipRequest = true, controller.requests[i]
+			controller.requests = append(controller.requests[:i], controller.requests[i+1:]...)
+			break
+		}
+	}
+
+	if !found {
+		fmt.Printf("Could not find chip request: %s %+v\n", id, controller.requests)
+		return
+	}
+
+	if approved {
+		controller.manager.GetPlayer(chipRequest.PlayerID).Stack += chipRequest.Amount
+		e.BroadcastState(event.GameID)
+	}
+
+	e.BroadcastRequests(controller)
+}
+
 func (e *EventBus) handleAdminEvent(event AdminEvent) {
-	fmt.Println("handleAdminEvent")
 	controller, ok := e.games[event.GameID]
 	if !ok {
 		fmt.Printf("Error: Could not find controller for game id (%d)\n", event.GameID)
 		return
 	}
 
-	fmt.Printf("validateAuthorized: %d, %+v\n", event.PlayerID, controller.game)
 	err := event.ValidateAuthorized(controller.game)
 	if err != nil {
 		return
 	}
 
-	fmt.Println("event.Action", event.Action)
 	switch event.Action {
 	case ClientAdminStart:
 		err = controller.manager.NextHand()
@@ -135,22 +180,13 @@ func (e *EventBus) handleAdminEvent(event AdminEvent) {
 		}
 
 		e.BroadcastState(event.GameID)
+		break
 	case ClientChipRequest:
-		broadcastEvent := NewBroadcastEvent(
-			ActionAdmin,
-			map[string]interface{}{
-				"player": controller.manager.GetPlayer(event.PlayerID),
-				"amount": int64(event.Value.(float64)),
-			},
-		)
-
-		fmt.Printf("broadcast %+v %+v\n", controller.game, broadcastEvent)
-		e.broadcast(controller.game.ID, controller.game.OwnerID, broadcastEvent)
+		e.handleAdminChipRequest(event)
+		break
 	case ClientChipResponse:
-		amount := int64(event.Value.(float64))
-		controller.manager.GetPlayer(event.PlayerID).Stack += amount
-
-		e.BroadcastState(event.GameID)
+		e.handleAdminChipResponse(event)
+		break
 	default:
 		fmt.Printf("Unknown admin event: %s\n", event.Action)
 	}
@@ -174,11 +210,20 @@ func (e *EventBus) SetClient(client *Client) {
 	client.AdminChannel = e.AdminChannel
 	client.MessageChannel = e.MessageChannel
 
-	_ = controller.manager.State.Table.AddPlayer(&holdem.Player{ID: client.PlayerID})
+	player, err := models.GetPlayerFromID(client.PlayerID)
+	if err != nil {
+		return
+	}
+
+	gamePlayer := &holdem.Player{ID: player.ID, Username: player.Username}
+	_ = controller.manager.State.Table.AddPlayer(gamePlayer)
 	controller.clients = append(controller.clients, client)
 
-	fmt.Println("Broadcasting client state: add client")
 	e.BroadcastState(client.GameID)
+
+	if client.PlayerID == controller.game.OwnerID {
+		e.BroadcastRequests(controller)
+	}
 }
 
 // RemoveClient removes a client from EventBus
@@ -198,6 +243,17 @@ func (e *EventBus) RemoveClient(client *Client) {
 
 	fmt.Println("Broadcasting client state: remove client")
 	e.BroadcastState(client.GameID)
+}
+
+// BroadcastRequests sends chip requests to game owner
+func (e *EventBus) BroadcastRequests(controller *GameController) {
+	// TODO: include relevant cards
+	broadcastEvent := NewBroadcastEvent(ActionAdmin, map[string][]ChipRequest{
+		"requests": controller.requests,
+	})
+
+	fmt.Printf("broadcast %+v %+v\n", controller.game, broadcastEvent)
+	e.broadcast(controller.game.ID, controller.game.OwnerID, broadcastEvent)
 }
 
 // BroadcastState sends game state to all clients
@@ -252,10 +308,10 @@ func (e *EventBus) ListenForEvents() {
 			}
 			playerEventMap[playerEvent.Action](playerEvent.Client)
 		case adminEvent := <-e.AdminChannel:
-			fmt.Printf("AdminAction: (%s)\n", adminEvent.Action)
+			fmt.Printf("AdminAction: (%+v)\n", adminEvent)
 			e.handleAdminEvent(adminEvent)
 		case gameAction := <-e.GameChannel:
-			fmt.Printf("GameAction: (%+v)\n", gameAction.Action)
+			fmt.Printf("GameAction: (%+v)\n", gameAction)
 			e.PerformGameAction(gameAction)
 		}
 	}

@@ -103,7 +103,7 @@ func (c *Client) HandleShutdown() {
 
 		return nil
 	})
-	c.conn.SetReadDeadline(time.Now().Add(10 * time.Minute)) // TODO: game duration
+	c.conn.SetReadDeadline(time.Now().Add(10 * 6 * time.Minute)) // TODO: game duration
 }
 
 // Authenticate ensures that the player first sends a valid token

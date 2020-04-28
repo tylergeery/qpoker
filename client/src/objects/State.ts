@@ -19,63 +19,56 @@ type PlayerOptions = {
 }
 
 export class GamePlayer {
-    id: number;
-    stack: number;
-    options: PlayerOptions;
-    state: string;
-    bigBlind: boolean;
-    littleBlind: boolean;
+    constructor(
+        public id: number,
+        public username: string,
+        public stack: number,
+        public options: PlayerOptions,
+        public state: string,
+        public bigBlind: boolean,
+        public littleBlind: boolean
+    ) {}
 
     public static FromObj(playerObj: any): GamePlayer {
-        let player = new GamePlayer();
-
-        player.id = playerObj.id;
-        player.stack = playerObj.stack;
-        player.options = playerObj.options;
-        player.state = playerObj.state;
-        player.bigBlind = playerObj.big_blind;
-        player.littleBlind = playerObj.little_blind;
-
-        return player;
+        return new GamePlayer(
+            playerObj.id,
+            playerObj.username,
+            playerObj.stack,
+            playerObj.options,
+            playerObj.state,
+            playerObj.big_blind,
+            playerObj.little_blind
+        );
     }
 }
 
-class Player {
-    id: number;
-    username: string;
-}
- 
 class Table {
-    players: GamePlayer[];
-    capacity: number;
+    constructor(public players: GamePlayer[], public capacity: number) {}
 
     public static FromObj(tableObj: any): Table {
-        let table = new Table();
-
-        table.players = tableObj.players;
-        table.capacity = tableObj.capacity;
-
-        return table;
+        return new Table(tableObj.players, tableObj.capacity);
     }
 }
 
 class State {
-    board: Card[];
-    table: Table;
-    state: string;
+    constructor(
+        public board: Card[],
+        public table: Table,
+        public state: string
+    ) {}
 
     public static FromObj(stateObj: any): State {
-        let state = new State();
-
-        state.board = (stateObj.board || []).map((card: any) => {
-            return new Card(
-                card.value.toString(),
-                String.fromCharCode(card.suit),
-                String.fromCharCode(card.char),
-            )
-        });
-        state.table = Table.FromObj(stateObj.table);
-        state.state = stateObj.state;
+        let state = new State(
+            (stateObj.board || []).map((card: any) => {
+                return new Card(
+                    card.value.toString(),
+                    String.fromCharCode(card.suit),
+                    String.fromCharCode(card.char),
+                )
+            }),
+            Table.FromObj(stateObj.table),
+            stateObj.state
+        );
 
         return state;
     }
@@ -86,36 +79,32 @@ type BetMap = {
 }
 
 class Pot {
-    payouts: BetMap;
-    playerBets: BetMap;
-    playerTotals: BetMap;
-    total: number;
+    constructor(
+        public payouts: BetMap,
+        public playerBets: BetMap,
+        public playerTotals: BetMap,
+        public total: number
+    ) {}
 
     public static FromObj(potObj: any): Pot {
-        let pot = new Pot();
-
-        pot.payouts = potObj.payouts || {};
-        pot.playerBets = potObj.player_bets || {};
-        pot.playerTotals = potObj.player_totals || {};
-        pot.total = potObj.total;
-
-        return pot;
+        return new Pot(
+            potObj.payouts || {},
+            potObj.player_bets || {},
+            potObj.player_totals || {},
+            potObj.total
+        );
     }
 }
 
 class Manager {
-    bigBlind: number;
-    state: State;
-    pot: Pot;
+    constructor(public bigBlind: number, public state: State, public pot: Pot) {}
 
     public static FromObj(managerObj: any): Manager {
-        let manager = new Manager();
-
-        manager.bigBlind = managerObj.big_blind;
-        manager.state = State.FromObj(managerObj.state);
-        manager.pot = Pot.FromObj(managerObj.pot || {});
-
-        return manager;
+        return new Manager(
+            managerObj.big_blind,
+            State.FromObj(managerObj.state),
+            Pot.FromObj(managerObj.pot || {})
+        );
     }
 }
 
@@ -123,11 +112,10 @@ export class EventState {
     constructor(
         public manager: Manager,
         public cards: {[key: number]: Card[]},
-        public players: {[key: number]: Player}
     ) {}
 
     public static FromObj(obj: any) {
-        return new EventState(Manager.FromObj(obj.manager), obj.cards, obj.players);
+        return new EventState(Manager.FromObj(obj.manager), obj.cards);
     }
 
     public getPlayerCards(playerID: number): Card[] {
@@ -149,7 +137,7 @@ export class EventState {
                 continue;
             }
 
-            if (player.id.toString() !== playerID) {
+            if (player.id.toString() !== playerID.toString()) {
                 continue;
             }
 
@@ -179,6 +167,5 @@ export const defaultEventState = EventState.FromObj({
         },
         "big_blind": 0
     },
-    "players": {},
     "cards": {}
 });

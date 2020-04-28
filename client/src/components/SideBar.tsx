@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { classNames } from "../utils";
+import { EventState } from "../objects/State";
 import { Game } from "../objects/Game";
 import { Settings } from "./sidebar/Settings";
 import { Chat } from "./sidebar/Chat";
@@ -8,6 +9,7 @@ import { History } from "./sidebar/History";
 import { ConnectionHandler } from "../connection/ws";
 
 type SideBarProps = {
+    es: EventState;
     game?: Game;
     playerID: string;
     playerToken: string;

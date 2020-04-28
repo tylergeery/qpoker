@@ -3,12 +3,14 @@ import * as React from "react";
 import { classNames } from "../../utils";
 import { Game } from "../../objects/Game";
 import { ConnectionHandler } from "../../connection/ws";
+import { EventState } from "../../objects/State";
 
 type SettingsProps = {
     active: boolean;
     playerID: string;
     game?: Game;
     conn: ConnectionHandler;
+    es: EventState;
 }
 
 type SettingsState = {
@@ -27,14 +29,28 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
         }}
     }
 
+    public componentDidMount() {
+        this.props.conn.subscribe('admin', (event: any) => {
+            console.log('settings received event:', event)
+            if (!event.data.requests) {
+                return
+            }
+
+            this.setState({requests: event.data.requests});
+        });
+    }
+
     public handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         this.state.form[event.target.name] = event.target.value;
+    }
+
+    public sendChipsResponse(id: string) {
+        this.sendAction('admin', { action: 'chip_response', value: id })
     }
 
     public sendAdminAction(action: string, valueKey: string) {
         let value = this.state.form[valueKey];
 
-        console.log(this.state.form, valueKey)
         this.sendAction('admin', { action, value })
     }
 
@@ -44,6 +60,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
             data
         }
 
+        console.log("send action: ", action);
         this.props.conn.send(JSON.stringify(action))
     }
 
@@ -77,21 +94,21 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     <tr>
                         <th colSpan={4}>Chip Requests</th>
                     </tr>
-                    {isAdmin ? (
-                        <tr>
-                            <td colSpan={2}>Player</td>
+                    {this.state.requests.map((req) => {
+                        return <tr>
+                            <td colSpan={2}>{this.props.es.getPlayer(req.player_id).username}</td>
                             <td>
-                                <button className="btn-flat green lighten-2" type="button">
+                                <button onClick={this.sendChipsResponse.bind(this, req.id)} className="btn-flat green lighten-2" type="button">
                                     Approve
                                 </button>
                             </td>
                             <td>
-                                <button className="btn-flat red lighten-2" type="button">
+                                <button onClick={this.sendChipsResponse.bind(this, '-' + req.id)} className="btn-flat red lighten-2" type="button">
                                     Deny
                                 </button>
                             </td>
                         </tr>
-                    ) : ''}
+                    })}
                     <tr>
                         <td colSpan={2}>Request Chips</td>
                         <td>
