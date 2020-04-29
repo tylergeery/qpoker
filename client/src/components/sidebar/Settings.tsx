@@ -83,7 +83,12 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                         <tr>
                             <td colSpan={2}>Start Game:</td>
                             <td>
-                                <button onClick={this.sendAdminAction.bind(this, 'start', '')} className="btn-flat green lighten-1" type="button">
+                                <button disabled={this.props.es.manager.status == "init"}
+                                    onClick={this.sendAdminAction.bind(this, 'start', '')}
+                                    className={classNames("btn-flat green lighten-1", {
+                                        'disabled': this.props.es.manager.status == "init",
+                                        'hidden': this.props.es.manager.status == "active" 
+                                    })} type="button">
                                     Start
                                 </button>
                             </td>

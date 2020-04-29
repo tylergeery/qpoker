@@ -25,7 +25,12 @@
     line-height: 250px;
 }
 
-.player, .seat { width: 60px; height: 60px; position: absolute; z-index: 10; }
+.board-holder {
+    position: absolute; width: 300px;
+    left: calc(50% - 150px); top: calc(50% - 20px);
+}
+
+.player, .seat { width: 120px; height: 60px; position: absolute; z-index: 10; }
 .seat {border: 1px solid ivory; box-shadow: 5px ivory; border-radius: 50%; }
 .seat:hover { background-color: ivory; }
 
@@ -48,7 +53,8 @@
 
 .table-pos-6 { bottom: calc(15% - 30px); left: calc(50% - 30px); }
 
-.card { width: 30px; }
+.card { width: 58px;}
+.board-holder .card { margin: 0 2px 0 0; }
 
 
 /* Sidebar */

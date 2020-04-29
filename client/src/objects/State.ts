@@ -97,13 +97,20 @@ class Pot {
 }
 
 class Manager {
-    constructor(public bigBlind: number, public state: State, public pot: Pot) {}
+    constructor(
+        public bigBlind: number,
+        public state: State,
+        public pot: Pot,
+        public status: string
+    ) {}
 
     public static FromObj(managerObj: any): Manager {
+        console.log("managerObj: ", managerObj);
         return new Manager(
             managerObj.big_blind,
             State.FromObj(managerObj.state),
-            Pot.FromObj(managerObj.pot || {})
+            Pot.FromObj(managerObj.pot || {}),
+            managerObj.status,
         );
     }
 }
@@ -115,7 +122,19 @@ export class EventState {
     ) {}
 
     public static FromObj(obj: any) {
-        return new EventState(Manager.FromObj(obj.manager), obj.cards);
+        for (let playerID in obj.cards) {
+            obj.cards[playerID] = obj.cards[playerID].map((card: any) => {
+                return new Card(
+                    card.value.toString(),
+                    String.fromCharCode(card.suit),
+                    String.fromCharCode(card.char),
+                )
+            })
+        }
+
+        return new EventState(
+            Manager.FromObj(obj.manager),
+            obj.cards);
     }
 
     public getPlayerCards(playerID: number): Card[] {
@@ -165,7 +184,8 @@ export const defaultEventState = EventState.FromObj({
             "player_totals": {},
             "total": 0
         },
-        "big_blind": 0
+        "big_blind": 0,
+        "status": "init"
     },
     "cards": {}
 });

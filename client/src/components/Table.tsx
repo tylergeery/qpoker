@@ -16,6 +16,7 @@ export type TableProps = {
 export type TableState = {
     es: EventState;
 }
+
 // State is never set so we use the '{}' type.
 export class Table extends React.Component<TableProps, TableState> {
     conn: ConnectionHandler;
@@ -66,9 +67,14 @@ export class Table extends React.Component<TableProps, TableState> {
             <div className="row white-text nmb">
                 <div className="col s12 l9">
                     <div className="row w100 table-holder nmb">
+                        <div className="board-holder">
+                            {this.state.es.manager.state.board.map((card) => {
+                                return <img className="card" src={`/assets/media/cards/${card.imageName()}.svg`} />
+                            })}
+                        </div>
                         {this.state.es.manager.state.table ? this.state.es.manager.state.table.players.map((player: any, i: number) => {
                             return player ? 
-                                <Player player={player} index={i} gameState={this.state.es.manager.state.state} cards={this.state.es.getPlayerCards(player.id)} />
+                                <Player conn={this.conn} player={player} playerID={this.props.playerID} index={i} gameState={this.state.es.manager.state.state} cards={this.state.es.getPlayerCards(player.id)} />
                                 : (chooseSeat ? <Seat index={i} /> : '');
                         }) : ''}
                         <img className="w100 bg" src="/assets/media/card_table.png" alt="Card table"/>

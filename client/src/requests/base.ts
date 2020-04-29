@@ -7,6 +7,7 @@ export interface RequestParams {
 export abstract class BaseRequest<T> {
     success: boolean;
     errors?: string[];
+    response_code: number;
 
     abstract getEndpoint(params: RequestParams): string;
 
@@ -29,13 +30,15 @@ export abstract class BaseRequest<T> {
 
     public async handleResponse(response: Response): Promise<T> {
         this.success = response.ok;
+        this.response_code = response.status;
+
         let json = await response.json();
 
         if (this.success) {
             return json;
         }
 
-        this.errors = json['errors'];
+        this.errors = json ? json['errors'] : [];
 
         return null;
     }

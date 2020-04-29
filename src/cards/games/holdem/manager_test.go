@@ -16,16 +16,6 @@ func TestNewGameError(t *testing.T) {
 	}
 	cases := []TestCase{
 		TestCase{
-			players:  []*Player{},
-			expected: "Invalid player count: 0",
-		},
-		TestCase{
-			players: []*Player{
-				&Player{ID: 1},
-			},
-			expected: "Invalid player count: 1",
-		},
-		TestCase{
 			players: []*Player{
 				&Player{ID: 1},
 				&Player{ID: 2},

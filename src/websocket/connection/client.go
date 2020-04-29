@@ -67,7 +67,7 @@ func (e ClientEvent) ToGameEvent(c *Client) GameEvent {
 		PlayerID: c.PlayerID,
 		Action: holdem.Action{
 			Name:   e.Data["name"].(string),
-			Amount: e.Data["amount"].(int64),
+			Amount: interfaceInt64(e.Data["amount"]),
 		},
 	}
 }

@@ -12,8 +12,6 @@ export class GetPlayerRequest<T> extends BaseRequest<T> {
             headers: this.getJSONHeaders(params)
         });
 
-        this.success = response.ok;
-
-        return await response.json();
+        return this.handleResponse(response);
     }
 }

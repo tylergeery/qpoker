@@ -13,9 +13,10 @@ export async function getPlayer(): Promise<Player> {
 
     let req = new GetPlayerRequest<Player>();
     let player = await req.request({id: userID, userToken});
-    if (!req.success) {
-        return null;
+
+    if (req.response_code == 403) {
+        userStorage.removePlayer();
     }
 
-    return player;
+    return req.success ? player : null;
 }

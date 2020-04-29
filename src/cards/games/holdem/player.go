@@ -1,6 +1,9 @@
 package holdem
 
-import "qpoker/cards"
+import (
+	"qpoker/cards"
+	"qpoker/models"
+)
 
 const (
 	// PlayerStateInit is the init state for each hand
@@ -28,6 +31,14 @@ type Player struct {
 	State        string          `json:"state"`
 	BigBlind     bool            `json:"big_blind"`
 	LittleBlind  bool            `json:"little_blind"`
+}
+
+func NewPlayer(player *models.Player) *Player {
+	return &Player{
+		ID:       player.ID,
+		Username: player.Username,
+		State:    PlayerStateInit,
+	}
 }
 
 // SetPlayerActions sets the moves a player is allowed to make

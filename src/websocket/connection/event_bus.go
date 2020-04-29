@@ -81,7 +81,7 @@ func (e *EventBus) reloadGameState(client *Client) error {
 
 	// TODO: Check if game is complete
 	// TODO: pull latest game hand, recreate state from hand
-	gamePlayer := &holdem.Player{ID: player.ID, Username: player.Username}
+	gamePlayer := holdem.NewPlayer(player)
 	players := []*holdem.Player{gamePlayer}
 	manager, err := holdem.NewGameManager(game.ID, players, game.Options)
 	if err != nil {
@@ -152,7 +152,7 @@ func (e *EventBus) handleAdminChipResponse(event AdminEvent) {
 	}
 
 	if approved {
-		controller.manager.GetPlayer(chipRequest.PlayerID).Stack += chipRequest.Amount
+		controller.manager.AddChips(chipRequest.PlayerID, chipRequest.Amount)
 		e.BroadcastState(event.GameID)
 	}
 
@@ -215,8 +215,8 @@ func (e *EventBus) SetClient(client *Client) {
 		return
 	}
 
-	gamePlayer := &holdem.Player{ID: player.ID, Username: player.Username}
-	_ = controller.manager.State.Table.AddPlayer(gamePlayer)
+	gamePlayer := holdem.NewPlayer(player)
+	_ = controller.manager.AddPlayer(gamePlayer)
 	controller.clients = append(controller.clients, client)
 
 	e.BroadcastState(client.GameID)
@@ -233,7 +233,6 @@ func (e *EventBus) RemoveClient(client *Client) {
 		return
 	}
 
-	// TODO: this is broken
 	for i := range controller.clients {
 		if controller.clients[i] == client {
 			controller.clients = append(controller.clients[:i], controller.clients[i+1:]...)

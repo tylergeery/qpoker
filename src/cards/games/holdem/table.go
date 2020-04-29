@@ -160,6 +160,25 @@ func (t *Table) RemovePlayer(playerID int64) error {
 	return fmt.Errorf("Player %d was not found at the table", playerID)
 }
 
+// GetAllPlayers retrieves all players at table
+func (t *Table) GetAllPlayers() []*Player {
+	players := []*Player{}
+
+	for i := range t.Players {
+		if t.Players[i] == nil {
+			continue
+		}
+
+		if t.Players[i].State == PlayerStateInit && t.Players[i].Stack <= int64(0) {
+			continue
+		}
+
+		players = append(players, t.Players[i])
+	}
+
+	return players
+}
+
 func (t *Table) resetPlayerRoundStates() {
 	for i := range t.Players {
 		if t.Players[i] == nil {

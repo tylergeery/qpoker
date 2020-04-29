@@ -16,3 +16,12 @@ export const classNames = (...potentials: any[]): string => {
 
     return approved.join(" ");
 }
+
+type ClientAction = {
+    type: string;
+    data: any;
+}
+
+export const createAdminAction = (data: any): ClientAction => ({type: 'admin', data });
+export const createGameAction = (data: any): ClientAction => ({type: 'game', data });
+export const createChatAction = (chat: string): ClientAction => ({type: 'chat', data: chat });

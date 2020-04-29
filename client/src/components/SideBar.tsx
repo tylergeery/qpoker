@@ -23,7 +23,7 @@ type SideBarState = {
 export class SideBar extends React.Component<SideBarProps, SideBarState> {
     constructor(props: any) {
         super(props);
-        this.state = { selectedTab: "history" };
+        this.state = { selectedTab: "settings" };
     }
 
     public getNavOptions(): string[] {

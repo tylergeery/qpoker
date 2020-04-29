@@ -10,6 +10,13 @@ import (
 const (
 	// MaxPlayerCount is the max amount of players for HoldEm
 	MaxPlayerCount = 12
+
+	// StatusInit init
+	StatusInit = "init"
+	// StatusReady ready
+	StatusReady = "ready"
+	// StatusActive active
+	StatusActive = "active"
 )
 
 // GameManager holds game state and manages game flow
@@ -18,6 +25,7 @@ type GameManager struct {
 	State    *HoldEm `json:"state"`
 	Pot      *Pot    `json:"pot"`
 	BigBlind int64   `json:"big_blind"`
+	Status   string  `json:"status"`
 
 	gameHand        *models.GameHand
 	gamePlayerHands map[int64]*models.GamePlayerHand
@@ -38,13 +46,40 @@ func NewGameManager(gameID int64, players []*Player, options models.GameOptions)
 		GameID:   gameID,
 		State:    NewHoldEm(table),
 		BigBlind: options.BigBlind,
+		Status:   StatusInit,
 	}
 
 	return gm, nil
 }
 
+// AddPlayer adds player to game
+func (g *GameManager) AddPlayer(player *Player) error {
+	err := g.State.Table.AddPlayer(player)
+
+	g.UpdateStatus(StatusReady)
+
+	return err
+}
+
+// RemovePlayer removes player from game
+func (g *GameManager) RemovePlayer(playerID int64) error {
+	err := g.State.Table.RemovePlayer(playerID)
+
+	g.UpdateStatus(StatusInit)
+
+	return err
+}
+
+// AddChips adds chips to Player
+func (g *GameManager) AddChips(playerID, amount int64) {
+	g.GetPlayer(playerID).Stack += amount
+	g.UpdateStatus(StatusReady)
+}
+
 // NextHand moves game manager on to next hand
 func (g *GameManager) NextHand() error {
+	g.UpdateStatus(StatusActive)
+
 	err := g.State.Deal()
 	if err != nil {
 		return err
@@ -228,6 +263,7 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool
 	complete = g.isComplete()
 	if complete {
 		err = g.EndHand()
+		g.State.Table.GetActivePlayer().SetPlayerActions(nil)
 		return
 	}
 
@@ -327,6 +363,28 @@ func (g *GameManager) EndHand() error {
 	}
 
 	return nil
+}
+
+// UpdateStatus updates game status to most appropriate
+func (g *GameManager) UpdateStatus(status string) {
+	switch {
+	case g.Status == StatusInit && status == StatusReady:
+		if len(g.State.Table.GetAllPlayers()) > 1 {
+			g.Status = status
+		}
+		break
+	case g.Status == StatusReady && status == StatusInit:
+		if len(g.State.Table.GetActivePlayers()) <= 1 {
+			g.Status = status
+		}
+	case g.Status == StatusReady && status == StatusActive:
+		if len(g.State.Table.GetActivePlayers()) > 1 {
+			g.Status = status
+		}
+		break
+	default:
+		break
+	}
 }
 
 // GetVisibleCards returns client representation of cards for those visible

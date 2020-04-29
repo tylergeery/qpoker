@@ -8,11 +8,13 @@ export class ConnectionHandler {
     }
     onDisconnect?: () => void;
     queue: string[]
+    streak: number;
 
     constructor(conn: WebSocket) {
         this.conn = conn;
         this.active = false;
         this.queue = [];
+        this.streak = 0;
         this.subscribers = {
             'admin': [],
             'message': [],
@@ -23,6 +25,7 @@ export class ConnectionHandler {
     public init() {
         this.conn.onopen = (evt: Event) => {
             this.active = true;
+            this.streak = 0;
             this.sendQueue();
         };
 
@@ -32,7 +35,10 @@ export class ConnectionHandler {
 
         this.conn.onclose = (evt: CloseEvent) => {
             console.log("Connection close event: ", evt);
-            if (this.onDisconnect) {
+            this.active = false;
+            this.streak++;
+
+            if (this.streak <= 10 && this.onDisconnect) {
                 this.onDisconnect();
             }
         };
@@ -48,7 +54,11 @@ export class ConnectionHandler {
         this.subscribers[type].map((fn) => fn(msg));
     }
 
-    public send(msg: string) {
+    public send(msg: any) {
+        if (typeof msg != 'string') {
+            msg = JSON.stringify(msg);
+        }
+
         if (this.active) {
             this.conn.send(msg);
             return
