@@ -29,6 +29,13 @@ class Hand extends React.Component<HandProps, {}> {
 }
 
 class HandActions extends React.Component<PlayerProps, {}> {
+    bet: number;
+
+    constructor(props: any) {
+        super(props)
+        this.bet = 0;
+    }
+
     public getOptions(): string[] {
         let options: string[] = [];
 
@@ -44,21 +51,32 @@ class HandActions extends React.Component<PlayerProps, {}> {
     public sendAction(event: React.ChangeEvent<HTMLInputElement>) {
         switch (event.target.innerHTML) {
             case 'bet':
+                this.props.conn.send(createGameAction({
+                    name: event.target.innerHTML,
+                    amount: this.bet,
+                }));
                 break;
             default:
                 this.props.conn.send(createGameAction({
                     name: event.target.innerHTML,
-                    amount: 50,
+                    amount: 0,
                 }));
                 break;
         }
     }
 
+    private registerBet(event: React.ChangeEvent<HTMLInputElement>) {
+        this.bet = parseInt(event.target.value);
+    }
+
     render() {
+        let options = this.getOptions();
+
         return this.props.playerID.toString() === this.props.player.id.toString() ? <div>
-            {this.getOptions().map((opt) => {
+            {options.map((opt) => {
                 return <button onClick={this.sendAction.bind(this)} type="button">{opt}</button>;
             })}
+            {options.length ? <input type="number" defaultValue={0} onChange={this.registerBet.bind(this)} /> : ''}
         </div> : ''
     }
 }

@@ -28,6 +28,10 @@ func (req createGameRequest) validate() error {
 		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
 	}
 
+	req.Options.TimeBetweenHands = 5
+	req.Options.BuyInMin = 10
+	req.Options.BuyInMax = 50
+
 	return nil
 }
 
@@ -102,6 +106,18 @@ func (req updateGameRequest) validate() error {
 		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
 	}
 
+	if req.Options.TimeBetweenHands < 0 || req.Options.TimeBetweenHands > 30 {
+		return fmt.Errorf("Invalid time between hands: %d", req.Options.TimeBetweenHands)
+	}
+
+	if req.Options.BuyInMin < 0 {
+		return fmt.Errorf("Invalid min buy in: %d", req.Options.BuyInMin)
+	}
+
+	if req.Options.BuyInMax < 0 {
+		return fmt.Errorf("Invalid max buy in: %d", req.Options.BuyInMax)
+	}
+
 	return nil
 }
 
@@ -144,6 +160,22 @@ func UpdateGame(c *fiber.Ctx) {
 	if req.Options.BigBlind != 0 {
 		game.Options.BigBlind = req.Options.BigBlind
 	}
+	if req.Options.TimeBetweenHands != 0 {
+		game.Options.TimeBetweenHands = req.Options.TimeBetweenHands
+	}
+	if req.Options.BuyInMin != 0 {
+		game.Options.BuyInMin = req.Options.BuyInMin
+	}
+	if req.Options.BuyInMax != 0 {
+		game.Options.BuyInMax = req.Options.BuyInMax
+	}
+
+	if req.Options.BuyInMax < req.Options.BuyInMin {
+		c.SendStatus(400)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Game buy in max cannot be less than min")))
+		return
+	}
+
 	if req.Name != "" {
 		game.Name = req.Name
 	}

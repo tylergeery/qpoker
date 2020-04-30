@@ -4,6 +4,8 @@ import { classNames } from "../../utils";
 import { Game } from "../../objects/Game";
 import { ConnectionHandler } from "../../connection/ws";
 import { EventState } from "../../objects/State";
+import { UpdateGameRequest } from "../../requests/updateGame";
+import { userStorage } from "../../utils/storage";
 
 type SettingsProps = {
     active: boolean;
@@ -14,6 +16,7 @@ type SettingsProps = {
 }
 
 type SettingsState = {
+    errors: string[];
     options: any[];
     requests: any[];
     form: {
@@ -24,14 +27,18 @@ type SettingsState = {
 export class Settings extends React.Component<SettingsProps, SettingsState> {
     constructor(props: any) {
         super(props)
-        this.state = { options: [], requests: [], form: {
-            'chip_request': 20000,
-        }}
+        this.state = {
+            errors: [],
+            options: Object.assign({}, props.game.options),
+            requests: [],
+            form: {
+                'chip_request': 20000,
+            }
+        }
     }
 
     public componentDidMount() {
         this.props.conn.subscribe('admin', (event: any) => {
-            console.log('settings received event:', event)
             if (!event.data.requests) {
                 return
             }
@@ -62,6 +69,73 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
 
         console.log("send action: ", action);
         this.props.conn.send(JSON.stringify(action))
+    }
+
+    public getOptions(): any[] {
+        return [
+            {
+                name: 'big_blind',
+                label: 'Big Blind',
+                type: 'number',
+                value: this.props.game.options.big_blind || 50,
+            },
+            {
+                name: 'capacity',
+                label: 'Capacity',
+                type: 'number',
+                value: this.props.game.options.capacity || 12,
+            },
+            {
+                name: 'time_between_hands',
+                label: 'Time Between Hands (s)',
+                type: 'number',
+                value: this.props.game.options.time_between_hands || 5,
+            },
+            {
+                name: 'buy_in_min',
+                label: 'Min Buy In',
+                type: 'number',
+                value: this.props.game.options.buy_in_min || 10,
+            },
+            {
+                name: 'buy_in_max',
+                label: 'Max Buy In',
+                type: 'number',
+                value: this.props.game.options.buy_in_max || 50,
+            }
+        ]
+    }
+
+    private async updateGame(event: React.ChangeEvent<HTMLInputElement>) {
+        switch (event.target.name) {
+            case 'capacity':
+                this.props.game.options.capacity = parseInt(event.target.value);
+                break
+            case 'big_blind':
+                this.props.game.options.big_blind = parseInt(event.target.value);
+                break
+            case 'time_between_hands':
+                this.props.game.options.time_between_hands = parseInt(event.target.value);
+                break
+            case 'buy_in_min':
+                this.props.game.options.buy_in_min = parseInt(event.target.value);
+                break
+            case 'buy_in_max':
+                this.props.game.options.buy_in_max = parseInt(event.target.value);
+                break
+        }
+
+        const req = new UpdateGameRequest<Game>();
+        const game = await req.request({
+            id: this.props.game.id.toString(),
+            data: this.props.game,
+            userToken: userStorage.getToken(),
+        });
+
+        if (!req.success) {
+            this.setState({errors: req.errors});
+            return
+        }
     }
 
     private isAdmin(): boolean {
@@ -117,7 +191,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     <tr>
                         <td colSpan={2}>Request Chips</td>
                         <td>
-                            <input type="number" step={50} defaultValue={20000} name="chip_request"
+                            <input type="number" step={50} defaultValue={this.props.game.options.buy_in_min} name="chip_request"
                                 onChange={this.handleChange.bind(this)} />
                         </td>
                         <td>
@@ -130,14 +204,17 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
 
                     <tr></tr>
                     <th>Game Settings:</th>
-                    {this.state.options.map((option) => {
-                        // TODO: render details if not admin
-                        return <tr>
+                    {this.getOptions().map((option) => {
+                        return isAdmin ? (<tr>
                             <td colSpan={2}>{option.label}:</td>
-                            <td>
-                                <input type={option.type} name={option.name} defaultValue={option.value}></input>
+                            <td colSpan={2}>
+                                <input onBlur={this.updateGame.bind(this)}
+                                    type={option.type} name={option.name} defaultValue={option.value}></input>
                             </td>
-                        </tr>;
+                        </tr>) : (<tr>
+                            <td colSpan={2}>{option.label}:</td>
+                            <td colSpan={2}>{option.value}</td>
+                        </tr>);
                     })}
                 </table>
             </div>

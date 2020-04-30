@@ -90,8 +90,17 @@ export class ConnectionHandler {
     }
 }
 
+const getHost = (): string => {
+    switch (window.location.hostname) {
+        case 'localhost':
+            return 'ws://localhost:8080/ws';
+        default:
+            return `wss://${window.location.hostname}/ws`;
+    }
+}
+
 export function NewConnectionHandler(): ConnectionHandler {
-    const ws = new WebSocket('ws://localhost:8080/ws');
+    const ws = new WebSocket(getHost());
 
     return new ConnectionHandler(ws);
 }

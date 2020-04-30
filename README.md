@@ -33,28 +33,27 @@ make test
 ## TODO
 - Add tests for websocket server
 - Client
-  - Add static pages
-    - Landing page
-      - Join game by code
-      - Hosting options
-        - Charge for hosting
-        - Free hosting w/ ads
-        - Host your own
-      - Card games available
-        - Holdem
-        - Gang gin
-        - Hearts
-        - TODO
+  - Landing page
+    - Join game by code
+    - Features
+      - Video
+      - Card games
+        - holdem
+        - hearts
+        - gang gin
+      - self-hosting
+    - Hosting options
+      - Charge for hosting
+      - Free hosting w/ ads
+      - Host your own
   - JS
     - Table page
-      - Game flow
       - Game History
       - Remove nav choices
     - Add tests
 - Admin Options
-  - Assigning Chips
   - Time Between hands
-  - Selecting seats
+  - Time limit on user choice
 - Deploy somewhere
 - Autovaccuum games
   - Rules around when games should be removed from memory

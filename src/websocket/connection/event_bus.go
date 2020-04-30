@@ -6,6 +6,7 @@ import (
 	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
+	"time"
 )
 
 var eventBus *EventBus
@@ -37,6 +38,7 @@ type GameController struct {
 	manager  *holdem.GameManager
 	game     *models.Game
 	requests []ChipRequest
+	chats    []Chat
 }
 
 // EventBus manages all server event action
@@ -159,6 +161,22 @@ func (e *EventBus) handleAdminChipResponse(event AdminEvent) {
 	e.BroadcastRequests(controller)
 }
 
+func (e *EventBus) advanceNextHand(event AdminEvent) {
+	controller, ok := e.games[event.GameID]
+	if !ok {
+		fmt.Printf("Error advancing hand: Could not find controller for game id (%d)\n", event.GameID)
+		return
+	}
+
+	err := controller.manager.NextHand()
+	if err != nil {
+		fmt.Printf("Error advancing hand for admin: %s\n", err)
+		return
+	}
+
+	e.BroadcastState(event.GameID)
+}
+
 func (e *EventBus) handleAdminEvent(event AdminEvent) {
 	controller, ok := e.games[event.GameID]
 	if !ok {
@@ -173,13 +191,7 @@ func (e *EventBus) handleAdminEvent(event AdminEvent) {
 
 	switch event.Action {
 	case ClientAdminStart:
-		err = controller.manager.NextHand()
-		if err != nil {
-			fmt.Printf("Error starting game for admin: %s\n", err)
-			return
-		}
-
-		e.BroadcastState(event.GameID)
+		e.advanceNextHand(event)
 		break
 	case ClientChipRequest:
 		e.handleAdminChipRequest(event)
@@ -291,7 +303,12 @@ func (e *EventBus) PerformGameAction(gameEvent GameEvent) {
 	e.BroadcastState(gameEvent.GameID)
 
 	if complete {
-		// Start timer for next hand
+		time.AfterFunc(
+			controller.game.Options.TimeBetweenHands*time.Second,
+			func() {
+				e.advanceNextHand(AdminEvent{GameID: gameEvent.GameID})
+			},
+		)
 	}
 }
 

@@ -12,7 +12,7 @@ export abstract class BaseRequest<T> {
     abstract getEndpoint(params: RequestParams): string;
 
     public getURL(params: RequestParams): string {
-        return window.QPoker.hostname + '/' + this.getEndpoint(params);
+        return '/' + this.getEndpoint(params);
     }
 
     public getJSONHeaders(params: RequestParams): any {

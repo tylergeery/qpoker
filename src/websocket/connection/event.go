@@ -25,6 +25,12 @@ const (
 	ActionPlayerLeave = "leave"
 )
 
+// Chat message
+type Chat struct {
+	playerID int64  `json:"player_id"`
+	message  string `json:"message"`
+}
+
 // PlayerEvent represents a player connection action
 type PlayerEvent struct {
 	Client *Client

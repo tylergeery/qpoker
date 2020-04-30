@@ -1,6 +1,9 @@
 class GameOptions {
-    big_blind: number;
-    capacity: number;
+    public big_blind: number;
+    public capacity: number;
+    public time_between_hands: number;
+    public buy_in_max: number;
+    public buy_in_min: number;
 }
 
 export class Game {

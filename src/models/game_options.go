@@ -10,8 +10,11 @@ import (
 
 // GameOptions is a config object used to control game settings
 type GameOptions struct {
-	Capacity int   `json:"capacity"`
-	BigBlind int64 `json:"big_blind"`
+	Capacity         int   `json:"capacity"`
+	BigBlind         int64 `json:"big_blind"`
+	TimeBetweenHands int   `json:"time_between_hands"`
+	BuyInMin         int64 `json:"buy_in_min"`
+	BuyInMax         int64 `json:"buy_in_max"`
 }
 
 // Value makes the GameOptions struct implement the driver.Valuer interface. This method

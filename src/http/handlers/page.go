@@ -80,7 +80,6 @@ func PageTable(c *fiber.Ctx) {
 		return
 	}
 
-	fmt.Println(string(gameObject))
 	RenderPage(c, "table", pageVars(fiber.Map{
 		"title":       fmt.Sprintf("Table %s", game.Name),
 		"stylesheets": []string{"table"},
