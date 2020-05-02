@@ -9,12 +9,22 @@ import (
 	"github.com/metal3d/go-slugify"
 )
 
+const (
+	// GameStatusInit is initial game state
+	GameStatusInit = "init"
+	// GameStatusStart is started game state
+	GameStatusStart = "start"
+	// GameStatusComplete is completed game state
+	GameStatusComplete = "complete"
+)
+
 // Game handles user info
 type Game struct {
 	ID        int64       `json:"id"`
 	Name      string      `json:"name"`
 	Slug      string      `json:"slug"`
 	OwnerID   int64       `json:"-"`
+	Status    string      `json:"status"`
 	Options   GameOptions `json:"options"`
 	CreatedAt time.Time   `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
@@ -25,11 +35,13 @@ func GetGameBy(key string, val interface{}) (*Game, error) {
 	game := &Game{}
 
 	err := ConnectToDB().QueryRow(fmt.Sprintf(`
-		SELECT id, name, slug, owner_id, created_at, updated_at
+		SELECT id, name, slug, owner_id, status, created_at, updated_at
 		FROM game
 		WHERE %s = $1
 		LIMIT 1
-	`, key), val).Scan(&game.ID, &game.Name, &game.Slug, &game.OwnerID, &game.CreatedAt, &game.UpdatedAt)
+	`, key), val).Scan(
+		&game.ID, &game.Name, &game.Slug, &game.OwnerID,
+		&game.Status, &game.CreatedAt, &game.UpdatedAt)
 
 	if err != nil {
 		return game, err
@@ -64,10 +76,10 @@ func (g *Game) createSlug() {
 
 func (g *Game) insert() error {
 	err := ConnectToDB().QueryRow(`
-		INSERT INTO game (name, slug, owner_id)
-		VALUES ($1, $2, $3)
+		INSERT INTO game (name, slug, owner_id, status)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
-	`, g.Name, g.Slug, g.OwnerID).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
+	`, g.Name, g.Slug, g.OwnerID, g.Status).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
 
 	return err
 }
@@ -79,10 +91,11 @@ func (g *Game) update() error {
 			name = $2,
 			slug = $3,
 			owner_id = $4,
+			status = $5,
 			updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
-	`, g.ID, g.Name, g.Slug, g.OwnerID).Scan(&g.UpdatedAt)
+	`, g.ID, g.Name, g.Slug, g.OwnerID, g.Status).Scan(&g.UpdatedAt)
 
 	return err
 }

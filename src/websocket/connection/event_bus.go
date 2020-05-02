@@ -6,6 +6,7 @@ import (
 	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
+	"strconv"
 	"time"
 )
 
@@ -15,13 +16,6 @@ var eventBus *EventBus
 type GameState struct {
 	Manager *holdem.GameManager    `json:"manager"`
 	Cards   map[int64][]cards.Card `json:"cards"`
-}
-
-// ChipRequest holds a chips request
-type ChipRequest struct {
-	ID       string `json:"id"`
-	PlayerID int64  `json:"player_id"`
-	Amount   int64  `json:"amount"`
 }
 
 // NewGameState returns the game state for clients
@@ -37,7 +31,7 @@ type GameController struct {
 	clients  []*Client
 	manager  *holdem.GameManager
 	game     *models.Game
-	requests []ChipRequest
+	requests []*models.GameChipRequest
 	chats    []Chat
 }
 
@@ -81,8 +75,6 @@ func (e *EventBus) reloadGameState(client *Client) error {
 		return err
 	}
 
-	// TODO: Check if game is complete
-	// TODO: pull latest game hand, recreate state from hand
 	gamePlayer := holdem.NewPlayer(player)
 	players := []*holdem.Player{gamePlayer}
 	manager, err := holdem.NewGameManager(game.ID, players, game.Options)
@@ -90,7 +82,21 @@ func (e *EventBus) reloadGameState(client *Client) error {
 		return err
 	}
 
-	controller := &GameController{[]*Client{}, manager, game, []ChipRequest{}}
+	controller := &GameController{
+		[]*Client{},
+		manager,
+		game,
+		[]*models.GameChipRequest{},
+		[]Chat{},
+	}
+
+	switch game.Status {
+	case models.GameStatusComplete:
+		return fmt.Errorf("Game is already complete")
+	case models.GameStatusStart:
+		// TODO: pull game state, player chips, requests
+	}
+
 	e.games[client.GameID] = controller
 
 	return nil
@@ -119,45 +125,77 @@ func (e *EventBus) broadcast(gameID, playerID int64, broadcastEvent BroadcastEve
 
 func (e *EventBus) handleAdminChipRequest(event AdminEvent) {
 	controller := e.games[event.GameID]
+
+	// Check if user has outstanding request
+	for i := range controller.requests {
+		if controller.requests[i].PlayerID == event.PlayerID {
+			fmt.Printf("Only one chip request per player at a time: %d\n", event.PlayerID)
+			return
+		}
+	}
+
+	// Add request
 	request := event.GetChipRequest()
 	controller.requests = append(controller.requests, request)
 
+	// Immediately approve for game owner
 	if event.PlayerID == controller.game.OwnerID {
 		event.Value = request.ID
 		e.handleAdminChipResponse(event)
 		return
 	}
 
+	// Let owner know about request
 	e.BroadcastRequests(controller)
 }
 
 func (e *EventBus) handleAdminChipResponse(event AdminEvent) {
+	var chipRequest *models.GameChipRequest
+
 	controller := e.games[event.GameID]
 	id := event.Value.(string)
 	approved := true
+
+	// TODO: we can do better than have denied request be `-playerID`
 	if id[0] == '-' {
 		approved, id = false, id[1:]
 	}
 
-	found, chipRequest := false, ChipRequest{}
+	playerID, err := strconv.Atoi(id)
+	if err != nil {
+		fmt.Printf("Could not parse player ID: %s\n", id)
+		return
+	}
+
+	// Remove request from pending
 	for i := range controller.requests {
-		if controller.requests[i].ID == id {
-			found, chipRequest = true, controller.requests[i]
+		if controller.requests[i].PlayerID == int64(playerID) {
+			chipRequest = controller.requests[i]
 			controller.requests = append(controller.requests[:i], controller.requests[i+1:]...)
 			break
 		}
 	}
 
-	if !found {
-		fmt.Printf("Could not find chip request: %s %+v\n", id, controller.requests)
+	if chipRequest == nil {
+		fmt.Printf("Could not find chip request: %d %+v\n", playerID, controller.requests)
 		return
 	}
 
+	// Approve chips and assign, if necessary
+	chipRequest.Status = models.GameChipRequestStatusDenied
 	if approved {
+		chipRequest.Status = models.GameChipRequestStatusDenied
 		controller.manager.AddChips(chipRequest.PlayerID, chipRequest.Amount)
 		e.BroadcastState(event.GameID)
 	}
 
+	// Save request
+	err = chipRequest.Save()
+	if err != nil {
+		fmt.Printf("Error saving chip request (%s)\n", err)
+	}
+
+	// Let all players know about updated stack
 	e.BroadcastRequests(controller)
 }
 
@@ -202,6 +240,21 @@ func (e *EventBus) handleAdminEvent(event AdminEvent) {
 	default:
 		fmt.Printf("Unknown admin event: %s\n", event.Action)
 	}
+}
+
+func (e *EventBus) handleMessageEvent(event MsgEvent) {
+	controller, ok := e.games[event.GameID]
+	if !ok {
+		fmt.Printf("Error: Could not find controller for game id (%d)\n", event.GameID)
+		return
+	}
+
+	controller.chats = append(controller.chats, event.GetChat())
+	if l := len(controller.chats); l > 100 {
+		controller.chats = controller.chats[l-100:]
+	}
+
+	e.broadcast(event.GameID, event.PlayerID, BroadcastEvent{ActionMsg, controller.chats})
 }
 
 // SetClient adds client to EventBus
@@ -259,7 +312,7 @@ func (e *EventBus) RemoveClient(client *Client) {
 // BroadcastRequests sends chip requests to game owner
 func (e *EventBus) BroadcastRequests(controller *GameController) {
 	// TODO: include relevant cards
-	broadcastEvent := NewBroadcastEvent(ActionAdmin, map[string][]ChipRequest{
+	broadcastEvent := NewBroadcastEvent(ActionAdmin, map[string][]*models.GameChipRequest{
 		"requests": controller.requests,
 	})
 
@@ -304,8 +357,9 @@ func (e *EventBus) PerformGameAction(gameEvent GameEvent) {
 
 	if complete {
 		time.AfterFunc(
-			controller.game.Options.TimeBetweenHands*time.Second,
+			time.Duration(controller.game.Options.TimeBetweenHands)*time.Second,
 			func() {
+				// Immediately start next hand after timeBetweenHands
 				e.advanceNextHand(AdminEvent{GameID: gameEvent.GameID})
 			},
 		)
@@ -329,6 +383,9 @@ func (e *EventBus) ListenForEvents() {
 		case gameAction := <-e.GameChannel:
 			fmt.Printf("GameAction: (%+v)\n", gameAction)
 			e.PerformGameAction(gameAction)
+		case msgAction := <-e.MessageChannel:
+			fmt.Printf("MsgAction: (%+v)\n", msgAction)
+			e.handleMessageEvent(msgAction)
 		}
 	}
 }

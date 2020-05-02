@@ -114,8 +114,12 @@ func TestCreateGameSuccess(t *testing.T) {
 	assert.Greater(t, game.ID, int64(0))
 	assert.Equal(t, name, game.Name)
 	assert.True(t, len(game.Slug) >= 16)
+	assert.Equal(t, game.Status, models.GameStatusInit)
 	assert.Equal(t, capacity, game.Options.Capacity)
 	assert.Equal(t, bigBlind, game.Options.BigBlind)
+	assert.Equal(t, 5, game.Options.TimeBetweenHands)
+	assert.Equal(t, int64(10)*bigBlind, game.Options.BuyInMax)
+	assert.Equal(t, bigBlind, game.Options.BuyInMin)
 	assert.Greater(t, game.CreatedAt.Unix(), int64(0))
 	assert.Greater(t, game.UpdatedAt.Unix(), int64(0))
 }

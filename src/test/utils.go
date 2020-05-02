@@ -39,6 +39,7 @@ func CreateTestGame(player *models.Player) *models.Game {
 	game := &models.Game{
 		Name:    fmt.Sprintf("Test Game %d", ts),
 		OwnerID: player.ID,
+		Status:  models.GameStatusInit,
 	}
 	_ = game.Save()
 

@@ -37,7 +37,10 @@ export class Table extends React.Component<TableProps, TableState> {
         this.conn.subscribe('game', this.stateUpdateHandler.bind(this));
         this.conn.init();
         this.conn.send(JSON.stringify(initMsg));
-        this.conn.onDisconnect = this.resetConnection.bind(this);
+        this.conn.onDisconnect = () => {
+            // wait for animation frame to not destroy background tabs
+            window.requestAnimationFrame(this.resetConnection.bind(this));
+        };
     }
 
     public stateUpdateHandler(evtState: EventState) {

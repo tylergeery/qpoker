@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -27,8 +25,8 @@ const (
 
 // Chat message
 type Chat struct {
-	playerID int64  `json:"player_id"`
-	message  string `json:"message"`
+	PlayerID int64  `json:"player_id"`
+	Message  string `json:"message"`
 }
 
 // PlayerEvent represents a player connection action
@@ -74,11 +72,12 @@ func (e AdminEvent) ValidateAuthorized(game *models.Game) error {
 }
 
 // GetChipRequest gets chip request from event
-func (e AdminEvent) GetChipRequest() ChipRequest {
-	return ChipRequest{
-		uuid.New().String(),
-		e.PlayerID,
-		interfaceInt64(e.Value),
+func (e AdminEvent) GetChipRequest() *models.GameChipRequest {
+	return &models.GameChipRequest{
+		GameID:   e.GameID,
+		PlayerID: e.PlayerID,
+		Amount:   interfaceInt64(e.Value),
+		Status:   models.GameChipRequestStatusInit,
 	}
 }
 
@@ -87,6 +86,15 @@ type MsgEvent struct {
 	Action   string
 	GameID   int64
 	PlayerID int64
+	Value    string
+}
+
+// GetChat turns MsgEvent into Chat
+func (e MsgEvent) GetChat() Chat {
+	return Chat{
+		PlayerID: e.PlayerID,
+		Message:  e.Value,
+	}
 }
 
 // BroadcastEvent is the event broadcasted to all clients

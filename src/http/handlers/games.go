@@ -28,10 +28,6 @@ func (req createGameRequest) validate() error {
 		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
 	}
 
-	req.Options.TimeBetweenHands = 5
-	req.Options.BuyInMin = 10
-	req.Options.BuyInMax = 50
-
 	return nil
 }
 
@@ -65,6 +61,7 @@ func CreateGame(c *fiber.Ctx) {
 	game := &models.Game{
 		Name:    req.Name,
 		OwnerID: player.ID,
+		Status:  models.GameStatusInit,
 	}
 	err = game.Save()
 	if err != nil {
@@ -74,14 +71,20 @@ func CreateGame(c *fiber.Ctx) {
 		return
 	}
 
+	// Sane defaults
+	req.Options.TimeBetweenHands = 5
+	req.Options.BuyInMin = req.Options.BigBlind
+	req.Options.BuyInMax = req.Options.BigBlind * 10
+
 	options := &models.GameOptionsRecord{
 		GameID:  game.ID,
 		Options: req.Options,
 	}
 	err = options.Save()
 	if err != nil {
-		fmt.Printf("Game options save error: %s", err)
+		fmt.Printf("Game options save error: %s\n", err)
 	}
+	fmt.Printf("gameOptions after save: %+v\n", options)
 	if err == nil {
 		game.Options = options.Options
 	}

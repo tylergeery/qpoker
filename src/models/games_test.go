@@ -21,6 +21,7 @@ func TestGetGameBy(t *testing.T) {
 	assert.Equal(t, fetchedGame.Name, game.Name)
 	assert.Equal(t, fetchedGame.Slug, game.Slug)
 	assert.True(t, len(fetchedGame.Slug) >= 16)
+	assert.Equal(t, fetchedGame.Status, game.Status)
 	assert.Equal(t, fetchedGame.CreatedAt.Unix(), game.CreatedAt.Unix())
 	assert.Equal(t, fetchedGame.UpdatedAt.Unix(), game.UpdatedAt.Unix())
 

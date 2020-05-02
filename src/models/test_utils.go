@@ -36,6 +36,7 @@ func CreateTestGame(player *Player) *Game {
 	game := &Game{
 		Name:    fmt.Sprintf("Testing Game %d", time.Now().UTC().UnixNano()),
 		OwnerID: player.ID,
+		Status:  GameStatusInit,
 	}
 	game.Save()
 
