@@ -57,7 +57,7 @@ func (req *GameChipRequest) Save() error {
 func (req *GameChipRequest) insert() error {
 	err := ConnectToDB().QueryRow(`
 		INSERT INTO game_chip_requests (game_id, player_id, amount, status)
-		VALUES ($1, $2, $3)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`, req.GameID, req.PlayerID, req.Amount, req.Status).Scan(
 		&req.ID, &req.CreatedAt, &req.UpdatedAt)

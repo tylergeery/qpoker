@@ -73,8 +73,40 @@ func GetGameHandBy(key string, val interface{}) (*GameHand, error) {
 }
 
 // GetHandsForGame returns all hands for game
-func GetHandsForGame(gameID int64) ([]*GameHand, error) {
-	return []*GameHand{}, nil
+func GetHandsForGame(gameID int64, since int64, count int) ([]*GameHand, error) {
+	hands := []*GameHand{}
+
+	rows, err := ConnectToDB().Query(`
+		SELECT
+			id,
+			game_id,
+			board,
+			payouts,
+			bets,
+			created_at,
+			updated_at
+		FROM game_hand
+		WHERE game_id = $1
+			AND id > $2
+		ORDER BY id ASC
+		LIMIT $3
+	`, gameID, since, count)
+	if err != nil {
+		return hands, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		hand := &GameHand{}
+
+		rows.Scan(
+			&hand.ID, &hand.GameID, pq.Array(&hand.Board), &hand.Payouts,
+			&hand.Bets, &hand.CreatedAt, &hand.UpdatedAt,
+		)
+		hands = append(hands, hand)
+	}
+
+	return hands, nil
 }
 
 // Save writes the Game object to the database
