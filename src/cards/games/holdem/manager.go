@@ -388,11 +388,19 @@ func (g *GameManager) UpdateStatus(status string) {
 }
 
 // GetVisibleCards returns client representation of cards for those visible
-func (g *GameManager) GetVisibleCards() map[int64][]cards.Card {
+func (g *GameManager) GetVisibleCards(playerID int64) map[int64][]cards.Card {
 	visibleCards := map[int64][]cards.Card{}
 
 	for _, player := range g.State.Table.Players {
-		if player != nil && player.CardsVisible {
+		if player == nil {
+			continue
+		}
+
+		if player.Cards == nil {
+			continue
+		}
+
+		if player.ID == playerID || player.CardsVisible {
 			visibleCards[player.ID] = player.Cards
 		}
 	}

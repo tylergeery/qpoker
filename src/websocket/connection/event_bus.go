@@ -22,7 +22,6 @@ type GameState struct {
 func NewGameState(manager *holdem.GameManager) GameState {
 	return GameState{
 		Manager: manager,
-		Cards:   manager.GetVisibleCards(),
 	}
 }
 
@@ -140,7 +139,7 @@ func (e *EventBus) handleAdminChipRequest(event AdminEvent) {
 
 	// Immediately approve for game owner
 	if event.PlayerID == controller.game.OwnerID {
-		event.Value = request.ID
+		event.Value = strconv.Itoa(int(request.PlayerID))
 		e.handleAdminChipResponse(event)
 		return
 	}
@@ -327,15 +326,12 @@ func (e *EventBus) BroadcastState(gameID int64) {
 		return
 	}
 
-	// TODO: include relevant cards
-	broadcastEvent := NewBroadcastEvent(ActionGame, NewGameState(controller.manager))
-	state, err := json.Marshal(broadcastEvent)
-	if err != nil {
-		fmt.Printf("Error broadcasting game state: %s\n", err)
-		return
-	}
+	state := NewGameState(controller.manager)
 
 	for i := range controller.clients {
+		state.Cards = controller.manager.GetVisibleCards(controller.clients[i].PlayerID)
+		broadcastEvent := NewBroadcastEvent(ActionGame, state)
+		state, _ := json.Marshal(broadcastEvent)
 		controller.clients[i].SendMessage(state)
 	}
 }

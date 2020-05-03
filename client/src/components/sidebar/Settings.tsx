@@ -32,7 +32,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
             options: Object.assign({}, props.game.options),
             requests: [],
             form: {
-                'chip_request': 20000,
+                'chip_request': props.game.options.buy_in_min
             }
         }
     }
@@ -77,31 +77,31 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                 name: 'big_blind',
                 label: 'Big Blind',
                 type: 'number',
-                value: this.props.game.options.big_blind || 50,
+                value: this.props.game.options.big_blind,
             },
             {
                 name: 'capacity',
                 label: 'Capacity',
                 type: 'number',
-                value: this.props.game.options.capacity || 12,
+                value: this.props.game.options.capacity,
             },
             {
                 name: 'time_between_hands',
                 label: 'Time Between Hands (s)',
                 type: 'number',
-                value: this.props.game.options.time_between_hands || 5,
+                value: this.props.game.options.time_between_hands,
             },
             {
                 name: 'buy_in_min',
                 label: 'Min Buy In',
                 type: 'number',
-                value: this.props.game.options.buy_in_min || 10,
+                value: this.props.game.options.buy_in_min,
             },
             {
                 name: 'buy_in_max',
                 label: 'Max Buy In',
                 type: 'number',
-                value: this.props.game.options.buy_in_max || 50,
+                value: this.props.game.options.buy_in_max,
             }
         ]
     }
@@ -153,15 +153,14 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                             <th colSpan={4}>Admin Control</th>
                         </tr>
                     ) : ''}
-                    {isAdmin ? (
+                    {(isAdmin && this.props.es.manager.status != "active") ? (
                         <tr>
                             <td colSpan={2}>Start Game:</td>
                             <td>
                                 <button disabled={this.props.es.manager.status == "init"}
                                     onClick={this.sendAdminAction.bind(this, 'start', '')}
                                     className={classNames("btn-flat green lighten-1", {
-                                        'disabled': this.props.es.manager.status == "init",
-                                        'hidden': this.props.es.manager.status == "active" 
+                                        'disabled': this.props.es.manager.status == "init" 
                                     })} type="button">
                                     Start
                                 </button>
@@ -177,12 +176,12 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                         return <tr>
                             <td colSpan={2}>{this.props.es.getPlayer(req.player_id).username}</td>
                             <td>
-                                <button onClick={this.sendChipsResponse.bind(this, req.id)} className="btn-flat green lighten-2" type="button">
+                                <button onClick={this.sendChipsResponse.bind(this, req.player_id.toString())} className="btn-flat green lighten-2" type="button">
                                     Approve
                                 </button>
                             </td>
                             <td>
-                                <button onClick={this.sendChipsResponse.bind(this, '-' + req.id)} className="btn-flat red lighten-2" type="button">
+                                <button onClick={this.sendChipsResponse.bind(this, '-' + req.player_id.toString())} className="btn-flat red lighten-2" type="button">
                                     Deny
                                 </button>
                             </td>
@@ -191,7 +190,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     <tr>
                         <td colSpan={2}>Request Chips</td>
                         <td>
-                            <input type="number" step={50} defaultValue={this.props.game.options.buy_in_min} name="chip_request"
+                            <input type="number" step={this.props.game.options.big_blind} defaultValue={this.props.game.options.buy_in_min} name="chip_request"
                                 onChange={this.handleChange.bind(this)} />
                         </td>
                         <td>
