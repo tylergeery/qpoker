@@ -42,6 +42,8 @@ func TestGetGameHandBy(t *testing.T) {
 }
 
 func TestGetHandsForGame(t *testing.T) {
+	var nilCards []string
+
 	// Given
 	player := CreateTestPlayer()
 	player2 := CreateTestPlayer()
@@ -85,12 +87,21 @@ func TestGetHandsForGame(t *testing.T) {
 		assert.NoError(t, err)
 		err = gameHand.Save()
 		assert.NoError(t, err)
+		gamePlayerHand := &GamePlayerHand{
+			GameHandID:    gameHand.ID,
+			PlayerID:      player2.ID,
+			Cards:         []string{"AS", "AC"},
+			EndingStack:   int64(100),
+			StartingStack: int64(50),
+		}
+		err = gamePlayerHand.Save()
+		assert.NoError(t, err)
 	}
 
 	// When
-	fetchedHands, err := GetHandsForGame(game.ID, int64(0), 2)
+	fetchedHands, err := GetHandsForGame(game.ID, player.ID, game.CreatedAt, 2)
 	assert.NoError(t, err)
-	fetchedHands2, err := GetHandsForGame(game.ID, fetchedHands[1].ID, 2)
+	fetchedHands2, err := GetHandsForGame(game.ID, player2.ID, fetchedHands[1].CreatedAt, 2)
 	assert.NoError(t, err)
 	totalHands := append(fetchedHands, fetchedHands2...)
 
@@ -103,5 +114,15 @@ func TestGetHandsForGame(t *testing.T) {
 		assert.Equal(t, totalHands[i].Bets, gameHands[i].Bets)
 		assert.Equal(t, totalHands[i].CreatedAt.Unix(), gameHands[i].CreatedAt.Unix())
 		assert.Equal(t, totalHands[i].UpdatedAt.Unix(), gameHands[i].UpdatedAt.Unix())
+
+		if i == 2 {
+			assert.Equal(t, totalHands[i].Cards, []string{"AS", "AC"})
+			assert.Equal(t, totalHands[i].StartingStack.Int64, int64(50))
+			assert.Equal(t, totalHands[i].EndingStack.Int64, int64(100))
+		} else {
+			assert.Equal(t, totalHands[i].Cards, nilCards)
+			assert.False(t, totalHands[i].StartingStack.Valid)
+			assert.False(t, totalHands[i].EndingStack.Valid)
+		}
 	}
 }

@@ -52,6 +52,11 @@ func GetGameBy(key string, val interface{}) (*Game, error) {
 	return game, err
 }
 
+// IsComplete checks whether the game is complete
+func (g *Game) IsComplete() bool {
+	return g.Status == GameStatusComplete
+}
+
 // Save writes the Game object to the database
 func (g *Game) Save() error {
 	if g.ID == 0 {

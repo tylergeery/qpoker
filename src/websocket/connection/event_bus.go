@@ -183,7 +183,7 @@ func (e *EventBus) handleAdminChipResponse(event AdminEvent) {
 	// Approve chips and assign, if necessary
 	chipRequest.Status = models.GameChipRequestStatusDenied
 	if approved {
-		chipRequest.Status = models.GameChipRequestStatusDenied
+		chipRequest.Status = models.GameChipRequestStatusApproved
 		controller.manager.AddChips(chipRequest.PlayerID, chipRequest.Amount)
 		e.BroadcastState(event.GameID)
 	}

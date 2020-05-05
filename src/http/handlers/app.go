@@ -32,7 +32,7 @@ func CreateApp() *fiber.App {
 	apiV1.Put("/games/:gameID", middleware.Authorize, UpdateGame)
 	apiV1.Get("/games/:gameID", middleware.Authorize, GetGame)
 
-	// apiV1.Get("/players/:id/games/:gameID/history", middleware.Authorize, GetPlayerGameHistory)
+	apiV1.Get("/games/:gameID/history", middleware.Authorize, GetGameHistory)
 
 	return app
 }

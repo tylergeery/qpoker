@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
@@ -48,6 +49,14 @@ type GameHand struct {
 	UpdatedAt time.Time    `json:"updated_at"`
 }
 
+// GameHandWithPlayer returns game hand with player info
+type GameHandWithPlayer struct {
+	GameHand
+	Cards         []string      `json:"cards"`
+	StartingStack sql.NullInt64 `json:"starting_stack"`
+	EndingStack   sql.NullInt64 `json:"ending_stack"`
+}
+
 // GetGameHandBy returns a GameHand found from key,val
 func GetGameHandBy(key string, val interface{}) (*GameHand, error) {
 	hand := &GameHand{}
@@ -73,35 +82,42 @@ func GetGameHandBy(key string, val interface{}) (*GameHand, error) {
 }
 
 // GetHandsForGame returns all hands for game
-func GetHandsForGame(gameID int64, since int64, count int) ([]*GameHand, error) {
-	hands := []*GameHand{}
+func GetHandsForGame(gameID, playerID int64, since time.Time, count int) ([]*GameHandWithPlayer, error) {
+	hands := []*GameHandWithPlayer{}
 
 	rows, err := ConnectToDB().Query(`
 		SELECT
-			id,
-			game_id,
+			gh.id,
+			gh.game_id,
 			board,
-			payouts,
-			bets,
-			created_at,
-			updated_at
-		FROM game_hand
+			gh.payouts,
+			gh.bets,
+			gh.created_at,
+			gh.updated_at,
+			gph.cards,
+			gph.starting_stack,
+			gph.ending_stack
+		FROM game_hand gh
+		LEFT JOIN game_player_hand gph ON (
+			gh.id = gph.game_hand_id AND gph.player_id = $3
+		)
 		WHERE game_id = $1
-			AND id > $2
-		ORDER BY id ASC
-		LIMIT $3
-	`, gameID, since, count)
+			AND gh.created_at > $2
+		ORDER BY gh.created_at ASC
+		LIMIT $4
+	`, gameID, since, playerID, count)
 	if err != nil {
 		return hands, err
 	}
 
 	defer rows.Close()
 	for rows.Next() {
-		hand := &GameHand{}
+		hand := &GameHandWithPlayer{}
 
 		rows.Scan(
 			&hand.ID, &hand.GameID, pq.Array(&hand.Board), &hand.Payouts,
 			&hand.Bets, &hand.CreatedAt, &hand.UpdatedAt,
+			pq.Array(&hand.Cards), &hand.StartingStack, &hand.EndingStack,
 		)
 		hands = append(hands, hand)
 	}

@@ -8,8 +8,8 @@ import (
 const (
 	// GameChipRequestStatusInit = "init"
 	GameChipRequestStatusInit = "init"
-	// GameChipRequestStatusIApproved = "approved"
-	GameChipRequestStatusIApproved = "approved"
+	// GameChipRequestStatusApproved = "approved"
+	GameChipRequestStatusApproved = "approved"
 	// GameChipRequestStatusDenied = "denied"
 	GameChipRequestStatusDenied = "denied"
 )
@@ -43,6 +43,42 @@ func GetGameChipRequestBy(key string, val interface{}) (*GameChipRequest, error)
 	}
 
 	return req, err
+}
+
+// GetChipRequestsForGame returns all hands for game
+func GetChipRequestsForGame(gameID int64, since time.Time, count int) ([]*GameChipRequest, error) {
+	requests := []*GameChipRequest{}
+
+	rows, err := ConnectToDB().Query(`
+		SELECT
+			id,
+			game_id,
+			player_id,
+			amount,
+			status,
+			created_at,
+			updated_at
+		FROM game_chip_requests
+		WHERE game_id = $1
+			AND updated_at > $2
+		ORDER BY updated_at ASC
+		LIMIT $3
+	`, gameID, since, count)
+	if err != nil {
+		return requests, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		req := &GameChipRequest{}
+
+		rows.Scan(
+			&req.ID, &req.GameID, &req.PlayerID, &req.Amount,
+			&req.Status, &req.CreatedAt, &req.UpdatedAt)
+		requests = append(requests, req)
+	}
+
+	return requests, nil
 }
 
 // Save writes the Game object to the database

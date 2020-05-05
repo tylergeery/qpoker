@@ -57,10 +57,11 @@ func (g *GamePlayerHand) Save() error {
 
 func (g *GamePlayerHand) insert() error {
 	err := ConnectToDB().QueryRow(`
-		INSERT INTO game_player_hand (game_hand_id, player_id, cards, starting_stack)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO game_player_hand (game_hand_id, player_id, cards, starting_stack, ending_stack)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at, updated_at
-	`, g.GameHandID, g.PlayerID, pq.StringArray(g.Cards), g.StartingStack).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
+	`, g.GameHandID, g.PlayerID, pq.StringArray(g.Cards), g.StartingStack, g.EndingStack).Scan(
+		&g.ID, &g.CreatedAt, &g.UpdatedAt)
 
 	return err
 }

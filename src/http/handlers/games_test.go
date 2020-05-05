@@ -222,3 +222,103 @@ func TestGetGameSuccess(t *testing.T) {
 	assert.Equal(t, game.CreatedAt.Unix(), retrievedGame.CreatedAt.Unix())
 	assert.Equal(t, game.UpdatedAt.Unix(), retrievedGame.CreatedAt.Unix())
 }
+
+func TestGetGameHistoryEmpty(t *testing.T) {
+	// Given
+	var gameHistory []interface{}
+
+	player := test.CreateTestPlayer()
+	game := test.CreateTestGame(player)
+	headers := map[string]string{"Content-Type": "application/json", "Authorization": fmt.Sprintf("Bearer %s", player.Token)}
+	req := test.CreateTestRequest("GET", fmt.Sprintf("/api/v1/games/%d/history", game.ID), headers, nil)
+	app := CreateApp()
+
+	// When
+	response, err := app.Test(req)
+	assert.NoError(t, err)
+
+	// Then
+	content, err := ioutil.ReadAll(response.Body)
+	assert.NoError(t, err)
+
+	json.Unmarshal(content, &gameHistory)
+	assert.Equal(t, 0, len(gameHistory))
+}
+
+func TestGetGameHistorySuccess(t *testing.T) {
+	// Given
+	var gameHistory []interface{}
+
+	// Create GameHistory
+	player := test.CreateTestPlayer()
+	player2 := test.CreateTestPlayer()
+	game := test.CreateTestGame(player)
+	req1 := &models.GameChipRequest{
+		GameID:   game.ID,
+		PlayerID: player.ID,
+		Amount:   120,
+		Status:   models.GameChipRequestStatusApproved,
+	}
+	err := req1.Save()
+	assert.NoError(t, err)
+	req2 := &models.GameChipRequest{
+		GameID:   game.ID,
+		PlayerID: player.ID,
+		Amount:   360,
+		Status:   models.GameChipRequestStatusApproved,
+	}
+	err = req2.Save()
+	assert.NoError(t, err)
+
+	for i := 0; i < 3; i++ {
+		hand := &models.GameHand{
+			GameID: game.ID,
+			Board:  []string{"2D", "3C", "4S"},
+			Payouts: models.UserStackMap{
+				player.ID: 40,
+			},
+			Bets: models.UserStackMap{
+				player2.ID: 20,
+				player.ID:  20,
+			},
+		}
+		err = hand.Save()
+		assert.NoError(t, err)
+
+		if i == 0 {
+			gamePlayerHand := &models.GamePlayerHand{
+				GameHandID:    hand.ID,
+				PlayerID:      player.ID,
+				Cards:         []string{"JS", "JC"},
+				StartingStack: int64(120 + (i * 20)),
+				EndingStack:   int64(120 + ((i + 1) * 20)),
+			}
+			err = gamePlayerHand.Save()
+			assert.NoError(t, err)
+		}
+	}
+	req3 := &models.GameChipRequest{
+		GameID:   game.ID,
+		PlayerID: player.ID,
+		Amount:   120,
+	}
+	err = req3.Save()
+	assert.NoError(t, err)
+
+	headers := map[string]string{"Content-Type": "application/json", "Authorization": fmt.Sprintf("Bearer %s", player.Token)}
+	req := test.CreateTestRequest("GET", fmt.Sprintf("/api/v1/games/%d/history", game.ID), headers, nil)
+	app := CreateApp()
+
+	// When
+	response, err := app.Test(req)
+	assert.NoError(t, err)
+
+	// Then
+	content, err := ioutil.ReadAll(response.Body)
+	assert.NoError(t, err)
+
+	json.Unmarshal(content, &gameHistory)
+	assert.Equal(t, 6, len(gameHistory))
+
+	// Assert things about the 6
+}

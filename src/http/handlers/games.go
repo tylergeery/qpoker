@@ -5,6 +5,7 @@ import (
 	"qpoker/http/utils"
 	"qpoker/models"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber"
 )
@@ -226,4 +227,76 @@ func GetGame(c *fiber.Ctx) {
 
 	c.SendStatus(200)
 	c.JSON(game)
+}
+
+// GetGameHistory returns all game history events
+func GetGameHistory(c *fiber.Ctx) {
+	playerID := c.Locals("playerID").(int64)
+	gameID, err := strconv.Atoi(c.Params("gameID"))
+	if err != nil {
+		c.SendStatus(404)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown game ID type")))
+		return
+	}
+
+	game, err := models.GetGameBy("id", gameID)
+	if err != nil {
+		c.SendStatus(404)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown game")))
+		return
+	}
+
+	since, err := time.Parse(c.Query("since"), time.RFC3339Nano)
+	if err != nil {
+		since = game.CreatedAt
+	}
+
+	if game.IsComplete() {
+		// TODO: ensure player actually played
+	}
+
+	gameHands, err := models.GetHandsForGame(game.ID, playerID, since, 100)
+	if err != nil {
+		c.SendStatus(500)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Error querying game hands")))
+		return
+	}
+
+	chipRequests, err := models.GetChipRequestsForGame(game.ID, since, 100)
+	if err != nil {
+		c.SendStatus(500)
+		c.JSON(utils.FormatErrors(fmt.Errorf("Error querying game chip requests")))
+		return
+	}
+
+	c.SendStatus(200)
+	c.JSON(combineAndSort(gameHands, chipRequests))
+}
+
+func combineAndSort(hands []*models.GameHandWithPlayer, reqs []*models.GameChipRequest) []interface{} {
+	sorted := []interface{}{}
+
+	for len(hands) > 0 || len(reqs) > 0 {
+		if len(hands) > 0 && len(reqs) > 0 {
+			if hands[0].CreatedAt.Before(reqs[0].UpdatedAt) {
+				sorted = append(sorted, hands[0])
+				hands = hands[1:]
+			} else {
+				sorted = append(sorted, reqs[0])
+				reqs = reqs[1:]
+			}
+
+			continue
+		}
+
+		if len(hands) > 0 {
+			sorted = append(sorted, hands[0])
+			hands = hands[1:]
+		} else {
+			sorted = append(sorted, reqs[0])
+			reqs = reqs[1:]
+		}
+	}
+
+	return sorted
 }
