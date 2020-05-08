@@ -21,13 +21,12 @@ type Table struct {
 
 // NewTable returns a new table object
 func NewTable(capacity int, players []*Player) *Table {
+	if capacity < len(players) {
+		capacity = len(players)
+	}
+
 	tablePlayers := make([]*Player, capacity)
-
 	for i := range players {
-		if i >= capacity {
-			break
-		}
-
 		tablePlayers[i] = players[i]
 	}
 

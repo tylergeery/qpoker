@@ -78,14 +78,12 @@ func (g *GameManager) AddChips(playerID, amount int64) {
 
 // NextHand moves game manager on to next hand
 func (g *GameManager) NextHand() error {
-	g.UpdateStatus(StatusActive)
+	g.Status = StatusReady
 
 	err := g.State.Deal()
 	if err != nil {
 		return err
 	}
-
-	// TODO: pull latest game options
 
 	// Save hand and player hands
 	err = g.StartHand()
@@ -104,6 +102,8 @@ func (g *GameManager) NextHand() error {
 	g.State.Table.GetActivePlayer().BigBlind = true
 	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)))
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+
+	g.UpdateStatus(StatusActive)
 
 	return nil
 }
@@ -165,11 +165,20 @@ func (g *GameManager) canBet() bool {
 		return false
 	}
 
+	// If user has current max bet, they can raise (first round only)
+	if g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID] {
+		return true
+	}
+
+	if g.Pot.MaxBet() >= g.State.Table.GetActivePlayer().Stack {
+		return false
+	}
+
 	return true
 }
 
 func (g *GameManager) canCall() bool {
-	if !g.canBet() {
+	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
 		return false
 	}
 
@@ -181,6 +190,10 @@ func (g *GameManager) canCheck() bool {
 }
 
 func (g *GameManager) canFold() bool {
+	if g.State.Table.GetActivePlayer().Stack <= 0 {
+		return false
+	}
+
 	return !g.canCheck()
 }
 
@@ -189,7 +202,10 @@ func (g *GameManager) playerBet(action Action) error {
 		return fmt.Errorf("Cannot bet")
 	}
 
-	// TODO: validate bet amount, don't forget about little blind
+	if g.Status == StatusActive && action.Amount < g.BigBlind {
+		return fmt.Errorf("Insufficient bet amount")
+	}
+
 	player := g.State.Table.GetActivePlayer()
 	amount := utils.MinInt64(action.Amount, player.Stack)
 
@@ -230,7 +246,6 @@ func (g *GameManager) playerFold(action Action) error {
 		return fmt.Errorf("Cannot fold")
 	}
 
-	fmt.Printf("setting player state: %s\n", PlayerStateFold)
 	g.State.Table.GetActivePlayer().State = PlayerStateFold
 
 	return nil
