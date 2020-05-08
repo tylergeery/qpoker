@@ -100,12 +100,24 @@ func (g *GameManager) NextHand() error {
 
 	// big blind
 	g.State.Table.GetActivePlayer().BigBlind = true
-	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)))
-	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+	_, err = g.PlayerAction(
+		g.State.Table.GetActivePlayer().ID,
+		NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)),
+	)
+	if err != nil {
+		return err
+	}
 
 	g.UpdateStatus(StatusActive)
 
 	return nil
+}
+
+// NextRound advances gameplay to next round
+func (g *GameManager) NextRound() {
+	g.State.Advance()
+	g.State.Table.NextRound(g.GetPlayerActions)
+	g.Pot.ClearBets()
 }
 
 func (g *GameManager) cardsToStringArray(cardObjects []cards.Card) []string {
@@ -126,6 +138,10 @@ func (g *GameManager) isComplete() bool {
 	}
 
 	if g.isRoundComplete() && g.State.State == StateRiver {
+		return true
+	}
+
+	if g.IsAllIn() && g.State.State == StateRiver {
 		return true
 	}
 
@@ -165,8 +181,22 @@ func (g *GameManager) canBet() bool {
 		return false
 	}
 
+	playersTotal, players := int64(0), g.State.Table.GetActivePlayers()
+	for i := range players {
+		if players[i].ID == g.State.Table.GetActivePlayer().ID {
+			continue
+		}
+
+		playersTotal += players[i].Stack
+	}
+
+	// Cannot bet if nobody else has a stack
+	if playersTotal <= int64(0) {
+		return false
+	}
+
 	// If user has current max bet, they can raise (first round only)
-	if g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID] {
+	if g.Pot.MaxBet() > int64(0) && g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID] {
 		return true
 	}
 
@@ -186,11 +216,18 @@ func (g *GameManager) canCall() bool {
 }
 
 func (g *GameManager) canCheck() bool {
+	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
+		return false
+	}
+
+	// TODO: handle all in
+
 	return g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID]
 }
 
 func (g *GameManager) canFold() bool {
-	if g.State.Table.GetActivePlayer().Stack <= 0 {
+	fmt.Printf("PlayerID: %d, Stack: %d\n", g.State.Table.GetActivePlayer().ID, g.State.Table.GetActivePlayer().Stack)
+	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
 		return false
 	}
 
@@ -198,12 +235,15 @@ func (g *GameManager) canFold() bool {
 }
 
 func (g *GameManager) playerBet(action Action) error {
-	if !g.canBet() {
-		return fmt.Errorf("Cannot bet")
-	}
+	if g.Status == StatusActive {
+		if !g.canBet() {
+			return fmt.Errorf("Cannot bet")
+		}
 
-	if g.Status == StatusActive && action.Amount < g.BigBlind {
-		return fmt.Errorf("Insufficient bet amount")
+		minBet := utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)
+		if action.Amount < minBet {
+			return fmt.Errorf("Insufficient bet amount")
+		}
 	}
 
 	player := g.State.Table.GetActivePlayer()
@@ -222,7 +262,10 @@ func (g *GameManager) playerCall(action Action) error {
 	}
 
 	player := g.State.Table.GetActivePlayer()
-	amount := g.Pot.MaxBet() - g.Pot.PlayerBets[player.ID]
+	amount := utils.MinInt64(
+		g.Pot.MaxBet()-g.Pot.PlayerBets[player.ID],
+		g.State.Table.GetActivePlayer().Stack,
+	)
 
 	g.Pot.AddBet(player.ID, amount)
 	player.Stack -= amount
@@ -252,15 +295,13 @@ func (g *GameManager) playerFold(action Action) error {
 }
 
 // PlayerAction performs an action for player
-func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool, err error) {
+func (g *GameManager) PlayerAction(playerID int64, action Action) (bool, error) {
 	if g.isComplete() {
-		err = fmt.Errorf("Game is already complete")
-		return
+		return false, fmt.Errorf("Game is already complete")
 	}
 
 	if playerID != g.State.Table.GetActivePlayer().ID {
-		err = fmt.Errorf("User (%d) must wait for player (%d) to act", playerID, g.State.Table.GetActivePlayer().ID)
-		return
+		return false, fmt.Errorf("User (%d) must wait for player (%d) to act", playerID, g.State.Table.GetActivePlayer().ID)
 	}
 
 	actionMap := map[string]func(action Action) error{
@@ -270,28 +311,38 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (complete bool
 		ActionFold:  g.playerFold,
 	}
 
-	err = actionMap[action.Name](action)
+	err := actionMap[action.Name](action)
 	if err != nil {
-		return
+		return false, err
 	}
 
-	complete = g.isComplete()
-	if complete {
-		err = g.EndHand()
+	return g.ProcessAction()
+}
+
+// ProcessAction handles the post-processing of an action
+func (g *GameManager) ProcessAction() (bool, error) {
+	if g.isComplete() {
+		err := g.EndHand()
 		g.State.Table.GetActivePlayer().SetPlayerActions(nil)
-		return
+		return true, err
 	}
 
 	if g.isRoundComplete() {
-		g.State.Advance()
-		g.State.Table.NextRound(g.GetPlayerActions)
-		g.Pot.ClearBets()
-		return
+		g.NextRound()
+		return false, nil
 	}
 
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+	if g.IsAllIn() {
+		g.NextRound()
+		return false, nil
+	}
 
-	return
+	if !g.State.Table.GetActivePlayer().HasOptions() {
+		return g.ProcessAction()
+	}
+
+	return false, nil
 }
 
 // GetPlayerActions returns allowed active player actions
@@ -366,10 +417,10 @@ func (g *GameManager) EndHand() error {
 			continue
 		}
 
-		hand.EndingStack = player.Stack
 		if amount, ok := payouts[player.ID]; ok {
-			hand.EndingStack += amount
+			player.Stack += amount
 		}
+		hand.EndingStack = player.Stack
 
 		err = hand.Save()
 		if err != nil {
@@ -436,4 +487,16 @@ func (g *GameManager) GetPlayer(playerID int64) *Player {
 	}
 
 	return nil
+}
+
+// IsAllIn determines whether a round is all in and should proceed automagically
+func (g *GameManager) IsAllIn() bool {
+	players := g.State.Table.GetActivePlayers()
+	for i := range players {
+		if players[i].HasOptions() {
+			return false
+		}
+	}
+
+	return true
 }

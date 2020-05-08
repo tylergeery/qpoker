@@ -3,6 +3,7 @@ package holdem
 import (
 	"qpoker/cards"
 	"qpoker/models"
+	"qpoker/utils"
 )
 
 const (
@@ -33,6 +34,7 @@ type Player struct {
 	LittleBlind  bool            `json:"little_blind"`
 }
 
+// NewPlayer creates a new Player
 func NewPlayer(player *models.Player) *Player {
 	return &Player{
 		ID:       player.ID,
@@ -53,4 +55,9 @@ func (p *Player) IsActive() bool {
 	}
 
 	return true
+}
+
+// HasOptions returns whether the player has options
+func (p *Player) HasOptions() bool {
+	return utils.HasTrueValues(p.Options)
 }

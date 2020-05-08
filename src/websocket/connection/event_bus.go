@@ -198,10 +198,10 @@ func (e *EventBus) handleAdminChipResponse(event AdminEvent) {
 	e.BroadcastRequests(controller)
 }
 
-func (e *EventBus) advanceNextHand(event AdminEvent) {
-	controller, ok := e.games[event.GameID]
+func (e *EventBus) advanceNextHand(gameID int64) {
+	controller, ok := e.games[gameID]
 	if !ok {
-		fmt.Printf("Error advancing hand: Could not find controller for game id (%d)\n", event.GameID)
+		fmt.Printf("Error advancing hand: Could not find controller for game id (%d)\n", gameID)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (e *EventBus) advanceNextHand(event AdminEvent) {
 		return
 	}
 
-	e.BroadcastState(event.GameID)
+	e.BroadcastState(gameID)
 }
 
 func (e *EventBus) handleAdminEvent(event AdminEvent) {
@@ -228,7 +228,7 @@ func (e *EventBus) handleAdminEvent(event AdminEvent) {
 
 	switch event.Action {
 	case ClientAdminStart:
-		e.advanceNextHand(event)
+		e.advanceNextHand(event.GameID)
 		break
 	case ClientChipRequest:
 		e.handleAdminChipRequest(event)
@@ -310,12 +310,10 @@ func (e *EventBus) RemoveClient(client *Client) {
 
 // BroadcastRequests sends chip requests to game owner
 func (e *EventBus) BroadcastRequests(controller *GameController) {
-	// TODO: include relevant cards
 	broadcastEvent := NewBroadcastEvent(ActionAdmin, map[string][]*models.GameChipRequest{
 		"requests": controller.requests,
 	})
 
-	fmt.Printf("broadcast %+v %+v\n", controller.game, broadcastEvent)
 	e.broadcast(controller.game.ID, controller.game.OwnerID, broadcastEvent)
 }
 
@@ -349,16 +347,31 @@ func (e *EventBus) PerformGameAction(gameEvent GameEvent) {
 		return
 	}
 
-	e.BroadcastState(gameEvent.GameID)
+	e.processGame(gameEvent.GameID, complete)
+}
+
+func (e *EventBus) processGame(gameID int64, complete bool) {
+	controller := e.games[gameID]
+
+	e.BroadcastState(gameID)
 
 	if complete {
-		time.AfterFunc(
-			time.Duration(controller.game.Options.TimeBetweenHands)*time.Second,
-			func() {
-				// Immediately start next hand after timeBetweenHands
-				e.advanceNextHand(AdminEvent{GameID: gameEvent.GameID})
-			},
-		)
+		go func() {
+			time.Sleep(time.Duration(controller.game.Options.TimeBetweenHands) * time.Second)
+			e.advanceNextHand(gameID)
+			fmt.Printf("Advancing to next hand: %d\n", gameID)
+		}()
+		return
+	}
+
+	if controller.manager.IsAllIn() {
+		go func() {
+			time.Sleep(time.Duration(1) * time.Second)
+			complete, _ = controller.manager.ProcessAction()
+
+			e.processGame(gameID, complete)
+			fmt.Printf("Processing next round: %d\n", gameID)
+		}()
 	}
 }
 
