@@ -72,6 +72,34 @@ func TestEvaluate(t *testing.T) {
 		TestCase{
 			hand: Hand{
 				Cards: []cards.Card{
+					cards.NewCard(1, cards.SuitSpades),
+					cards.NewCard(13, cards.SuitDiamonds),
+					cards.NewCard(12, cards.SuitDiamonds),
+					cards.NewCard(9, cards.SuitSpades),
+					cards.NewCard(6, cards.SuitClubs),
+					cards.NewCard(1, cards.SuitSpades),
+					cards.NewCard(5, cards.SuitDiamonds),
+				},
+			},
+			expectedScore: int64(21414131209),
+		},
+		TestCase{
+			hand: Hand{
+				Cards: []cards.Card{
+					cards.NewCard(1, cards.SuitSpades),
+					cards.NewCard(13, cards.SuitDiamonds),
+					cards.NewCard(12, cards.SuitDiamonds),
+					cards.NewCard(9, cards.SuitSpades),
+					cards.NewCard(6, cards.SuitClubs),
+					cards.NewCard(2, cards.SuitSpades),
+					cards.NewCard(13, cards.SuitDiamonds),
+				},
+			},
+			expectedScore: int64(21313141209),
+		},
+		TestCase{
+			hand: Hand{
+				Cards: []cards.Card{
 					cards.NewCard(11, cards.SuitHearts),
 					cards.NewCard(3, cards.SuitHearts),
 					cards.NewCard(2, cards.SuitClubs),

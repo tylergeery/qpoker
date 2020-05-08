@@ -90,3 +90,7 @@ func TestGameSimulate(t *testing.T) {
 	assert.Equal(t, StateRiver, holdEm.State)
 	assert.Equal(t, 5, len(holdEm.Board))
 }
+
+func TestGetWinningIDs(t *testing.T) {
+
+}

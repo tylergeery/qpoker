@@ -1,6 +1,7 @@
 package cards
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,6 +49,23 @@ func TestDealAndShuffle(t *testing.T) {
 	assert.NotEqual(t, first, first1)
 	assert.NotEqual(t, second, second2)
 	assert.NotEqual(t, third, third3)
+}
+
+func TestCardStringValues(t *testing.T) {
+	deck := NewDeck()
+
+	for i := 0; i < 5; i++ {
+		deck.Shuffle()
+		cardMap := map[string]bool{}
+
+		for j := 0; j < 52; j++ {
+			card, err := deck.GetCard()
+			assert.NoError(t, err)
+			_, ok := cardMap[card.ToString()]
+			assert.False(t, ok, fmt.Sprintf("Found multiple card values in deck: %s, %+v", card.ToString(), card))
+			cardMap[card.ToString()] = true
+		}
+	}
 }
 
 func TestGetCardError(t *testing.T) {

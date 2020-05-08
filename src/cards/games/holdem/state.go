@@ -107,7 +107,7 @@ func (h *HoldEm) Advance() error {
 // GetWinningIDs returns the hand winners in order
 func (h *HoldEm) GetWinningIDs() []int64 {
 	players := h.Table.GetActivePlayers()
-	scores := []int64{}
+	scores := map[int64]int64{}
 	playerIDs := []int64{}
 
 	if len(players) == 1 {
@@ -115,11 +115,19 @@ func (h *HoldEm) GetWinningIDs() []int64 {
 	}
 
 	for i := range players {
-		scores = append(scores, Evaluate(Hand{append(h.Board, players[i].Cards...)}))
+		handCards := []cards.Card{}
+		handCards = append(handCards, h.Board...)
+		handCards = append(handCards, players[i].Cards...)
+
+		scores[players[i].ID] = Evaluate(Hand{handCards})
 		playerIDs = append(playerIDs, players[i].ID)
 	}
 
-	sort.Slice(playerIDs, func(i, j int) bool { return scores[i] > scores[j] })
+	sort.Slice(playerIDs, func(i, j int) bool {
+		return scores[playerIDs[i]] >= scores[playerIDs[j]]
+	})
+
+	fmt.Printf("WinningIDs: %+v, scores: %+v\n", playerIDs, scores)
 
 	return playerIDs
 }

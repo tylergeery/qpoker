@@ -216,22 +216,34 @@ func (g *GameManager) canCall() bool {
 }
 
 func (g *GameManager) canCheck() bool {
-	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
+	player := g.State.Table.GetActivePlayer()
+	if player.Stack <= int64(0) {
 		return false
 	}
 
-	// TODO: handle all in
+	playersTotal, players := int64(0), g.State.Table.GetActivePlayers()
+	for i := range players {
+		if players[i].ID == g.State.Table.GetActivePlayer().ID {
+			continue
+		}
+
+		playersTotal += players[i].Stack
+	}
+
+	// Cannot check if nobody else has a stack
+	if playersTotal <= int64(0) {
+		return false
+	}
 
 	return g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID]
 }
 
 func (g *GameManager) canFold() bool {
-	fmt.Printf("PlayerID: %d, Stack: %d\n", g.State.Table.GetActivePlayer().ID, g.State.Table.GetActivePlayer().Stack)
 	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
 		return false
 	}
 
-	return !g.canCheck()
+	return g.Pot.MaxBet() > g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID]
 }
 
 func (g *GameManager) playerBet(action Action) error {
@@ -363,8 +375,8 @@ func (g *GameManager) ShowVisibleCards() {
 		return
 	}
 
-	for _, player := range activePlayers {
-		player.CardsVisible = true
+	for i := range activePlayers {
+		activePlayers[i].CardsVisible = true
 	}
 }
 
@@ -491,12 +503,18 @@ func (g *GameManager) GetPlayer(playerID int64) *Player {
 
 // IsAllIn determines whether a round is all in and should proceed automagically
 func (g *GameManager) IsAllIn() bool {
+	countWithStack := 0
 	players := g.State.Table.GetActivePlayers()
+
 	for i := range players {
 		if players[i].HasOptions() {
 			return false
 		}
+
+		if players[i].Stack > int64(0) {
+			countWithStack++
+		}
 	}
 
-	return true
+	return countWithStack <= 1
 }
