@@ -30,12 +30,12 @@ func CreateTestPlayer() *Player {
 }
 
 // CreateTestGame creates a game for a test game
-func CreateTestGame(player *Player) *Game {
+func CreateTestGame(playerID int64) *Game {
 	setSeed()
 
 	game := &Game{
 		Name:    fmt.Sprintf("Testing Game %d", time.Now().UTC().UnixNano()),
-		OwnerID: player.ID,
+		OwnerID: playerID,
 		Status:  GameStatusInit,
 	}
 	game.Save()

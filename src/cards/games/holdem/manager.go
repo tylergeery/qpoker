@@ -177,30 +177,24 @@ func (g *GameManager) isRoundComplete() bool {
 }
 
 func (g *GameManager) canBet() bool {
-	if g.State.Table.GetActivePlayer().Stack <= int64(0) {
+	player := g.State.Table.GetActivePlayer()
+	playerBet := g.Pot.PlayerBets[player.ID]
+
+	if player.Stack <= int64(0) {
 		return false
 	}
 
-	playersTotal, players := int64(0), g.State.Table.GetActivePlayers()
-	for i := range players {
-		if players[i].ID == g.State.Table.GetActivePlayer().ID {
-			continue
-		}
-
-		playersTotal += players[i].Stack
-	}
-
-	// Cannot bet if nobody else has a stack
-	if playersTotal <= int64(0) {
+	// check if other players have chips left to bet
+	if g.countWithEffectiveStackAbove(g.Pot.MaxBet()) <= 1 {
 		return false
 	}
 
 	// If user has current max bet, they can raise (first round only)
-	if g.Pot.MaxBet() > int64(0) && g.Pot.MaxBet() == g.Pot.PlayerBets[g.State.Table.GetActivePlayer().ID] {
+	if g.Pot.MaxBet() > int64(0) && g.Pot.MaxBet() == playerBet {
 		return true
 	}
 
-	if g.Pot.MaxBet() >= g.State.Table.GetActivePlayer().Stack {
+	if g.Pot.MaxBet() >= player.Stack {
 		return false
 	}
 
@@ -503,18 +497,31 @@ func (g *GameManager) GetPlayer(playerID int64) *Player {
 
 // IsAllIn determines whether a round is all in and should proceed automagically
 func (g *GameManager) IsAllIn() bool {
+	return g.countWithStackAbove(int64(0)) <= 1
+}
+
+func (g *GameManager) countWithStackAbove(amount int64) int {
 	countWithStack := 0
 	players := g.State.Table.GetActivePlayers()
 
 	for i := range players {
-		if players[i].HasOptions() {
-			return false
-		}
-
-		if players[i].Stack > int64(0) {
+		if players[i].Stack > amount {
 			countWithStack++
 		}
 	}
 
-	return countWithStack <= 1
+	return countWithStack
+}
+
+func (g *GameManager) countWithEffectiveStackAbove(amount int64) int {
+	countWithStack := 0
+	players := g.State.Table.GetActivePlayers()
+
+	for i := range players {
+		if (players[i].Stack + g.Pot.PlayerBets[players[i].ID]) > amount {
+			countWithStack++
+		}
+	}
+
+	return countWithStack
 }

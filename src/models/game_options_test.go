@@ -9,7 +9,7 @@ import (
 func TestGameOptionsCrud(t *testing.T) {
 	// Given
 	player := CreateTestPlayer()
-	game := CreateTestGame(player)
+	game := CreateTestGame(player.ID)
 	record := GameOptionsRecord{
 		GameID: game.ID,
 		Options: GameOptions{

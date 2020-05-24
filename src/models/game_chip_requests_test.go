@@ -10,7 +10,7 @@ func TestGetGameChipRequestBy(t *testing.T) {
 	// Given
 	player := CreateTestPlayer()
 	player2 := CreateTestPlayer()
-	game := CreateTestGame(player)
+	game := CreateTestGame(player.ID)
 	req := &GameChipRequest{
 		GameID:   game.ID,
 		PlayerID: player2.ID,

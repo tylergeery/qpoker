@@ -9,6 +9,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func createTestPlayer(t *testing.T, stack int) *Player {
+	player := models.CreateTestPlayer()
+
+	return &Player{
+		ID:       player.ID,
+		Username: player.Username,
+		State:    PlayerStateInit,
+		Stack:    int64(stack),
+	}
+}
+
+func createTestManager(t *testing.T, players ...*Player) *GameManager {
+	game := models.CreateTestGame(players[0].ID)
+
+	manager, err := NewGameManager(game.ID, players, models.GameOptions{BigBlind: 50})
+	assert.NoError(t, err)
+	err = manager.NextHand()
+	assert.NoError(t, err)
+
+	return manager
+}
+
+func expectedPlayerActions(canBet, canCall, canCheck, canFold bool) map[string]bool {
+	return map[string]bool{
+		"can_bet":   canBet,
+		"can_call":  canCall,
+		"can_check": canCheck,
+		"can_fold":  canFold,
+	}
+}
+
 func TestNewGameError(t *testing.T) {
 	type TestCase struct {
 		players  []*Player
@@ -73,7 +104,7 @@ func TestPlayHandAllFold(t *testing.T) {
 		player = models.CreateTestPlayer()
 		players = append(players, &Player{ID: player.ID, Stack: int64(200)})
 	}
-	game := models.CreateTestGame(player)
+	game := models.CreateTestGame(player.ID)
 
 	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
@@ -154,7 +185,7 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 		player = models.CreateTestPlayer()
 		players = append(players, &Player{ID: player.ID, Stack: int64(200)})
 	}
-	game := models.CreateTestGame(player)
+	game := models.CreateTestGame(player.ID)
 
 	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
@@ -267,36 +298,20 @@ func TestGetPlayerActions(t *testing.T) {
 		manager  *GameManager
 		expected map[string]bool
 	}
-	createTestPlayer := func(id int, stack int) *Player {
-		return &Player{
-			ID:       int64(id),
-			Username: fmt.Sprintf("player%d", id),
-			State:    PlayerStateInit,
-			Stack:    int64(stack),
-		}
+	gamePlayers := []*Player{
+		createTestPlayer(t, 1000),
+		createTestPlayer(t, 1000),
+		createTestPlayer(t, 1000),
 	}
-	createTestManager := func(id int, players ...*Player) *GameManager {
-		manager, err := NewGameManager(int64(id), players, models.GameOptions{BigBlind: 50})
-		assert.NoError(t, err)
-		err = manager.NextHand()
-		assert.NoError(t, err)
-
-		return manager
-	}
-	advancedManager := createTestManager(
-		20,
-		createTestPlayer(1, 1000),
-		createTestPlayer(2, 1000),
-		createTestPlayer(3, 1000),
-	)
-	advancedManager.PlayerAction(int64(2), Action{ActionCall, int64(0)})
-	advancedManager.PlayerAction(int64(3), Action{ActionCall, int64(0)})
+	advancedManager := createTestManager(t, gamePlayers...)
+	advancedManager.PlayerAction(gamePlayers[1].ID, Action{ActionCall, int64(0)})
+	advancedManager.PlayerAction(gamePlayers[2].ID, Action{ActionCall, int64(0)})
 
 	cases := []TestCase{
 		TestCase{
-			manager: createTestManager(5,
-				createTestPlayer(1, 25),
-				createTestPlayer(2, 50)),
+			manager: createTestManager(t,
+				createTestPlayer(t, 25),
+				createTestPlayer(t, 50)),
 			expected: map[string]bool{
 				"can_bet":   false,
 				"can_call":  false,
@@ -304,37 +319,58 @@ func TestGetPlayerActions(t *testing.T) {
 				"can_fold":  false,
 			},
 		},
-		// TestCase{
-		// 	manager: createTestManager(5,
-		// 		createTestPlayer(1, 50),
-		// 		createTestPlayer(2, 50),
-		// 		createTestPlayer(3, 50)),
-		// 	expected: map[string]bool{
-		// 		"can_bet":   false,
-		// 		"can_call":  true,
-		// 		"can_check": false,
-		// 		"can_fold":  true,
-		// 	},
-		// },
-		// TestCase{
-		// 	manager: advancedManager,
-		// 	expected: map[string]bool{
-		// 		"can_bet":   true,
-		// 		"can_call":  false,
-		// 		"can_check": true,
-		// 		"can_fold":  false,
-		// 	},
-		// },
+		TestCase{
+			manager: createTestManager(t,
+				createTestPlayer(t, 50),
+				createTestPlayer(t, 50),
+				createTestPlayer(t, 50)),
+			expected: map[string]bool{
+				"can_bet":   false,
+				"can_call":  true,
+				"can_check": false,
+				"can_fold":  true,
+			},
+		},
+		TestCase{
+			manager: advancedManager,
+			expected: map[string]bool{
+				"can_bet":   true,
+				"can_call":  false,
+				"can_check": true,
+				"can_fold":  false,
+			},
+		},
 	}
 	for _, c := range cases {
 		assert.Equal(t, c.expected, c.manager.GetPlayerActions())
 	}
 }
 
-func TestPlayComplexHand(t *testing.T) {
+func TestAllInPlayerOptions(t *testing.T) {
+	gamePlayers := []*Player{
+		createTestPlayer(t, 500),
+		createTestPlayer(t, 750),
+		createTestPlayer(t, 50),
+		createTestPlayer(t, 1000),
+	}
+	allInManager := createTestManager(t, gamePlayers...)
+	assert.Equal(t, expectedPlayerActions(true, true, false, true), allInManager.GetPlayerActions())
 
-}
+	allInManager.PlayerAction(gamePlayers[0].ID, Action{ActionBet, int64(50)})
+	assert.Equal(t, expectedPlayerActions(true, true, false, true), allInManager.GetPlayerActions())
 
-func TestPlayManyHands(t *testing.T) {
+	allInManager.PlayerAction(gamePlayers[1].ID, Action{ActionBet, int64(750)})
+	assert.Equal(t, expectedPlayerActions(false, true, false, true), allInManager.GetPlayerActions())
 
+	allInManager.PlayerAction(gamePlayers[2].ID, Action{ActionFold, int64(0)})
+	assert.Equal(t, expectedPlayerActions(false, true, false, true), allInManager.GetPlayerActions())
+
+	allInManager.PlayerAction(gamePlayers[3].ID, Action{ActionCall, int64(0)})
+	assert.Equal(t, gamePlayers[0].ID, allInManager.State.Table.GetActivePlayer().ID)
+	assert.Equal(t, expectedPlayerActions(false, true, false, true), allInManager.GetPlayerActions())
+
+	allInManager.PlayerAction(gamePlayers[0].ID, Action{ActionCall, int64(0)})
+	assert.Equal(t, expectedPlayerActions(false, false, false, false), allInManager.GetPlayerActions())
+	assert.False(t, allInManager.State.Table.GetActivePlayer().HasOptions())
+	assert.True(t, allInManager.IsAllIn())
 }

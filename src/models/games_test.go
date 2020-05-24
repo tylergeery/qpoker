@@ -10,7 +10,7 @@ import (
 func TestGetGameBy(t *testing.T) {
 	// Given
 	player := CreateTestPlayer()
-	game := CreateTestGame(player)
+	game := CreateTestGame(player.ID)
 
 	// When
 	fetchedGame, err := GetGameBy("id", game.ID)

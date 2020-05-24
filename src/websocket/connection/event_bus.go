@@ -344,6 +344,7 @@ func (e *EventBus) PerformGameAction(gameEvent GameEvent) {
 	complete, err := controller.manager.PlayerAction(gameEvent.PlayerID, gameEvent.Action)
 	if err != nil {
 		fmt.Printf("Error performing gameEvent: %+v, err: %s\n", gameEvent, err)
+		e.BroadcastState(gameEvent.GameID)
 		return
 	}
 

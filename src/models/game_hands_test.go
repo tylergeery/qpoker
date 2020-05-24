@@ -10,7 +10,7 @@ func TestGetGameHandBy(t *testing.T) {
 	// Given
 	player := CreateTestPlayer()
 	player2 := CreateTestPlayer()
-	game := CreateTestGame(player)
+	game := CreateTestGame(player.ID)
 	gameHand := &GameHand{
 		GameID: game.ID,
 		Board:  []string{"2C", "AD", "KD", "QC", "2D"},
@@ -47,7 +47,7 @@ func TestGetHandsForGame(t *testing.T) {
 	// Given
 	player := CreateTestPlayer()
 	player2 := CreateTestPlayer()
-	game := CreateTestGame(player)
+	game := CreateTestGame(player.ID)
 	gameHands := []*GameHand{
 		&GameHand{
 			GameID: game.ID,
