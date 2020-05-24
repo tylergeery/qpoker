@@ -253,7 +253,7 @@ func (e *EventBus) handleMessageEvent(event MsgEvent) {
 		controller.chats = controller.chats[l-100:]
 	}
 
-	e.broadcast(event.GameID, event.PlayerID, BroadcastEvent{ActionMsg, controller.chats})
+	e.BroadcastMessages(controller)
 }
 
 // SetClient adds client to EventBus
@@ -288,6 +288,8 @@ func (e *EventBus) SetClient(client *Client) {
 	if client.PlayerID == controller.game.OwnerID {
 		e.BroadcastRequests(controller)
 	}
+
+	e.BroadcastMessages(controller)
 }
 
 // RemoveClient removes a client from EventBus
@@ -315,6 +317,13 @@ func (e *EventBus) BroadcastRequests(controller *GameController) {
 	})
 
 	e.broadcast(controller.game.ID, controller.game.OwnerID, broadcastEvent)
+}
+
+// BroadcastMessages sends chip requests to game owner
+func (e *EventBus) BroadcastMessages(controller *GameController) {
+	for i := range controller.clients {
+		e.broadcast(controller.clients[i].GameID, controller.clients[i].PlayerID, BroadcastEvent{ActionMsg, controller.chats})
+	}
 }
 
 // BroadcastState sends game state to all clients

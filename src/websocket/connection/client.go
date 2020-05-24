@@ -56,12 +56,15 @@ func (e ClientEvent) ToAdminEvent(c *Client) AdminEvent {
 
 // ToMsgEvent parses the game action from the GameEvent
 func (e ClientEvent) ToMsgEvent(c *Client) MsgEvent {
-	return MsgEvent{}
+	return MsgEvent{
+		Value:    e.Data["message"].(string),
+		GameID:   c.GameID,
+		PlayerID: c.PlayerID,
+	}
 }
 
 // ToGameEvent parses the game action from the GameEvent
 func (e ClientEvent) ToGameEvent(c *Client) GameEvent {
-	fmt.Printf("Got game event: %s\n", e.Data)
 	return GameEvent{
 		GameID:   c.GameID,
 		PlayerID: c.PlayerID,

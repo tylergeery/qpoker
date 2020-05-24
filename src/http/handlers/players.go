@@ -176,7 +176,7 @@ func LoginPlayer(c *fiber.Ctx) {
 	player, err := models.AuthenticatePlayer(req.Email, req.PW)
 	if err != nil {
 		c.SendStatus(400)
-		c.JSON(utils.FormatErrors(err))
+		c.JSON(utils.FormatErrors(fmt.Errorf("could not validate credentials, please try again")))
 		return
 	}
 
@@ -198,7 +198,7 @@ func GetPlayer(c *fiber.Ctx) {
 
 	if err != nil {
 		c.SendStatus(404)
-		c.JSON(utils.FormatErrors(fmt.Errorf("Uknown player ID type")))
+		c.JSON(utils.FormatErrors(fmt.Errorf("Unknown player ID: %s", c.Params("id"))))
 		return
 	}
 

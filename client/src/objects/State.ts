@@ -149,6 +149,10 @@ export class EventState {
     }
 
     public getPlayer(playerID: string): GamePlayer {
+        if (!playerID) {
+            return null
+        }
+
         for (let i=0; i < this.manager.state.table.players.length; i++) {
             const player = this.manager.state.table.players[i];
 

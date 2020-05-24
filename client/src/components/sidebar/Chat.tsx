@@ -13,18 +13,39 @@ type ChatProps = {
 
 type ChatState = {
     chats: any[];
+    text?: string;
 }
 
 export class Chat extends React.Component<ChatProps, ChatState> {
     constructor(props: any) {
         super(props)
 
-        this.state = { chats: [] }
+        this.state = { chats: [], text: null }
         this.props.conn.subscribe('message', this.receiveMessages.bind(this))
     }
 
-    public receiveMessages(chats: any[]) {
-        this.setState({ chats })
+    public receiveMessages(msg: any) {
+        this.setState({ chats: msg.data })
+    }
+
+    public textUpdate(event: any) {
+        this.setState({text: event.target.value});
+    }
+
+    public submit(event: any) {
+        event.preventDefault();
+
+        let action = {
+            type: 'message',
+            data: {
+                message: this.state.text,
+            }
+        };
+
+        this.props.conn.send(JSON.stringify(action))
+        this.setState({text: ''})
+
+        return false;
     }
 
     public render() {
@@ -32,14 +53,22 @@ export class Chat extends React.Component<ChatProps, ChatState> {
             <h3>Game Chat</h3>
             <div>
                 {this.state.chats.map((chat) => {
-                    return <span>
-                        <b>{this.props.es.getPlayer(chat.playerID).username}</b>
-                        {chat.message}
-                    </span>;
+                    return <p>
+                        <b>{this.props.es.getPlayer(chat.player_id).username}</b>
+                        <span>{chat.message}</span>
+                    </p>;
                 })}
             </div>
             <div>
-                <input type="text" name="chat" placeholder="Type to room" />
+                <form onSubmit={this.submit.bind(this)}>
+                    <input type="text" name="chat" placeholder="Type to room"
+                        value={this.state.text}
+                        onChange={this.textUpdate.bind(this)}/>
+                    <button disabled={!this.state.text} type="submit"
+                        className={classNames("btn-large grey darken-3", {'disabled': !this.state.text})}>
+                        Submit
+                    </button>
+                </form>
             </div>
         </div>;
     }
