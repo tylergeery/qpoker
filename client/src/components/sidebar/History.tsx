@@ -2,10 +2,16 @@ import * as React from "react";
 
 import { classNames } from "../../utils";
 import { ConnectionHandler } from "../../connection/ws";
+import { GameHistoryRequest } from "../../requests/gameHistory";
+import { EventState } from "../../objects/State";
+import { Game } from "../../objects/Game";
+import { userStorage } from "../../utils/storage";
 
 type HistoryProps = {
+    es: EventState;
     active: boolean;
     playerID: string;
+    game?: Game;
     conn: ConnectionHandler;
 }
 
@@ -17,28 +23,28 @@ export class History extends React.Component<HistoryProps, HistoryState> {
     constructor(props: any) {
         super(props)
         this.state = { history: [] }
+    }
 
-        // TODO: register for new chats
+    public async componentDidMount() {
+        let req = new GameHistoryRequest<any[]>();
+        let history = await req.request({
+            id: this.props.game.id.toString(),
+            userToken: userStorage.getToken(),
+        });
+
+        this.setState({history});
     }
 
     public render() {
         return <div className={classNames({"hidden": !this.props.active})}>
             <h3>Game History</h3>
             <div>
-                <label>
-                    Start Game:
-                    <button type="button">
-                        Start
-                    </button>
-                </label>
-            </div>
-            <h3>Chip Requests</h3>
-            <div>
-                <label>
-                    request:
-                    <button type="button">Approve</button>
-                    <button type="button">Deny</button>
-                </label>
+                {this.state.history.map((history) => {
+                    return <p key={history.id}>
+                        <b>{history.player_id}</b>
+                        <span>{history.game_id}</span>
+                    </p>;
+                })}
             </div>
         </div>;
     }

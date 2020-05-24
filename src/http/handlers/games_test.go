@@ -12,6 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func i64(value interface{}) int64 {
+	v := value.(float64)
+
+	return int64(v)
+}
+
 func TestGameCreateInvalid(t *testing.T) {
 	type TestCase struct {
 		body     map[string]interface{}
@@ -263,7 +269,7 @@ func TestGetGameHistorySuccess(t *testing.T) {
 	assert.NoError(t, err)
 	req2 := &models.GameChipRequest{
 		GameID:   game.ID,
-		PlayerID: player.ID,
+		PlayerID: player2.ID,
 		Amount:   360,
 		Status:   models.GameChipRequestStatusApproved,
 	}
@@ -321,4 +327,42 @@ func TestGetGameHistorySuccess(t *testing.T) {
 	assert.Equal(t, 6, len(gameHistory))
 
 	// Assert things about the 6
+	chipRequest := gameHistory[0].(map[string]interface{})
+	assert.Equal(t, int64(120), i64(chipRequest["amount"]))
+	assert.Equal(t, game.ID, i64(chipRequest["game_id"]))
+	assert.Equal(t, player.ID, i64(chipRequest["player_id"]))
+	assert.Equal(t, "approved", chipRequest["status"].(string))
+
+	chipRequest = gameHistory[1].(map[string]interface{})
+	assert.Equal(t, int64(360), i64(chipRequest["amount"]))
+	assert.Equal(t, game.ID, i64(chipRequest["game_id"]))
+	assert.Equal(t, player2.ID, i64(chipRequest["player_id"]))
+	assert.Equal(t, "approved", chipRequest["status"].(string))
+
+	hand := gameHistory[2].(map[string]interface{})
+	assert.Equal(t, nil, hand["board"])
+	assert.Equal(t, []interface{}{"JS", "JC"}, hand["cards"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(140), "Valid": true}, hand["ending_stack"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(120), "Valid": true}, hand["starting_stack"])
+	assert.Equal(t, game.ID, i64(hand["game_id"]))
+
+	hand = gameHistory[3].(map[string]interface{})
+	assert.Equal(t, nil, hand["board"])
+	assert.Equal(t, nil, hand["cards"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["ending_stack"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["starting_stack"])
+	assert.Equal(t, game.ID, i64(hand["game_id"]))
+
+	hand = gameHistory[4].(map[string]interface{})
+	assert.Equal(t, nil, hand["board"])
+	assert.Equal(t, nil, hand["cards"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["ending_stack"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["starting_stack"])
+	assert.Equal(t, game.ID, i64(hand["game_id"]))
+
+	chipRequest = gameHistory[5].(map[string]interface{})
+	assert.Equal(t, int64(120), i64(chipRequest["amount"]))
+	assert.Equal(t, game.ID, i64(chipRequest["game_id"]))
+	assert.Equal(t, player.ID, i64(chipRequest["player_id"]))
+	assert.Equal(t, "", chipRequest["status"].(string))
 }
