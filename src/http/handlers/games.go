@@ -292,10 +292,11 @@ func combineAndSort(hands []*models.GameHandWithPlayer, reqs []*models.GameChipR
 		if len(hands) > 0 {
 			sorted = append(sorted, hands[0])
 			hands = hands[1:]
-		} else {
-			sorted = append(sorted, reqs[0])
-			reqs = reqs[1:]
+			continue
 		}
+
+		sorted = append(sorted, reqs[0])
+		reqs = reqs[1:]
 	}
 
 	return sorted

@@ -106,7 +106,7 @@ func (c *Client) HandleShutdown() {
 
 		return nil
 	})
-	c.conn.SetReadDeadline(time.Now().Add(10 * 6 * time.Minute)) // TODO: game duration
+	c.conn.SetReadDeadline(time.Now().Add(10 * 6 * time.Minute))
 }
 
 // Authenticate ensures that the player first sends a valid token
@@ -142,7 +142,6 @@ func (c *Client) Authenticate() error {
 // ReadMessages listens for messages until client disappears
 func (c *Client) ReadMessages() {
 	for c.connOpen {
-		// TODO: play with read timeout
 		msg, err := c.getMessage()
 		if err != nil {
 			return

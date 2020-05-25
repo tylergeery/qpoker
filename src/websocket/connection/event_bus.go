@@ -69,36 +69,57 @@ func (e *EventBus) reloadGameState(client *Client) error {
 		return err
 	}
 
-	player, err := models.GetPlayerFromID(client.PlayerID)
+	_, err = models.GetPlayerFromID(client.PlayerID)
 	if err != nil {
 		return err
 	}
 
-	gamePlayer := holdem.NewPlayer(player)
-	players := []*holdem.Player{gamePlayer}
+	players := []*holdem.Player{}
 	manager, err := holdem.NewGameManager(game.ID, players, game.Options)
 	if err != nil {
 		return err
 	}
 
 	controller := &GameController{
-		[]*Client{},
-		manager,
-		game,
-		[]*models.GameChipRequest{},
-		[]Chat{},
+		[]*Client{}, manager, game,
+		[]*models.GameChipRequest{}, []Chat{},
 	}
 
 	switch game.Status {
 	case models.GameStatusComplete:
 		return fmt.Errorf("Game is already complete")
-	case models.GameStatusStart:
-		// TODO: pull game state, player chips, requests
 	}
 
 	e.games[client.GameID] = controller
 
 	return nil
+}
+
+func (e *EventBus) reloadPlayerStack(game *models.Game, player *holdem.Player) {
+	// Search first for ending stack
+	since := game.CreatedAt
+	playerHand, err := models.GetGamePlayerHandForGameAndPlayer(game.ID, player.ID)
+	if err != nil {
+		return
+	}
+
+	if playerHand.ID > int64(0) {
+		player.Stack = playerHand.StartingStack
+		if playerHand.EndingStack > -1 {
+			player.Stack = playerHand.EndingStack
+			since = playerHand.UpdatedAt
+		}
+	}
+
+	// Add any chip requests since ending stack
+	chipRequests, err := models.GetApprovedChipRequestsForGameAndPlayer(game.ID, player.ID, since, 1)
+	if err != nil {
+		return
+	}
+
+	if len(chipRequests) > 0 {
+		player.Stack += chipRequests[0].Amount
+	}
 }
 
 func (e *EventBus) broadcast(gameID, playerID int64, broadcastEvent BroadcastEvent) {
@@ -283,6 +304,7 @@ func (e *EventBus) SetClient(client *Client) {
 	_ = controller.manager.AddPlayer(gamePlayer)
 	controller.clients = append(controller.clients, client)
 
+	e.reloadPlayerStack(controller.game, gamePlayer)
 	e.BroadcastState(client.GameID)
 
 	if client.PlayerID == controller.game.OwnerID {

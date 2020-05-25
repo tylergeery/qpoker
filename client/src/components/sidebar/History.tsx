@@ -6,6 +6,9 @@ import { GameHistoryRequest } from "../../requests/gameHistory";
 import { EventState } from "../../objects/State";
 import { Game } from "../../objects/Game";
 import { userStorage } from "../../utils/storage";
+import { ChipRequest } from "./history/ChipRequest";
+import { GameHand } from "./history/GameHand";
+
 
 type HistoryProps = {
     es: EventState;
@@ -40,10 +43,11 @@ export class History extends React.Component<HistoryProps, HistoryState> {
             <h3>Game History</h3>
             <div>
                 {this.state.history.map((history) => {
-                    return <p key={history.id}>
-                        <b>{history.player_id}</b>
-                        <span>{history.game_id}</span>
-                    </p>;
+                    return history.hasOwnProperty("status") ? (
+                        <ChipRequest {...history} />
+                    ) : (
+                        <GameHand {...history} />
+                    );
                 })}
             </div>
         </div>;

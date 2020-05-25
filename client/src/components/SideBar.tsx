@@ -45,7 +45,6 @@ export class SideBar extends React.Component<SideBarProps, SideBarState> {
     public navSelect(event: any) {
         this.setState({ selectedTab: event.target.innerHTML });
 
-        // TODO: handle newly selected tab
         event.stopPropagation();
     }
 

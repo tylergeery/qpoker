@@ -1,8 +1,9 @@
 package models
 
 import (
-	"fmt"
 	"time"
+
+	"qpoker/models/sql"
 )
 
 const (
@@ -12,6 +13,15 @@ const (
 	GameChipRequestStatusApproved = "approved"
 	// GameChipRequestStatusDenied = "denied"
 	GameChipRequestStatusDenied = "denied"
+
+	tableName = "game_chip_requests"
+)
+
+var (
+	columns = []string{
+		"id", "game_id", "player_id", "amount", "status",
+		"created_at", "updated_at",
+	}
 )
 
 // GameChipRequest handles user info
@@ -29,13 +39,16 @@ type GameChipRequest struct {
 func GetGameChipRequestBy(key string, val interface{}) (*GameChipRequest, error) {
 	req := &GameChipRequest{}
 
-	err := ConnectToDB().QueryRow(fmt.Sprintf(`
-		SELECT id, game_id, player_id, amount, status, created_at, updated_at
-		FROM game_chip_requests
-		WHERE %s = $1
-		LIMIT 1
-	`, key), val).Scan(
-		&req.ID, &req.GameID, &req.PlayerID, &req.Amount,
+	query := sql.NewSelect(
+		tableName,
+		columns,
+	).Filter(
+		sql.Equal(key, val),
+	).Limit(1)
+
+	sql, values := query.ToSQL()
+	row := ConnectToDB().QueryRow(sql, values...)
+	err := row.Scan(&req.ID, &req.GameID, &req.PlayerID, &req.Amount,
 		&req.Status, &req.CreatedAt, &req.UpdatedAt)
 
 	if err != nil {
@@ -47,23 +60,39 @@ func GetGameChipRequestBy(key string, val interface{}) (*GameChipRequest, error)
 
 // GetChipRequestsForGame returns all hands for game
 func GetChipRequestsForGame(gameID int64, since time.Time, count int) ([]*GameChipRequest, error) {
-	requests := []*GameChipRequest{}
+	query := sql.NewSelect(
+		tableName,
+		columns,
+	).Filter(
+		sql.And(
+			sql.Equal("game_id", gameID),
+			sql.GTE("updated_at", since),
+		),
+	).Limit(count)
 
-	rows, err := ConnectToDB().Query(`
-		SELECT
-			id,
-			game_id,
-			player_id,
-			amount,
-			status,
-			created_at,
-			updated_at
-		FROM game_chip_requests
-		WHERE game_id = $1
-			AND updated_at > $2
-		ORDER BY updated_at ASC
-		LIMIT $3
-	`, gameID, since, count)
+	return getChipRequestsFor(query)
+}
+
+// GetApprovedChipRequestsForGameAndPlayer returns all hands for game
+func GetApprovedChipRequestsForGameAndPlayer(gameID, playerID int64, since time.Time, count int) ([]*GameChipRequest, error) {
+	query := sql.NewSelect(tableName, columns)
+	query = query.Filter(
+		sql.And(
+			sql.Equal("game_id", gameID),
+			sql.Equal("player_id", playerID),
+			sql.GTE("updated_at", since),
+		),
+	)
+	query = query.Limit(count)
+
+	return getChipRequestsFor(query)
+}
+
+func getChipRequestsFor(query sql.Select) ([]*GameChipRequest, error) {
+	requests := []*GameChipRequest{}
+	sql, values := query.ToSQL()
+	rows, err := ConnectToDB().Query(sql, values...)
+
 	if err != nil {
 		return requests, err
 	}

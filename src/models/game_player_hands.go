@@ -20,7 +20,7 @@ type GamePlayerHand struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
-// GetGamePlayerHandBy returns a GameHand found from key,val
+// GetGamePlayerHandBy returns a GamePlayerHand found from key,val
 func GetGamePlayerHandBy(key string, val interface{}) (*GamePlayerHand, error) {
 	var endingStack sql.NullInt64
 	playerHand := &GamePlayerHand{}
@@ -41,6 +41,40 @@ func GetGamePlayerHandBy(key string, val interface{}) (*GamePlayerHand, error) {
 
 	if endingStack.Valid {
 		playerHand.EndingStack = endingStack.Int64
+	}
+
+	return playerHand, err
+}
+
+// GetGamePlayerHandForGameAndPlayer returns a GamePlayerHand found for game_id
+func GetGamePlayerHandForGameAndPlayer(gameID, playerID int64) (*GamePlayerHand, error) {
+	var endingStack sql.NullInt64
+	playerHand := &GamePlayerHand{}
+
+	err := ConnectToDB().QueryRow(`
+		SELECT
+			gph.id, gph.game_hand_id, gph.player_id, gph.cards,
+			gph.starting_stack, gph.ending_stack,
+			gph.created_at, gph.updated_at
+		FROM game_player_hand gph
+		JOIN game_hand gh ON (gh.id = gph.game_hand_id)
+		WHERE gh.game_id = $1
+			AND gph.player_id = $2
+		ORDER BY gh.created_at DESC
+		LIMIT 1
+	`, gameID, playerID).Scan(
+		&playerHand.ID, &playerHand.GameHandID, &playerHand.PlayerID, pq.Array(&playerHand.Cards),
+		&playerHand.StartingStack, &endingStack,
+		&playerHand.CreatedAt, &playerHand.UpdatedAt,
+	)
+
+	playerHand.EndingStack = int64(-1)
+	if endingStack.Valid {
+		playerHand.EndingStack = endingStack.Int64
+	}
+
+	if err != nil && err == sql.ErrNoRows {
+		err = nil
 	}
 
 	return playerHand, err

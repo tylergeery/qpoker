@@ -16,6 +16,7 @@ Host your own poker game with your friends.
 | GET    | /api/v1/games/:game_id          | Get game
 | POST   | /api/v1/games                   | Create a game
 | PUT    | /api/v1/games/:game_id          | Update a game
+| GET    | /api/v1/games/:game_id/history  | Get game history
 
 
 ## Development

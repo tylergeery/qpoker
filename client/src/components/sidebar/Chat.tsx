@@ -3,6 +3,7 @@ import * as React from "react";
 import { classNames } from "../../utils";
 import { ConnectionHandler } from "../../connection/ws";
 import { EventState } from "../../objects/State";
+import { Message } from "./chat/Message";
 
 type ChatProps = {
     active: boolean;
@@ -53,10 +54,7 @@ export class Chat extends React.Component<ChatProps, ChatState> {
             <h3>Game Chat</h3>
             <div>
                 {this.state.chats.map((chat) => {
-                    return <p>
-                        <b>{this.props.es.getPlayer(chat.player_id).username}</b>
-                        <span>{chat.message}</span>
-                    </p>;
+                    return <Message player={this.props.es.getPlayer(chat.player_id)} message={chat.message}/>;
                 })}
             </div>
             <div>
