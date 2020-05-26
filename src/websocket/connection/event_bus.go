@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"qpoker/cards"
@@ -99,7 +100,7 @@ func (e *EventBus) reloadPlayerStack(game *models.Game, player *holdem.Player) {
 	// Search first for ending stack
 	since := game.CreatedAt
 	playerHand, err := models.GetGamePlayerHandForGameAndPlayer(game.ID, player.ID)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return
 	}
 

@@ -73,10 +73,6 @@ func GetGamePlayerHandForGameAndPlayer(gameID, playerID int64) (*GamePlayerHand,
 		playerHand.EndingStack = endingStack.Int64
 	}
 
-	if err != nil && err == sql.ErrNoRows {
-		err = nil
-	}
-
 	return playerHand, err
 }
 
