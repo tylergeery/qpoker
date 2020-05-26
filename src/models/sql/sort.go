@@ -25,8 +25,8 @@ func (s sort) ToString() string {
 	return strings.Join(sortParts, ", ")
 }
 
-// Sort creates a sort for query
-func Sort(sorts []string) sort {
+// sort creates a sort for query
+func buildSort(sorts ...string) sort {
 	sortParts := []singleSort{}
 
 	for _, col := range sorts {

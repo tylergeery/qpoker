@@ -37,8 +37,8 @@ func (s Select) Filter(expression Expression) Select {
 }
 
 // Sort calls BaseQuery Sort
-func (s Select) Sort(sort sort) Select {
-	s.BaseQuery.sort = sort
+func (s Select) Sort(sorts ...string) Select {
+	s.BaseQuery.sort = buildSort(sorts...)
 	s.BaseQuery.hasSort = true
 
 	return s
@@ -70,10 +70,11 @@ func NewSelect(table string, columns []string) Select {
 func (s Select) ToSQL() (string, []interface{}) {
 	values := []interface{}{}
 
-	query := fmt.Sprintf(`
-		SELECT %s
-		FROM %s
-	`, strings.Join(s.columns, ", "), s.BaseQuery.table)
+	query := fmt.Sprintf(
+		`SELECT %s FROM %s`,
+		strings.Join(s.columns, ", "),
+		s.BaseQuery.table,
+	)
 
 	if s.BaseQuery.hasExpression {
 		expression, prepared, _ := s.BaseQuery.expression.ToQuery(1)
