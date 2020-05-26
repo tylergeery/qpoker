@@ -12,6 +12,7 @@ import (
 type GameOptions struct {
 	Capacity         int   `json:"capacity"`
 	BigBlind         int64 `json:"big_blind"`
+	DecisionTime     int   `json:"decision_time"`
 	TimeBetweenHands int   `json:"time_between_hands"`
 	BuyInMin         int64 `json:"buy_in_min"`
 	BuyInMax         int64 `json:"buy_in_max"`

@@ -74,6 +74,7 @@ func CreateGame(c *fiber.Ctx) {
 
 	// Sane defaults
 	req.Options.TimeBetweenHands = 5
+	req.Options.DecisionTime = 30
 	req.Options.BuyInMin = req.Options.BigBlind
 	req.Options.BuyInMax = req.Options.BigBlind * 10
 
@@ -112,6 +113,10 @@ func (req updateGameRequest) validate() error {
 
 	if req.Options.TimeBetweenHands < 0 || req.Options.TimeBetweenHands > 30 {
 		return fmt.Errorf("Invalid time between hands: %d", req.Options.TimeBetweenHands)
+	}
+
+	if req.Options.DecisionTime < 0 || req.Options.DecisionTime > 60 {
+		return fmt.Errorf("Invalid player decision time: %d", req.Options.DecisionTime)
 	}
 
 	if req.Options.BuyInMin < 0 {
@@ -166,6 +171,9 @@ func UpdateGame(c *fiber.Ctx) {
 	}
 	if req.Options.TimeBetweenHands != 0 {
 		game.Options.TimeBetweenHands = req.Options.TimeBetweenHands
+	}
+	if req.Options.DecisionTime != 0 {
+		game.Options.DecisionTime = req.Options.DecisionTime
 	}
 	if req.Options.BuyInMin != 0 {
 		game.Options.BuyInMin = req.Options.BuyInMin

@@ -74,12 +74,6 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
     public getOptions(): any[] {
         return [
             {
-                name: 'big_blind',
-                label: 'Big Blind',
-                type: 'number',
-                value: this.props.game.options.big_blind,
-            },
-            {
                 name: 'capacity',
                 label: 'Capacity',
                 type: 'number',
@@ -90,6 +84,18 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                 label: 'Time Between Hands (s)',
                 type: 'number',
                 value: this.props.game.options.time_between_hands,
+            },
+            {
+                name: 'decision_time',
+                label: 'Player Decision Time (s)',
+                type: 'number',
+                value: this.props.game.options.decision_time,
+            },
+            {
+                name: 'big_blind',
+                label: 'Big Blind',
+                type: 'number',
+                value: this.props.game.options.big_blind,
             },
             {
                 name: 'buy_in_min',

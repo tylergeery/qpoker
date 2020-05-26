@@ -3,6 +3,7 @@ package holdem
 import (
 	"fmt"
 	"qpoker/utils"
+	"time"
 )
 
 // Table holds the information about a given card table
@@ -15,8 +16,9 @@ type Table struct {
 	dealerIndex int
 
 	// Public facing for clients
-	Active int64 `json:"active"`
-	Dealer int64 `json:"dealer"`
+	Active   int64 `json:"active"`
+	ActiveAt int64 `json:"active_at`
+	Dealer   int64 `json:"dealer"`
 }
 
 // NewTable returns a new table object
@@ -95,6 +97,7 @@ func (t *Table) ActivateNextPlayer(getActions func() map[string]bool) {
 	t.GetActivePlayer().SetPlayerActions(nil)
 	t.activeIndex = t.nextPos(t.activeIndex)
 	t.Active = t.getPlayerID(t.activeIndex)
+	t.ActiveAt = time.Now().Unix()
 	t.GetActivePlayer().SetPlayerActions(getActions())
 }
 
