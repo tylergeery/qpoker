@@ -100,15 +100,10 @@ func (g *GameManager) NextHand() error {
 
 	// big blind
 	g.State.Table.GetActivePlayer().BigBlind = true
-	_, err = g.PlayerAction(
-		g.State.Table.GetActivePlayer().ID,
-		NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)),
-	)
-	if err != nil {
-		return err
-	}
+	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)))
 
 	g.UpdateStatus(StatusActive)
+	g.ProcessAction()
 
 	return nil
 }

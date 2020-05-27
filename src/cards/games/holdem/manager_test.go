@@ -304,8 +304,12 @@ func TestGetPlayerActions(t *testing.T) {
 		createTestPlayer(t, 1000),
 	}
 	advancedManager := createTestManager(t, gamePlayers...)
-	advancedManager.PlayerAction(gamePlayers[1].ID, Action{ActionCall, int64(0)})
-	advancedManager.PlayerAction(gamePlayers[2].ID, Action{ActionCall, int64(0)})
+	complete, err := advancedManager.PlayerAction(gamePlayers[1].ID, Action{ActionCall, int64(0)})
+	assert.False(t, complete)
+	assert.NoError(t, err)
+	complete, err = advancedManager.PlayerAction(gamePlayers[2].ID, Action{ActionCall, int64(0)})
+	assert.False(t, complete)
+	assert.NoError(t, err)
 
 	cases := []TestCase{
 		TestCase{

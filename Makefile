@@ -33,7 +33,7 @@ dev-player:  ## Create a local player
 	curl -XPOST -H 'Content-Type: application/json' -d '{"username": "player-$(ts)", "email": "player-$(ts)@test.com", "pw": "testpass"}' 'http://localhost:8080/api/v1/players' | jq
 
 test:  ## Run tests in local dev env
-	@docker-compose exec app go test -count=1 ./...
+	@docker-compose exec app go test -count=1 -timeout 5s ./...
 
 js:  ## Build client js
 	@cd client && /usr/bin/npx webpack
