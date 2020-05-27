@@ -94,6 +94,5 @@ func (s Select) ToSQL() (string, []interface{}) {
 		query += fmt.Sprintf(" OFFSET %d", s.BaseQuery.offset)
 	}
 
-	fmt.Println("query:", query, "values:", values)
 	return query, values
 }

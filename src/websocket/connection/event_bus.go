@@ -60,6 +60,7 @@ func StartEventBus() *EventBus {
 	eventBus = NewEventBus()
 
 	go eventBus.ListenForEvents()
+	go eventBus.IdleGameUpdates()
 
 	return eventBus
 }
@@ -233,7 +234,7 @@ func (e *EventBus) advanceNextHand(gameID int64) {
 		return
 	}
 
-	e.BroadcastState(gameID)
+	e.processGame(gameID, false)
 }
 
 func (e *EventBus) handleAdminEvent(event AdminEvent) {
@@ -329,7 +330,6 @@ func (e *EventBus) RemoveClient(client *Client) {
 		}
 	}
 
-	fmt.Println("Broadcasting client state: remove client")
 	e.BroadcastState(client.GameID)
 }
 
@@ -399,7 +399,7 @@ func (e *EventBus) processGame(gameID int64, complete bool) {
 
 	if controller.manager.IsAllIn() {
 		go func() {
-			time.Sleep(time.Duration(1) * time.Second)
+			time.Sleep(time.Duration(2) * time.Second)
 			complete, _ = controller.manager.ProcessAction()
 
 			e.processGame(gameID, complete)
@@ -429,5 +429,39 @@ func (e *EventBus) ListenForEvents() {
 			fmt.Printf("MsgAction: (%+v)\n", msgAction)
 			e.handleMessageEvent(msgAction)
 		}
+	}
+}
+
+// IdleGameUpdates handles idle time updates for games
+func (e *EventBus) IdleGameUpdates() {
+	for {
+		for gameID, controller := range e.games {
+			// TODO: refactor
+			// this is way too specific to holdem
+			lastMoveAt := controller.manager.State.Table.ActiveAt
+			currentTime := time.Now().Unix()
+			allowedTime := controller.game.Options.DecisionTime
+			if controller.manager.Status != holdem.StatusActive {
+				continue
+			}
+
+			if (currentTime - lastMoveAt) > int64(allowedTime) {
+				action := holdem.Action{holdem.ActionFold, int64(0)}
+				player := controller.manager.State.Table.GetActivePlayer()
+
+				if player.Options["can_check"] {
+					action = holdem.Action{holdem.ActionCheck, int64(0)}
+				}
+
+				// TODO: ensure we cant move for a player twice by accident
+				e.GameChannel <- GameEvent{
+					GameID:   gameID,
+					PlayerID: player.ID,
+					Action:   action,
+				}
+			}
+		}
+
+		time.Sleep(200 * time.Millisecond)
 	}
 }

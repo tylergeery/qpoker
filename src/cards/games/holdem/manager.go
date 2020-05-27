@@ -462,6 +462,7 @@ func (g *GameManager) UpdateStatus(status string) {
 // GetVisibleCards returns client representation of cards for those visible
 func (g *GameManager) GetVisibleCards(playerID int64) map[int64][]cards.Card {
 	visibleCards := map[int64][]cards.Card{}
+	allIn := g.IsAllIn()
 
 	for _, player := range g.State.Table.Players {
 		if player == nil {
@@ -472,7 +473,7 @@ func (g *GameManager) GetVisibleCards(playerID int64) map[int64][]cards.Card {
 			continue
 		}
 
-		if player.ID == playerID || player.CardsVisible {
+		if allIn || player.ID == playerID || player.CardsVisible {
 			visibleCards[player.ID] = player.Cards
 		}
 	}
@@ -497,7 +498,29 @@ func (g *GameManager) GetPlayer(playerID int64) *Player {
 
 // IsAllIn determines whether a round is all in and should proceed automagically
 func (g *GameManager) IsAllIn() bool {
-	return g.countWithStackAbove(int64(0)) <= 1
+	if g.Status != StatusActive {
+		return false
+	}
+
+	playersWithStack := g.countWithStackAbove(int64(0))
+	if playersWithStack == 0 {
+		return true
+	}
+
+	if playersWithStack > 1 {
+		return false
+	}
+
+	// Check if last person has accepted bet
+	players := g.State.Table.GetActivePlayers()
+	for i := range players {
+		if players[i].Stack > int64(0) {
+			return g.Pot.PlayerBets[players[i].ID] == g.Pot.MaxBet()
+		}
+	}
+
+	// should never get here
+	return true
 }
 
 func (g *GameManager) countWithStackAbove(amount int64) int {
