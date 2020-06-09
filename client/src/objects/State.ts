@@ -42,11 +42,19 @@ export class GamePlayer {
     }
 }
 
-class Table {
-    constructor(public players: GamePlayer[], public capacity: number) {}
+export class Table {
+    constructor(
+        public players: GamePlayer[],
+        public capacity: number,
+        public active: number,
+        public activeAt: number,
+    ) {}
 
     public static FromObj(tableObj: any): Table {
-        return new Table(tableObj.players, tableObj.capacity);
+        return new Table(
+            tableObj.players, tableObj.capacity,
+            tableObj.active, tableObj.active_at,
+        );
     }
 }
 

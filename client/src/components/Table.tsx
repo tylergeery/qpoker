@@ -77,7 +77,13 @@ export class Table extends React.Component<TableProps, TableState> {
                         </div>
                         {this.state.es.manager.state.table ? this.state.es.manager.state.table.players.map((player: any, i: number) => {
                             return player ? 
-                                <Player conn={this.conn} player={player} playerID={this.props.playerID} index={i} gameState={this.state.es.manager.state.state} cards={this.state.es.getPlayerCards(player.id)} />
+                                <Player conn={this.conn}
+                                        player={player}
+                                        playerID={this.props.playerID}
+                                        table={this.state.es.manager.state.table}
+                                        index={i}
+                                        gameState={this.state.es.manager.state.state}
+                                        cards={this.state.es.getPlayerCards(player.id)} />
                                 : (chooseSeat ? <Seat index={i} /> : '');
                         }) : ''}
                         <img className="w100 bg" src="/assets/media/card_table.png" alt="Card table"/>

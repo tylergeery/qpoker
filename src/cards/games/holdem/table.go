@@ -17,7 +17,7 @@ type Table struct {
 
 	// Public facing for clients
 	Active   int64 `json:"active"`
-	ActiveAt int64 `json:"active_at`
+	ActiveAt int64 `json:"active_at"`
 	Dealer   int64 `json:"dealer"`
 }
 
