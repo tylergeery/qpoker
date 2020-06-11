@@ -80,6 +80,7 @@ export class Table extends React.Component<TableProps, TableState> {
                                 <Player conn={this.conn}
                                         player={player}
                                         playerID={this.props.playerID}
+                                        playerBet={this.state.es.manager.pot.playerBets[+player.id] || 0}
                                         table={this.state.es.manager.state.table}
                                         index={i}
                                         gameState={this.state.es.manager.state.state}

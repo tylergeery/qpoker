@@ -6,6 +6,7 @@ import { createGameAction } from "../../utils";
 type PlayerProps = {
     playerID: string;
     player: GamePlayer;
+    playerBet: number;
     table: Table;
     index: number;
     gameState: string;
@@ -145,6 +146,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
             <Hand gameState={this.props.gameState} cards={this.props.cards} />
             <HandActions {...this.props} />
             <p>{this.state.timer ? this.state.timer.toString() : ''}</p>
+            <p>{this.props.playerBet || ''}</p>
         </div>
     }
 }
