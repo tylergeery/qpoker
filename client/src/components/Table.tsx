@@ -3,7 +3,7 @@ import * as React from "react";
 import { EventState, defaultEventState } from "../objects/State";
 import { NewConnectionHandler, ConnectionHandler } from "../connection/ws";
 import { Game } from "../objects/Game";
-import { Player } from "./table/Player";
+import { Player, PlayerSpotlight } from "./table/Player";
 import { Seat } from "./table/Seat";
 import { SideBar } from "./SideBar";
 
@@ -80,10 +80,9 @@ export class Table extends React.Component<TableProps, TableState> {
                                 <Player conn={this.conn}
                                         player={player}
                                         playerID={this.props.playerID}
-                                        playerBet={this.state.es.manager.pot.playerBets[+player.id] || 0}
-                                        table={this.state.es.manager.state.table}
                                         index={i}
-                                        gameState={this.state.es.manager.state.state}
+                                        manager={this.state.es.manager}
+                                        game={this.props.game}
                                         cards={this.state.es.getPlayerCards(player.id)} />
                                 : (chooseSeat ? <Seat index={i} /> : '');
                         }) : ''}

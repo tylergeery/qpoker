@@ -26,6 +26,7 @@ type GameManager struct {
 	Pot      *Pot    `json:"pot"`
 	BigBlind int64   `json:"big_blind"`
 	Status   string  `json:"status"`
+	AllIn    bool    `json:"all_in"`
 
 	gameHand        *models.GameHand
 	gamePlayerHands map[int64]*models.GamePlayerHand
@@ -79,6 +80,7 @@ func (g *GameManager) AddChips(playerID, amount int64) {
 // NextHand moves game manager on to next hand
 func (g *GameManager) NextHand() error {
 	g.Status = StatusReady
+	g.AllIn = false
 
 	err := g.State.Deal()
 	if err != nil {
@@ -493,6 +495,12 @@ func (g *GameManager) GetPlayer(playerID int64) *Player {
 
 // IsAllIn determines whether a round is all in and should proceed automagically
 func (g *GameManager) IsAllIn() bool {
+	g.AllIn = g.isAllIn()
+
+	return g.AllIn
+}
+
+func (g *GameManager) isAllIn() bool {
 	if g.Status != StatusActive {
 		return false
 	}

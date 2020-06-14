@@ -104,12 +104,13 @@ class Pot {
     }
 }
 
-class Manager {
+export class Manager {
     constructor(
         public bigBlind: number,
         public state: State,
         public pot: Pot,
-        public status: string
+        public status: string,
+        public allIn: boolean
     ) {}
 
     public static FromObj(managerObj: any): Manager {
@@ -119,6 +120,7 @@ class Manager {
             State.FromObj(managerObj.state),
             Pot.FromObj(managerObj.pot || {}),
             managerObj.status,
+            managerObj.all_in,
         );
     }
 }
@@ -197,7 +199,8 @@ export const defaultEventState = EventState.FromObj({
             "total": 0
         },
         "big_blind": 0,
-        "status": "init"
+        "status": "init",
+        "all_in": false,
     },
     "cards": {}
 });

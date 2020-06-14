@@ -30,7 +30,7 @@
     left: calc(50% - 150px); top: calc(50% - 20px);
 }
 
-.player, .seat { width: 120px; height: 60px; position: absolute; z-index: 10; }
+.player, .seat { width: 120px; height: 120px; position: absolute; z-index: 10; }
 .seat {border: 1px solid ivory; box-shadow: 5px ivory; border-radius: 50%; }
 .seat:hover { background-color: ivory; }
 
@@ -55,6 +55,19 @@
 
 .card { width: 58px;}
 .board-holder .card { margin: 0 2px 0 0; }
+
+.player .spotlight {
+    display: none;
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
+    border-radius: 30px;
+    z-index: -1;
+    background: rgba(255, 255, 255, 0.25)
+}
+.player .spotlight.active { display: block; }
 
 
 /* Sidebar */

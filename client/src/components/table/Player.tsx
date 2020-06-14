@@ -1,15 +1,15 @@
 import * as React from "react";
-import { Card, GamePlayer, Table } from "../../objects/State";
+import { Card, GamePlayer, Manager } from "../../objects/State";
 import { ConnectionHandler } from "../../connection/ws";
-import { createGameAction } from "../../utils";
+import { createGameAction, classNames } from "../../utils";
+import { Game } from "../../objects/Game";
 
 type PlayerProps = {
     playerID: string;
     player: GamePlayer;
-    playerBet: number;
-    table: Table;
     index: number;
-    gameState: string;
+    manager: Manager;
+    game?: Game;
     cards: Card[];
     conn: ConnectionHandler;
 }
@@ -33,6 +33,29 @@ class Hand extends React.Component<HandProps, {}> {
         ) : '';
     }
 }
+
+type HandTimerProps = {
+    allIn: boolean;
+    timer: number;
+    decisionTime: number;
+}
+
+class HandTimer extends React.Component<HandTimerProps, {}> {
+    private getTimerWidth(): string {
+        return (100 / this.props.decisionTime * this.props.timer).toString() + "%";
+    }
+
+    render() {
+        if (!this.props.timer) {
+            return '';
+        }
+
+        return <div className="progress">
+            <div className="determinate flip-x" style={{width: this.getTimerWidth()}}></div>
+        </div>
+    }
+}
+
 
 class HandActions extends React.Component<PlayerProps, {}> {
     bet: number;
@@ -96,9 +119,9 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
         this.state = { timer: 0 };
     }
 
-    private getCountdownTime(): number {
+    protected getCountdownTime(): number {
         let ts = +(new Date()) / 1000
-        let seconds = 30 - (ts - this.props.table.activeAt);
+        let seconds = this.props.game?.options.decision_time - (ts - this.props.manager.state.table.activeAt);
 
         if (!seconds || seconds < 0) {
             seconds = 0;
@@ -106,12 +129,16 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
 
         return Math.floor(seconds);
     }
-    private isSelected(): boolean {
+    protected isSelected(): boolean {
+        if (this.props.manager.allIn) {
+            return false;
+        }
+
         if (this.getCountdownTime() <= 0) {
             return false
         }
 
-        return this.props.table.active === this.props.player.id;
+        return this.props.manager.state.table.active === this.props.player.id;
     }
 
     private countDown(seconds: number) {
@@ -126,7 +153,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
     }
 
     private startTimer(): any {
-        if (this.interval || !this.props.table.activeAt) {
+        if (this.interval || !this.props.manager.state.table.activeAt) {
             return
         }
         this.interval = 1;
@@ -143,10 +170,21 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
 
         return <div className={ `player table-pos-${this.props.index}` }>
             {`${this.props.player.username} (${this.props.player.stack})` }
-            <Hand gameState={this.props.gameState} cards={this.props.cards} />
+            <Hand gameState={this.props.manager.state.state} cards={this.props.cards} />
             <HandActions {...this.props} />
-            <p>{this.state.timer ? this.state.timer.toString() : ''}</p>
-            <p>{this.props.playerBet || ''}</p>
+            <HandTimer allIn={this.props.manager.allIn} timer={this.state.timer} decisionTime={this.props.game?.options.decision_time} />
+            <p>{this.props.manager.pot.playerBets[+this.props.playerID] || ''}</p>
+            <PlayerSpotlight {...this.props} />
         </div>
+    }
+}
+
+export class PlayerSpotlight extends Player {
+    protected isWinner(): boolean {
+        return this.props.manager.pot.payouts[+this.props.playerID] > 0;
+    }
+
+    render() {
+        return <div className={classNames("spotlight", {active: this.isWinner()})}></div>
     }
 }
