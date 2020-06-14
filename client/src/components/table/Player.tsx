@@ -173,7 +173,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
             <Hand gameState={this.props.manager.state.state} cards={this.props.cards} />
             <HandActions {...this.props} />
             <HandTimer allIn={this.props.manager.allIn} timer={this.state.timer} decisionTime={this.props.game?.options.decision_time} />
-            <p>{this.props.manager.pot.playerBets[+this.props.playerID] || ''}</p>
+            <p>{this.props.manager.pot.playerBets[+this.props.player.id] || ''}</p>
             <PlayerSpotlight {...this.props} />
         </div>
     }
@@ -181,7 +181,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
 
 export class PlayerSpotlight extends Player {
     protected isWinner(): boolean {
-        return this.props.manager.pot.payouts[+this.props.playerID] > 0;
+        return this.props.manager.pot.payouts[+this.props.player.id] > 0;
     }
 
     render() {
