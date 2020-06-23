@@ -7,7 +7,7 @@ ts := $(shell date +%Y%m%d-%H%M%S)
 up: dev-setup db-apply db-seed  ## Create local docker env
 
 dev-setup:
-	docker-compose up --build -d nginx
+	docker-compose up -d nginx
 
 down:  ## Tear down local docker env
 	docker-compose down --remove-orphans

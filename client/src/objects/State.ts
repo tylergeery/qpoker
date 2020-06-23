@@ -102,6 +102,21 @@ class Pot {
             potObj.total
         );
     }
+
+    public toCover(playerID: number): number {
+        return this.maxBet() - this.playerBets[playerID];
+    }
+
+    private maxBet(): number {
+        let playerID: any = 0;
+        let maxBet = 0;
+
+        for (playerID in this.playerBets) {
+            maxBet = Math.max(maxBet, this.playerBets[playerID]);
+        }
+
+        return maxBet;
+    }
 }
 
 export class Manager {
@@ -114,7 +129,6 @@ export class Manager {
     ) {}
 
     public static FromObj(managerObj: any): Manager {
-        console.log("managerObj: ", managerObj);
         return new Manager(
             managerObj.big_blind,
             State.FromObj(managerObj.state),

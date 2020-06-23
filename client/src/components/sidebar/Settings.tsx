@@ -32,7 +32,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
             options: Object.assign({}, props.game.options),
             requests: [],
             form: {
-                'chip_request': props.game.options.buy_in_min
+                'chip_request': this.getDefaultBuyIn()
             }
         }
     }
@@ -45,6 +45,10 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
 
             this.setState({requests: event.data.requests});
         });
+    }
+
+    private getDefaultBuyIn() {
+        return Math.min(this.props.game.options.buy_in_min * 10, this.props.game.options.buy_in_max)
     }
 
     public handleChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -196,8 +200,9 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     <tr>
                         <td colSpan={2}>Request Chips</td>
                         <td>
-                            <input type="number" step={this.props.game.options.big_blind} defaultValue={this.props.game.options.buy_in_min} name="chip_request"
-                                onChange={this.handleChange.bind(this)} />
+                            <input type="number" step={this.props.game.options.big_blind}
+                                defaultValue={this.getDefaultBuyIn()}
+                                name="chip_request" onChange={this.handleChange.bind(this)} />
                         </td>
                         <td>
                             <button onClick={this.sendAdminAction.bind(this, 'chip_request', 'chip_request')} type="button" className="btn-flat">

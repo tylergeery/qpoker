@@ -62,15 +62,20 @@ class HandActions extends React.Component<PlayerProps, {}> {
 
     constructor(props: any) {
         super(props)
-        this.bet = 0;
+        this.bet = this.defaultBetAmount();
     }
 
     public getOptions(): string[] {
         let options: string[] = [];
+        let ordered: string[] = ['can_fold', 'can_check', 'can_call', 'can_bet'];
 
-        for (let opt in this.props.player.options) {
-            if (this.props.player.options[opt]) {
-                options.push(opt.slice(4));  // Remove `can_` prefix
+        if (!this.props.player.options) {
+            return options
+        }
+
+        for (let i = 0; i < ordered.length; i++) {
+            if (this.props.player.options[ordered[i]]) {
+                options.push(ordered[i].slice(4));  // Remove `can_` prefix
             }
         }
 
@@ -98,14 +103,27 @@ class HandActions extends React.Component<PlayerProps, {}> {
         this.bet = parseInt(event.target.value);
     }
 
+    private defaultBetAmount(): number {
+        let bigBlind = this.props.game.options.big_blind;
+
+        return Math.min(
+            this.props.player.stack,
+            bigBlind + this.props.manager.pot.toCover(this.props.player.id)
+        );
+    }
+
     render() {
         let options = this.getOptions();
+        let betAmount = this.defaultBetAmount();
 
         return this.props.playerID.toString() === this.props.player.id.toString() ? <div>
             {options.map((opt) => {
                 return <button onClick={this.sendAction.bind(this)} type="button">{opt}</button>;
             })}
-            {options.length ? <input type="number" defaultValue={0} onChange={this.registerBet.bind(this)} /> : ''}
+            {options.length ? (
+                <input type="number" defaultValue={betAmount}
+                    onChange={this.registerBet.bind(this)} />
+             ) : ''}
         </div> : ''
     }
 }
@@ -129,7 +147,12 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
 
         return Math.floor(seconds);
     }
+
     protected isSelected(): boolean {
+        if (this.props.manager.pot.payouts && Object.keys(this.props.manager.pot.payouts).length) {
+            return false;
+        }
+
         if (this.props.manager.allIn) {
             return false;
         }
@@ -157,8 +180,6 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
             return
         }
         this.interval = 1;
-
-
 
         this.countDown(this.getCountdownTime());
     }

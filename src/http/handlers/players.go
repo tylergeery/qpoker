@@ -27,8 +27,8 @@ func (c createPlayerRequest) validate() error {
 		return errors.New("password requires at least 6 characters")
 	}
 
-	if err := emailx.Validate(c.Email); err != nil {
-		return fmt.Errorf("Invalid email format: %s", c.Email)
+	if err := emailx.ValidateFast(c.Email); err != nil {
+		return fmt.Errorf("Invalid email format: %s, %s", c.Email, err)
 	}
 
 	return nil
