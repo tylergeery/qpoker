@@ -3,9 +3,10 @@ import * as React from "react";
 import { EventState, defaultEventState } from "../objects/State";
 import { NewConnectionHandler, ConnectionHandler } from "../connection/ws";
 import { Game } from "../objects/Game";
-import { Player, PlayerSpotlight } from "./table/Player";
+import { Player } from "./table/Player";
 import { Seat } from "./table/Seat";
 import { SideBar } from "./SideBar";
+import { VideoChannel } from "../video";
 
 export type TableProps = {
     game?: Game;
@@ -20,11 +21,23 @@ export type TableState = {
 // State is never set so we use the '{}' type.
 export class Table extends React.Component<TableProps, TableState> {
     conn: ConnectionHandler;
+    videoChannel: VideoChannel
 
     constructor(props: any) {
         super(props);
         this.state = {es: defaultEventState};
         this.resetConnection();
+    }
+
+    protected enableVideo() {
+        if (this.videoChannel || !this.props.playerID) {
+            return
+        }
+
+        // TODO: check if video preferences have been turned on
+        if (!this.needsSeat()) {
+            this.videoChannel = new VideoChannel(this.props.playerID);
+        }
     }
 
     public resetConnection() {
@@ -65,6 +78,9 @@ export class Table extends React.Component<TableProps, TableState> {
 
     public render() {
         let chooseSeat = this.needsSeat();
+        if (this.state.es.manager.state.table) {
+            this.enableVideo();
+        }
 
         return (
             <div className="row white-text nmb">
