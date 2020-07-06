@@ -30,13 +30,17 @@ export class Table extends React.Component<TableProps, TableState> {
     }
 
     protected enableVideo() {
-        if (this.videoChannel || !this.props.playerID) {
+        if (!this.props.playerID || this.videoChannel) {
             return
         }
 
         // TODO: check if video preferences have been turned on
         if (!this.needsSeat()) {
-            this.videoChannel = new VideoChannel(this.props.playerID);
+            this.videoChannel = new VideoChannel(
+                +this.props.playerID,
+                this.conn.send.bind(this.conn)
+            );
+            this.conn.subscribe('video', this.videoChannel.videoEvent.bind(this.videoChannel));
         }
     }
 

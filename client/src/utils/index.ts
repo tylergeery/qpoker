@@ -17,7 +17,7 @@ export const classNames = (...potentials: any[]): string => {
     return approved.join(" ");
 }
 
-type ClientAction = {
+export type ClientAction = {
     type: string;
     data: any;
 }

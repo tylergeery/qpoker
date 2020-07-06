@@ -39,6 +39,11 @@ func (e ClientEvent) IsMsgEvent() bool {
 	return e.Type == ActionMsg
 }
 
+// IsVideoEvent tells whether the event is an admin action
+func (e ClientEvent) IsVideoEvent() bool {
+	return e.Type == ActionVideo
+}
+
 // ToAdminEvent parses the game action from the GameEvent
 func (e ClientEvent) ToAdminEvent(c *Client) AdminEvent {
 	adminEvent := AdminEvent{
@@ -75,21 +80,53 @@ func (e ClientEvent) ToGameEvent(c *Client) GameEvent {
 	}
 }
 
+// ToVideoEvent parses the video action from the ClientEvent
+func (e ClientEvent) ToVideoEvent(c *Client) VideoEvent {
+	videoEvent := VideoEvent{
+		Type:       e.Data["type"].(string),
+		PlayerID:   c.PlayerID,
+		ToPlayerID: int64(e.Data["to_player_id"].(float64)),
+		GameID:     c.GameID,
+	}
+
+	if offer, ok := e.Data["offer"]; ok {
+		videoEvent.Offer = offer
+	}
+
+	if candidate, ok := e.Data["candidate"]; ok {
+		videoEvent.Candidate = candidate
+	}
+
+	return videoEvent
+}
+
+// Video holds client video info
+type Video struct {
+	Offer     interface{} `json:"offer"`
+	Candidate interface{} `json:"candidate"`
+	Answer    interface{} `json:"answer"`
+}
+
 // Client holds connection information
 type Client struct {
 	conn     *websocket.Conn
 	connOpen bool
 	PlayerID int64
 	GameID   int64
+	Videos   map[int64]*Video
 
 	GameChannel    chan GameEvent
 	AdminChannel   chan AdminEvent
 	MessageChannel chan MsgEvent
+	VideoChannel   chan VideoEvent
 }
 
 // NewClient returns a new client
 func NewClient(conn *websocket.Conn) *Client {
-	return &Client{conn: conn}
+	return &Client{
+		conn:   conn,
+		Videos: map[int64]*Video{},
+	}
 }
 
 // Active returns whether the client is still active
@@ -161,6 +198,11 @@ func (c *Client) ReadMessages() {
 
 		if event.IsMsgEvent() {
 			c.MessageChannel <- event.ToMsgEvent(c)
+			continue
+		}
+
+		if event.IsVideoEvent() {
+			c.VideoChannel <- event.ToVideoEvent(c)
 			continue
 		}
 
