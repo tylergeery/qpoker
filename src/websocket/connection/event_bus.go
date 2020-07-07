@@ -289,39 +289,21 @@ func (e *EventBus) handleVideoEvent(event VideoEvent) {
 	}
 
 	for i := range controller.clients {
-		if controller.clients[i].PlayerID == event.PlayerID {
-			if event.Type == "offer" {
-				controller.clients[i].Videos[event.ToPlayerID].Offer = event.Offer
-			}
-			if event.Type == "candidate" {
-				controller.clients[i].Videos[event.ToPlayerID].Candidate = event.Candidate
-			}
-			if event.Type == "answer" {
-				controller.clients[i].Videos[event.ToPlayerID].Answer = event.Offer
-			}
+		if controller.clients[i].PlayerID == event.ToPlayerID {
+			broadcastEvent := NewBroadcastEvent(ActionVideo, event)
+			e.broadcast(controller.game.ID, event.ToPlayerID, broadcastEvent)
 		}
 	}
 
-	e.BroadcastVideos(controller)
+	//e.BroadcastVideos(controller)
 }
 
 // BroadcastVideos broadcast client video states
 func (e *EventBus) BroadcastVideos(controller *GameController) {
-	clientVideos := map[int64]map[int64]*Video{}
+	clientVideos := map[int64]bool{}
 
 	for i := range controller.clients {
-		for j := range controller.clients {
-			if i == j {
-				continue
-			}
-
-			_, ok := controller.clients[i].Videos[controller.clients[j].PlayerID]
-			if !ok {
-				controller.clients[i].Videos[controller.clients[j].PlayerID] = &Video{}
-			}
-		}
-
-		clientVideos[controller.clients[i].PlayerID] = controller.clients[i].Videos
+		clientVideos[controller.clients[i].PlayerID] = true
 	}
 
 	broadcastEvent := NewBroadcastEvent(ActionVideo, clientVideos)

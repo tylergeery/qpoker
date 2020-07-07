@@ -12,7 +12,7 @@ class Player {
     }
 
     protected onIceCandidate(event: any) {
-        console.log(typeof this, `${this.fromPlayerID} - ${this.toPlayerID}, onicecandidate:`, event.candidate, this.conn.connectionState);
+        console.log(`${this.fromPlayerID} - ${this.toPlayerID}, onicecandidate:`, event.candidate, this.conn.connectionState);
     }
 
     protected onStateChange(event: any) {
@@ -36,7 +36,7 @@ class Player {
     }
 
     protected createConnection() {
-        const configuration: any = null;
+        const configuration: any = {'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }]};
         this.conn = new RTCPeerConnection(configuration);
         this.conn.onicecandidate = this.onIceCandidate.bind(this);
         this.conn.onconnectionstatechange = this.onStateChange.bind(this);
@@ -51,9 +51,15 @@ class Player {
 }
 
 class RemotePlayer extends Player {
-    hasCandidate: boolean;
-    offer: RTCSessionDescription;
-    candidate: RTCIceCandidate;
+    protected onIceStateChange(event: any) {
+        super.onIceStateChange(event);
+
+        if (event.target.iceConnectionState != "failed") {
+            return;
+        }
+
+        // TODO: try to reinitiate
+    }
 
     protected onIceCandidate(event: any) {
         if (!event.candidate) {
@@ -61,24 +67,18 @@ class RemotePlayer extends Player {
         }
 
         super.onIceCandidate(event);
-        this.hasCandidate = true;
+
         this.onEventCreated(
             createVideoAction({
                 type: 'candidate',
-                player_id: this.fromPlayerID,
+                from_player_id: this.fromPlayerID,
                 to_player_id: this.toPlayerID,
                 candidate: event.candidate
             }
-        ))
+        ));
     }
 
     public handleOffer(offer: RTCSessionDescription): Promise<RTCSessionDescription> {
-        if (this.offer && offer.sdp == this.offer.sdp) {
-            return;
-        }
-
-        this.offer = offer;
-
         return new Promise<RTCSessionDescription>((resolve, reject) => {
             console.log('received offer:', offer, this.conn.connectionState);
             this.conn.setRemoteDescription(offer);
@@ -89,7 +89,7 @@ class RemotePlayer extends Player {
                     this.onEventCreated(
                         createVideoAction({
                             type: 'answer',
-                            player_id: this.fromPlayerID,
+                            from_player_id: this.fromPlayerID,
                             to_player_id: this.toPlayerID,
                             offer: offer
                         })
@@ -100,20 +100,12 @@ class RemotePlayer extends Player {
     }
 
     public handleCandidate(candidate: RTCIceCandidate) {
-        if (this.candidate && candidate.candidate == this.candidate.candidate) {
-            return;
-        }
-
-        this.candidate = candidate;
-
         console.log("adding ice candidate:", candidate);
         this.conn.addIceCandidate(candidate);
     }
 }
 
 class LocalPlayer extends Player {
-    answer: RTCSessionDescription;
-
     public createOffer(stream: MediaStream): Promise<RTCSessionDescription> {
         stream.getTracks().forEach(track => this.conn.addTrack(track, stream));
 
@@ -125,7 +117,7 @@ class LocalPlayer extends Player {
                     this.onEventCreated(
                         createVideoAction({
                             type: 'offer',
-                            player_id: this.fromPlayerID,
+                            from_player_id: this.fromPlayerID,
                             to_player_id: this.toPlayerID,
                             offer: offer
                         }
@@ -138,12 +130,6 @@ class LocalPlayer extends Player {
     }
 
     public handleAnswer(answer: RTCSessionDescription): Promise<RTCSessionDescription> {
-        if (this.answer && answer.sdp == this.answer.sdp) {
-            return;
-        }
-
-        this.answer = answer;
-
         return new Promise<RTCSessionDescription>((resolve, reject) => {
             console.log('received answer:', answer, this.conn.connectionState);
             this.conn.setRemoteDescription(answer);
@@ -157,6 +143,9 @@ class UserPlayer extends LocalPlayer {
     }
 
     protected onTrackEvent(event: any) {}
+    protected onIceCandidate(event: any) {}
+    protected onStateChange(event: any) {}
+    protected onIceStateChange(event: any) {}
 }
 
 export class VideoChannel {
@@ -218,30 +207,25 @@ export class VideoChannel {
     }
 
     public videoEvent(event: ClientAction) {
-        let playerID: any;
+        let remotePlayer: RemotePlayer;
+        let localPlayer: LocalPlayer;
 
-        this.setPlayers(event.data);
-
-        for (playerID in this.remote) {
-            let remotePlayer = this.remote[playerID];
-            let toPlayer = event.data[playerID][this.playerID];
-
-            if (toPlayer && toPlayer.offer) {
-                remotePlayer.handleOffer(toPlayer.offer);
-            }
-
-            if (toPlayer && toPlayer.candidate) {
-                remotePlayer.handleCandidate(toPlayer.candidate);
-            }
-        }
-
-        for (playerID in this.local) {
-            let localPlayer = this.local[playerID];
-            let toPlayer = event.data[playerID][this.playerID];
-
-            if (toPlayer && toPlayer.answer) {
-                localPlayer.handleAnswer(toPlayer.answer);
-            }
+        switch (event.data.type) {
+            case 'offer':
+                remotePlayer = this.remote[+event.data.from_player_id];
+                remotePlayer.handleOffer(event.data.offer);
+                break;
+            case 'answer':
+                localPlayer = this.local[+event.data.from_player_id];
+                localPlayer.handleAnswer(event.data.offer);
+                break;
+            case 'candidate':
+                remotePlayer = this.remote[+event.data.from_player_id];
+                remotePlayer.handleCandidate(event.data.candidate);
+                break;
+            default:
+                this.setPlayers(event.data);
+                break;
         }
     }
 }

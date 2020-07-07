@@ -113,10 +113,10 @@ func NewBroadcastEvent(eventType string, data interface{}) BroadcastEvent {
 
 // VideoEvent represents a message event
 type VideoEvent struct {
-	Type       string `json:"type"`
-	GameID     int64
-	PlayerID   int64       `json:"player_id"`
-	ToPlayerID int64       `json:"to_player_id"`
-	Offer      interface{} `json:"offer"`
-	Candidate  interface{} `json:"candidate"`
+	Type         string      `json:"type"`
+	GameID       int64       `json:"game_id"`
+	FromPlayerID int64       `json:"from_player_id"`
+	ToPlayerID   int64       `json:"to_player_id"`
+	Offer        interface{} `json:"offer"`
+	Candidate    interface{} `json:"candidate"`
 }

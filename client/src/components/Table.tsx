@@ -40,6 +40,7 @@ export class Table extends React.Component<TableProps, TableState> {
                 +this.props.playerID,
                 this.conn.send.bind(this.conn)
             );
+            window.QPoker.VideoChannel = this.videoChannel;
             this.conn.subscribe('video', this.videoChannel.videoEvent.bind(this.videoChannel));
         }
     }
