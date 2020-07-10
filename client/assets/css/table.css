@@ -90,3 +90,10 @@
 .sidebar-nav a:active, .sidebar-nav a:hover, .sidebar-nav a:focus   {
     background: none !important;
 }
+
+
+/** Video CSS **/
+video {
+    height: 100px;
+    width: 100px;
+}

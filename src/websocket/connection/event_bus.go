@@ -42,6 +42,7 @@ type EventBus struct {
 	GameChannel    chan GameEvent
 	AdminChannel   chan AdminEvent
 	MessageChannel chan MsgEvent
+	VideoChannel   chan VideoEvent
 }
 
 // NewEventBus returns a new EventBus
@@ -52,6 +53,7 @@ func NewEventBus() *EventBus {
 		GameChannel:    make(chan GameEvent),
 		AdminChannel:   make(chan AdminEvent),
 		MessageChannel: make(chan MsgEvent),
+		VideoChannel:   make(chan VideoEvent),
 	}
 }
 
@@ -279,6 +281,37 @@ func (e *EventBus) handleMessageEvent(event MsgEvent) {
 	e.BroadcastMessages(controller)
 }
 
+func (e *EventBus) handleVideoEvent(event VideoEvent) {
+	controller, ok := e.games[event.GameID]
+	if !ok {
+		fmt.Printf("VideoEvent error: Could not find controller for game id (%d)\n", event.GameID)
+		return
+	}
+
+	for i := range controller.clients {
+		if controller.clients[i].PlayerID == event.ToPlayerID {
+			broadcastEvent := NewBroadcastEvent(ActionVideo, event)
+			e.broadcast(controller.game.ID, event.ToPlayerID, broadcastEvent)
+		}
+	}
+
+	//e.BroadcastVideos(controller)
+}
+
+// BroadcastVideos broadcast client video states
+func (e *EventBus) BroadcastVideos(controller *GameController) {
+	clientVideos := map[int64]bool{}
+
+	for i := range controller.clients {
+		clientVideos[controller.clients[i].PlayerID] = true
+	}
+
+	broadcastEvent := NewBroadcastEvent(ActionVideo, clientVideos)
+	for i := range controller.clients {
+		e.broadcast(controller.game.ID, controller.clients[i].PlayerID, broadcastEvent)
+	}
+}
+
 // SetClient adds client to EventBus
 func (e *EventBus) SetClient(client *Client) {
 	controller, ok := e.games[client.GameID]
@@ -296,6 +329,7 @@ func (e *EventBus) SetClient(client *Client) {
 	client.GameChannel = e.GameChannel
 	client.AdminChannel = e.AdminChannel
 	client.MessageChannel = e.MessageChannel
+	client.VideoChannel = e.VideoChannel
 
 	player, err := models.GetPlayerFromID(client.PlayerID)
 	if err != nil {
@@ -314,6 +348,7 @@ func (e *EventBus) SetClient(client *Client) {
 	}
 
 	e.BroadcastMessages(controller)
+	e.BroadcastVideos(controller)
 }
 
 // RemoveClient removes a client from EventBus
@@ -331,6 +366,7 @@ func (e *EventBus) RemoveClient(client *Client) {
 	}
 
 	e.BroadcastState(client.GameID)
+	e.BroadcastVideos(controller)
 }
 
 // BroadcastRequests sends chip requests to game owner
@@ -428,6 +464,9 @@ func (e *EventBus) ListenForEvents() {
 		case msgAction := <-e.MessageChannel:
 			fmt.Printf("MsgAction: (%+v)\n", msgAction)
 			e.handleMessageEvent(msgAction)
+		case videoAction := <-e.VideoChannel:
+			fmt.Printf("VideoAction: (%+v)\n", videoAction)
+			e.handleVideoEvent(videoAction)
 		}
 	}
 }

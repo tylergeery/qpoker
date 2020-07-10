@@ -19,6 +19,7 @@ export class ConnectionHandler {
             'admin': [],
             'message': [],
             'game': [],
+            'video': [],
         }
     }
 

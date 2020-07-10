@@ -16,6 +16,9 @@ const (
 	// ActionMsg is a message type of event
 	ActionMsg = "message"
 
+	// ActionVideo is a video type of event
+	ActionVideo = "video"
+
 	// ActionPlayerRegister is the register action
 	ActionPlayerRegister = "register"
 
@@ -106,4 +109,14 @@ type BroadcastEvent struct {
 // NewBroadcastEvent creates a new BroadcastEvent
 func NewBroadcastEvent(eventType string, data interface{}) BroadcastEvent {
 	return BroadcastEvent{eventType, data}
+}
+
+// VideoEvent represents a message event
+type VideoEvent struct {
+	Type         string      `json:"type"`
+	GameID       int64       `json:"game_id"`
+	FromPlayerID int64       `json:"from_player_id"`
+	ToPlayerID   int64       `json:"to_player_id"`
+	Offer        interface{} `json:"offer"`
+	Candidate    interface{} `json:"candidate"`
 }

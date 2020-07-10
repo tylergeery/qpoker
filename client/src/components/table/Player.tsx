@@ -190,6 +190,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
         }
 
         return <div className={ `player table-pos-${this.props.index}` }>
+            <video id={`player-video-${this.props.player.id}`} autoPlay></video>
             {`${this.props.player.username} (${this.props.player.stack})` }
             <Hand gameState={this.props.manager.state.state} cards={this.props.cards} />
             <HandActions {...this.props} />
