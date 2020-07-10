@@ -1,7 +1,8 @@
 import { createVideoAction, ClientAction } from "../utils";
 
-class Player {
+abstract class Player {
     conn: RTCPeerConnection;
+    prefix: string;
 
     constructor(
         public fromPlayerID: number,
@@ -9,22 +10,46 @@ class Player {
         public onEventCreated: (event: ClientAction) => void,
     ) {
         this.createConnection()
+        this.prefix = this.getPrefix()
     }
 
+    protected abstract getPrefix(): string;
+
+    protected abstract getCandidateEventName(): string;
+
     protected onIceCandidate(event: any) {
-        console.log(`${this.fromPlayerID} - ${this.toPlayerID}, onicecandidate:`, event.candidate, this.conn.connectionState);
+        console.log(this.prefix, 'onicecandidate:', event.candidate, this.conn.connectionState);
+
+        if (!event.candidate) {
+            return;
+        }
+
+        this.onEventCreated(
+            createVideoAction({
+                type: this.getCandidateEventName(),
+                from_player_id: this.fromPlayerID,
+                to_player_id: this.toPlayerID,
+                candidate: event.candidate
+            }
+        ));
     }
 
     protected onStateChange(event: any) {
-        console.log(`${this.fromPlayerID} - ${this.toPlayerID}, connectionstatechange:`, event, this.conn.connectionState);
+        console.log(this.prefix, 'connectionstatechange:', event, this.conn.connectionState);
     }
 
     protected onIceStateChange(event: any) {
-        console.log(`${this.fromPlayerID} - ${this.toPlayerID}, icestatechange:`, event);
+        console.log(this.prefix, 'icestatechange:', event);
+
+        if (event.target.iceConnectionState != "failed") {
+            return;
+        }
+
+        // TODO: try to reinitiate
     }
 
     protected onTrackEvent(event: any) {
-        console.log(`${this.fromPlayerID} - ${this.toPlayerID}, track:`, event);
+        console.log(this.prefix, 'track:', event);
 
         if (this.getVideoElement().srcObject !== event.streams[0]) {
             this.getVideoElement().srcObject = event.streams[0];
@@ -32,7 +57,7 @@ class Player {
     }
 
     protected onNegotiationNeededEvent(event: any) {
-        console.log(`${this.fromPlayerID} - ${this.toPlayerID}, negotiationneeded:`, event, this.conn.connectionState);
+        console.log(this.prefix, 'negotiationneeded:', event, this.conn.connectionState);
     }
 
     protected createConnection() {
@@ -48,39 +73,28 @@ class Player {
     protected getVideoElement(): HTMLVideoElement {
         return document.querySelector(`#player-video-${this.toPlayerID}`);
     }
+
+    public handleCandidate(candidate: RTCIceCandidate) {
+        console.log(this.prefix, 'adding ice candidate:', candidate);
+        this.conn.addIceCandidate(candidate)
+            .then((candidate) => {
+                console.log(this.prefix, 'added ice candidate:', candidate);
+            }, console.error);
+    }
 }
 
 class RemotePlayer extends Player {
-    protected onIceStateChange(event: any) {
-        super.onIceStateChange(event);
-
-        if (event.target.iceConnectionState != "failed") {
-            return;
-        }
-
-        // TODO: try to reinitiate
+    protected getPrefix(): string {
+        return `${this.toPlayerID} - ${this.fromPlayerID}`;
     }
 
-    protected onIceCandidate(event: any) {
-        if (!event.candidate) {
-            return;
-        }
-
-        super.onIceCandidate(event);
-
-        this.onEventCreated(
-            createVideoAction({
-                type: 'candidate',
-                from_player_id: this.fromPlayerID,
-                to_player_id: this.toPlayerID,
-                candidate: event.candidate
-            }
-        ));
+    protected getCandidateEventName(): string {
+        return 'candidate-remote';
     }
 
     public handleOffer(offer: RTCSessionDescription): Promise<RTCSessionDescription> {
         return new Promise<RTCSessionDescription>((resolve, reject) => {
-            console.log('received offer:', offer, this.conn.connectionState);
+            console.log(this.prefix, 'received offer:', offer, this.conn.connectionState);
             this.conn.setRemoteDescription(offer);
             this.conn.createAnswer()
                 .then((offer: RTCSessionDescription) => {
@@ -98,14 +112,17 @@ class RemotePlayer extends Player {
                 }, reject);
         });
     }
-
-    public handleCandidate(candidate: RTCIceCandidate) {
-        console.log("adding ice candidate:", candidate);
-        this.conn.addIceCandidate(candidate);
-    }
 }
 
 class LocalPlayer extends Player {
+    protected getPrefix(): string {
+        return `${this.fromPlayerID} - ${this.toPlayerID}`;
+    }
+
+    protected getCandidateEventName(): string {
+        return 'candidate-local';
+    }
+
     public createOffer(stream: MediaStream): Promise<RTCSessionDescription> {
         stream.getTracks().forEach(track => this.conn.addTrack(track, stream));
 
@@ -146,6 +163,7 @@ class UserPlayer extends LocalPlayer {
     protected onIceCandidate(event: any) {}
     protected onStateChange(event: any) {}
     protected onIceStateChange(event: any) {}
+    protected onNegotiationNeededEvent(event: any) {}
 }
 
 export class VideoChannel {
@@ -188,7 +206,7 @@ export class VideoChannel {
         // Create new players as needed
         for (playerID in playerIDOffers) {
             playerID = +playerID;
-            if (this.playerID == playerID) {
+            if (!playerID || this.playerID == playerID) {
                 continue
             }
 
@@ -219,9 +237,13 @@ export class VideoChannel {
                 localPlayer = this.local[+event.data.from_player_id];
                 localPlayer.handleAnswer(event.data.offer);
                 break;
-            case 'candidate':
+            case 'candidate-local':
                 remotePlayer = this.remote[+event.data.from_player_id];
                 remotePlayer.handleCandidate(event.data.candidate);
+                break;
+            case 'candidate-remote':
+                localPlayer = this.local[+event.data.from_player_id];
+                localPlayer.handleCandidate(event.data.candidate);
                 break;
             default:
                 this.setPlayers(event.data);

@@ -366,6 +366,7 @@ func (e *EventBus) RemoveClient(client *Client) {
 	}
 
 	e.BroadcastState(client.GameID)
+	e.BroadcastVideos(controller)
 }
 
 // BroadcastRequests sends chip requests to game owner
