@@ -40,7 +40,7 @@ module.exports = {
         },
 
         // dynamic game files
-        glob.sync('./src/games/**.js')
+        glob.sync('./src/games/*.tsx')
             .reduce(
                 (entries, gameFile) => {
                     entries['games/' + path.parse(gameFile).name] = gameFile;
