@@ -1,10 +1,10 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { Table } from "./components/Table";
-import { userStorage } from "./utils/storage";
-import { Game } from "./objects/Game";
-import { getPlayer } from "./helpers/player";
+import { Table } from "../components/games/poker/Poker";
+import { userStorage } from "../utils/storage";
+import { Game } from "../objects/Game";
+import { getPlayer } from "../helpers/player";
 
 if (!window.hasOwnProperty('QPoker')) {
     console.error("Could not find QPoker config");

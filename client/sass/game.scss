@@ -1,0 +1,25 @@
+.w100  { max-width: 100%; min-width: 100%; width: 100%; }
+.bg { z-index: 0; }
+
+
+/* Sidebar */
+.sidebar-holder {
+    max-height: 800px;
+    overflow-y: scroll;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid;
+
+    a {
+        flex-grow: 1;
+        text-align: center;
+        text-transform: capitalize;
+
+        &:active, &:hover, &:focus   {
+            background: none !important;
+        }
+    }
+}
