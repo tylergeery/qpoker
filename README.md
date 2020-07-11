@@ -37,23 +37,20 @@ make test
   - Landing page
     - Join game by code
     - Features
-      - Video
       - Card games
-        - holdem
         - hearts
         - gang gin
-      - self-hosting
     - Hosting options
       - Charge for hosting
       - Free hosting w/ ads
       - Host your own
+        - ansible deploy
+        - helm chart
   - JS
     - Table page
       - Game History
       - Remove nav choices
     - Add tests
-- Admin Options
-  - Time limit on user choice
 - Deploy somewhere
 - Autovaccuum games
   - Rules around when games should be removed from memory

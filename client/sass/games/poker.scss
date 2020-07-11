@@ -1,0 +1,77 @@
+@use '../partials/video';
+
+.table-holder {
+    position: relative;
+
+    /* https://www.heropatterns.com/ */
+    background-color: #636363;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='24' viewBox='0 0 88 24'%3E%3Cg fill-rule='evenodd'%3E%3Cg id='autumn' fill='%23b5b5b5' fill-opacity='0.4'%3E%3Cpath d='M10 0l30 15 2 1V2.18A10 10 0 0 0 41.76 0H39.7a8 8 0 0 1 .3 2.18v10.58L14.47 0H10zm31.76 24a10 10 0 0 0-5.29-6.76L4 1 2 0v13.82a10 10 0 0 0 5.53 8.94L10 24h4.47l-6.05-3.02A8 8 0 0 1 4 13.82V3.24l31.58 15.78A8 8 0 0 1 39.7 24h2.06zM78 24l2.47-1.24A10 10 0 0 0 86 13.82V0l-2 1-32.47 16.24A10 10 0 0 0 46.24 24h2.06a8 8 0 0 1 4.12-4.98L84 3.24v10.58a8 8 0 0 1-4.42 7.16L73.53 24H78zm0-24L48 15l-2 1V2.18A10 10 0 0 1 46.24 0h2.06a8 8 0 0 0-.3 2.18v10.58L73.53 0H78z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+
+    h5 {
+        position: absolute;
+        top: calc(50% - 150px);
+        left: calc(50% - 250px);
+
+        border: 2px solid black;
+        border-radius: 50%;
+        background-color: rgba(90, 0, 0);
+
+        width: 500px;
+        height: 250px;
+        text-align: center;
+        vertical-align: middle;
+        line-height: 250px;
+    }
+}
+
+.board-holder {
+    position: absolute; width: 300px;
+    left: calc(50% - 150px); top: calc(50% - 20px);
+}
+
+.player, .seat { width: 120px; height: 120px; position: absolute; z-index: 10; }
+
+.seat {
+    border: 1px solid ivory;
+    box-shadow: 5px ivory;
+    border-radius: 50%;
+
+    &:hover {
+        background-color: ivory;
+    }
+}
+
+.table-pos-0 { top: calc(15% - 30px); left: calc(50% - 30px); }
+
+.table-pos-1 { top: calc(20% - 30px); right: calc(35% - 30px); }
+.table-pos-11 { top: calc(20% - 30px); left: calc(35% - 30px); }
+
+.table-pos-2 { top: calc(30% - 30px); right: calc(20% - 30px); }
+.table-pos-10 { top: calc(30% - 30px); left: calc(20% - 30px); }
+
+.table-pos-3 { top: calc(50% - 30px); right: calc(10% - 30px); }
+.table-pos-9 { top: calc(50% - 30px); left: calc(10% - 30px); }
+
+.table-pos-4 { bottom: calc(35% - 30px); right: calc(20% - 30px); }
+.table-pos-8 { bottom: calc(35% - 30px); left: calc(20% - 30px); }
+
+.table-pos-5 { bottom: calc(20% - 30px); right: calc(35% - 30px); }
+.table-pos-7 { bottom: calc(20% - 30px); left: calc(35% - 30px); }
+
+.table-pos-6 { bottom: calc(15% - 30px); left: calc(50% - 30px); }
+
+.card { width: 58px;}
+.board-holder .card { margin: 0 2px 0 0; }
+
+.player .spotlight {
+    display: none;
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
+    border-radius: 30px;
+    z-index: -1;
+    background: rgba(255, 255, 255, 0.25)
+}
+.player .spotlight.active { display: block; }

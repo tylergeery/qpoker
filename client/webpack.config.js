@@ -1,4 +1,5 @@
 const path = require('path');
+const glob = require('glob');
 
 module.exports = {
     mode: "production",
@@ -31,11 +32,23 @@ module.exports = {
         ]
     },
 
-    entry: {
-        main: './src/main.tsx',
-        common: './src/common.tsx',
-        table: './src/table.tsx',
-    },
+    entry: Object.assign(
+        // static files
+        {
+            main: './src/main.tsx',
+            common: './src/common.tsx',
+        },
+
+        // dynamic game files
+        glob.sync('./src/games/**.js')
+            .reduce(
+                (entries, gameFile) => {
+                    entries['games/' + path.parse(gameFile).name] = gameFile;
+                    return entries;
+                },
+                {}
+            )
+    ),
     output: {
         filename: '[name].bundle.js',
         path: path.resolve(__dirname, 'assets/js'),

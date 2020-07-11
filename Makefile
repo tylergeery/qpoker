@@ -1,4 +1,4 @@
-.PHONY: help up down clean dev- db-migrate db-apply db-revert dev-user
+.PHONY: help up down clean dev- db-migrate db-apply db-revert dev-user sass js
 .DEFAULT_GOAL := help
 
 ts := $(shell date +%Y%m%d-%H%M%S)
@@ -40,6 +40,12 @@ js:  ## Build client js
 
 js-watch:  ## Build client js (watching for changes)
 	@cd client && NODE_ENV=dev /usr/bin/npx webpack --watch
+
+sass:
+	sass --no-source-map client/sass:client/assets/css
+
+sass-watch:
+	sass --no-source-map --watch client/sass/entry:client/assets/css
 
 check-%:
 	@if [ -z '${${*}}' ]; then echo 'Environment variable $* not set' && exit 1; fi

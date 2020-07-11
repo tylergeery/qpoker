@@ -1,8 +1,8 @@
 import * as React from "react";
-import { Card, GamePlayer, Manager } from "../../objects/State";
-import { ConnectionHandler } from "../../connection/ws";
-import { createGameAction, classNames } from "../../utils";
-import { Game } from "../../objects/Game";
+import { Card, GamePlayer, Manager } from "../../../../objects/State";
+import { ConnectionHandler } from "../../../../connection/ws";
+import { createGameAction, classNames } from "../../../../utils";
+import { Game } from "../../../../objects/Game";
 
 type PlayerProps = {
     playerID: string;

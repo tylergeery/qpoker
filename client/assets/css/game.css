@@ -1,0 +1,35 @@
+.w100 {
+  max-width: 100%;
+  min-width: 100%;
+  width: 100%;
+}
+
+.bg {
+  z-index: 0;
+}
+
+/* Sidebar */
+.sidebar-holder {
+  max-height: 800px;
+  overflow-y: scroll;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid;
+}
+.sidebar-nav a {
+  flex-grow: 1;
+  text-align: center;
+  text-transform: capitalize;
+}
+.sidebar-nav a:active, .sidebar-nav a:hover, .sidebar-nav a:focus {
+  background: none !important;
+}
+
+/** Video CSS **/
+video {
+  height: 100px;
+  width: 100px;
+}

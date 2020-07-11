@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import { EventState, defaultEventState } from "../objects/State";
-import { NewConnectionHandler, ConnectionHandler } from "../connection/ws";
-import { Game } from "../objects/Game";
+import { EventState, defaultEventState } from "../../../objects/State";
+import { NewConnectionHandler, ConnectionHandler } from "../../../connection/ws";
+import { Game } from "../../../objects/Game";
 import { Player } from "./table/Player";
 import { Seat } from "./table/Seat";
-import { SideBar } from "./SideBar";
-import { VideoChannel } from "../video";
+import { SideBar } from "../../SideBar";
+import { VideoChannel } from "../../../video";
 
 export type TableProps = {
     game?: Game;
