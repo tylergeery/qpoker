@@ -28,7 +28,7 @@ func (c createPlayerRequest) validate() error {
 	}
 
 	if err := emailx.ValidateFast(c.Email); err != nil {
-		return fmt.Errorf("Invalid email format: %s, %s", c.Email, err)
+		return fmt.Errorf("Invalid email format: %s", c.Email)
 	}
 
 	return nil
