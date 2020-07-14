@@ -25,7 +25,7 @@ type Hearts struct {
 // NewHearts creates and returns the resources for a new Hearts game
 func NewHearts(table *Table, state string) *Hearts {
 	scores := map[int64]int{}
-	for _, player := range table.GetPlayers() {
+	for _, player := range table.GetAllPlayers() {
 		scores[player.ID] = 0
 	}
 
@@ -39,27 +39,19 @@ func NewHearts(table *Table, state string) *Hearts {
 
 // Deal a new hand of hearts
 func (h *Hearts) Deal() error {
-	// shuffle cards
-	h.Deck.Shuffle()
-
 	// reset table
-	err := h.Table.NextHand()
-	if err != nil {
-		return err
-	}
+	h.Table.NextHand()
 
 	// reset board
 	h.Board = map[int64]cards.Card{}
 
-	// reset players cards
-	players := h.Table.GetActivePlayers()
-	for i := range players {
-		players[i].Cards = []cards.Card{}
-		players[i].Pile = []cards.Card{}
-	}
+	// shuffle cards
+	h.Deck.Shuffle()
 
 	// deal player cards
-	next := h.Table.activeIndex
+	next := h.Table.ActiveIndex
+	players := h.Table.GetActivePlayers()
+
 	for i := 0; i < 52; i++ {
 		card, err := h.Deck.GetCard()
 		if err != nil {
@@ -67,7 +59,7 @@ func (h *Hearts) Deal() error {
 		}
 
 		players[next].Cards = append(players[next].Cards, card)
-		next = h.Table.nextPos(next)
+		next = h.Table.NextPos(next)
 	}
 
 	h.State = StatePassing

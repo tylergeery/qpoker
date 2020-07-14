@@ -12,7 +12,7 @@ func TestAddAndRemoveFromTable(t *testing.T) {
 		players = append(players, &Player{ID: int64(i + 10)})
 	}
 
-	table := NewTable(players[:4])
+	table := NewTable(4, players[:4])
 	err := table.AddPlayer(players[4])
 	assert.Error(t, err)
 

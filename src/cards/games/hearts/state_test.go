@@ -24,7 +24,7 @@ func TestGameDeal(t *testing.T) {
 	}
 
 	for _, players := range cases {
-		hearts := NewHearts(NewTable(players), StatePassing)
+		hearts := NewHearts(NewTable(4, players), StatePassing)
 		assert.Equal(t, hearts.State, StatePassing)
 
 		hearts.Deal()

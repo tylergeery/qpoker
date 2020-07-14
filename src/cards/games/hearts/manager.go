@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// MaxPlayerCount is the max amount of players for HoldEm
+	// MaxPlayerCount is the max amount of players for hearts
 	MaxPlayerCount = 4
 
 	// StatusInit init
@@ -34,7 +34,7 @@ func NewGameManager(gameID int64, players []*Player, options models.GameOptions)
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}
 
-	table := NewTable(players)
+	table := NewTable(4, players)
 	gm := &GameManager{
 		GameID: gameID,
 		State:  NewHearts(table, ""), // TODO
@@ -94,7 +94,7 @@ func (g *GameManager) cardsToStringArray(cardObjects []cards.Card) []string {
 }
 
 func (g *GameManager) isComplete() bool {
-	playersRemaining := g.State.Table.GetPlayers()
+	playersRemaining := g.State.Table.GetAllPlayers()
 
 	for i := range playersRemaining {
 		if len(playersRemaining[i].Cards) > 0 {
@@ -154,7 +154,7 @@ func (g *GameManager) StartHand() error {
 	}
 
 	g.gamePlayerHands = map[int64]*models.GamePlayerHand{}
-	for _, player := range g.State.Table.GetPlayers() {
+	for _, player := range g.State.Table.GetAllPlayers() {
 		g.gamePlayerHands[player.ID] = &models.GamePlayerHand{
 			GameHandID:    g.gameHand.ID,
 			Cards:         g.cardsToStringArray(player.Cards),
@@ -179,7 +179,7 @@ func (g *GameManager) EndHand() error {
 	// 	return err
 	// }
 
-	for _, player := range g.State.Table.Players {
+	for _, player := range g.State.Table.GetAllPlayers() {
 		hand, ok := g.gamePlayerHands[player.ID]
 		if !ok {
 			continue
@@ -202,35 +202,18 @@ func (g *GameManager) EndHand() error {
 func (g *GameManager) UpdateStatus(status string) {
 	switch {
 	case g.Status == StatusInit && status == StatusReady:
-		if len(g.State.Table.GetPlayers()) > 1 {
+		if len(g.State.Table.GetAllPlayers()) > 3 {
 			g.Status = status
 		}
 		break
 	case g.Status == StatusReady && status == StatusInit:
-		if len(g.State.Table.GetActivePlayers()) <= 1 {
+		if len(g.State.Table.GetAllPlayers()) <= 3 {
 			g.Status = status
 		}
 	case g.Status == StatusReady && status == StatusActive:
-		if len(g.State.Table.GetActivePlayers()) > 1 {
+		if len(g.State.Table.GetAllPlayers()) > 3 {
 			g.Status = status
 		}
 		break
-	default:
-		break
 	}
-}
-
-// GetPlayer returns a player from a table
-func (g *GameManager) GetPlayer(playerID int64) *Player {
-	for i := range g.State.Table.Players {
-		if g.State.Table.Players[i] == nil {
-			continue
-		}
-
-		if playerID == g.State.Table.Players[i].ID {
-			return g.State.Table.Players[i]
-		}
-	}
-
-	return nil
 }

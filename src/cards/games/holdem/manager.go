@@ -410,15 +410,14 @@ func (g *GameManager) EndHand() error {
 		return err
 	}
 
-	for _, player := range g.State.Table.Players {
-		if player == nil {
-			continue
-		}
+	playerIDs := []int64{}
+	for playerID := range g.gamePlayerHands {
+		playerIDs = append(playerIDs, playerID)
+	}
 
-		hand, ok := g.gamePlayerHands[player.ID]
-		if !ok {
-			continue
-		}
+	players := g.State.Table.GetPlayersFromIDs(playerIDs)
+	for _, player := range players {
+		hand := g.gamePlayerHands[player.ID]
 
 		if amount, ok := payouts[player.ID]; ok {
 			player.Stack += amount
@@ -438,7 +437,7 @@ func (g *GameManager) EndHand() error {
 func (g *GameManager) UpdateStatus(status string) {
 	switch {
 	case g.Status == StatusInit && status == StatusReady:
-		if len(g.State.Table.GetAllPlayers()) > 1 {
+		if len(g.State.Table.GetReadyPlayers()) > 1 {
 			g.Status = status
 		}
 		break
@@ -461,16 +460,12 @@ func (g *GameManager) GetVisibleCards(playerID int64) map[int64][]cards.Card {
 	visibleCards := map[int64][]cards.Card{}
 	allIn := g.IsAllIn()
 
-	for _, player := range g.State.Table.Players {
-		if player == nil {
-			continue
-		}
-
+	for _, player := range g.State.Table.GetAllPlayers() {
 		if player.Cards == nil {
 			continue
 		}
 
-		if allIn || player.ID == playerID || player.CardsVisible {
+		if (allIn && player.IsActive()) || player.ID == playerID || player.CardsVisible {
 			visibleCards[player.ID] = player.Cards
 		}
 	}
@@ -480,17 +475,7 @@ func (g *GameManager) GetVisibleCards(playerID int64) map[int64][]cards.Card {
 
 // GetPlayer returns a player from a table
 func (g *GameManager) GetPlayer(playerID int64) *Player {
-	for i := range g.State.Table.Players {
-		if g.State.Table.Players[i] == nil {
-			continue
-		}
-
-		if playerID == g.State.Table.Players[i].ID {
-			return g.State.Table.Players[i]
-		}
-	}
-
-	return nil
+	return g.State.Table.GetPlayerByID(playerID)
 }
 
 // IsAllIn determines whether a round is all in and should proceed automagically
