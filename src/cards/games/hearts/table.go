@@ -64,6 +64,7 @@ func (t *Table) NextHand() {
 	for i := range players {
 		players[i].Cards = []cards.Card{}
 		players[i].Pile = []cards.Card{}
+		players[i].SetPlayerActions(nil)
 	}
 	t.DealerIndex = t.NextPos(t.DealerIndex)
 	t.Dealer = t.GetPlayerID(t.DealerIndex)

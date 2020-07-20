@@ -64,7 +64,7 @@ func (g *GameManager) RemovePlayer(playerID int64) error {
 
 // NextHand moves game manager on to next hand
 func (g *GameManager) NextHand() error {
-	g.Status = StatusReady
+	g.Status = StatusInit
 
 	err := g.State.Deal()
 	if err != nil {
@@ -105,6 +105,30 @@ func (g *GameManager) isComplete() bool {
 	return true
 }
 
+// PlayerPass passes player cards
+func (g *GameManager) PlayerPass(playerID int64, cards []cards.Card) error {
+	if len(cards) != 3 {
+		return fmt.Errorf("Invalid pass, requires 3 cards: (%d) (%+v)", playerID, cards)
+	}
+
+	g.State.addPass(playerID, cards)
+
+	return nil
+}
+
+func (g *GameManager) playerPlay(action Action) error {
+	player := g.State.Table.GetActivePlayer()
+
+	if len(player.Cards) == 0 {
+		return fmt.Errorf("Player (%d) cannot play, has no cards", player.ID)
+	}
+
+	// TODO: Ensure card is in players hand
+
+	g.State.playerPlay(player.ID, action.Card)
+	return nil
+}
+
 // PlayerAction performs an action for player
 func (g *GameManager) PlayerAction(playerID int64, action Action) (bool, error) {
 	if g.isComplete() {
@@ -115,7 +139,9 @@ func (g *GameManager) PlayerAction(playerID int64, action Action) (bool, error) 
 		return false, fmt.Errorf("User (%d) must wait for player (%d) to act", playerID, g.State.Table.GetActivePlayer().ID)
 	}
 
-	actionMap := map[string]func(action Action) error{}
+	actionMap := map[string]func(action Action) error{
+		ActionPlay: g.playerPlay,
+	}
 
 	err := actionMap[action.Name](action)
 	if err != nil {
@@ -141,7 +167,7 @@ func (g *GameManager) ProcessAction() (bool, error) {
 // GetPlayerActions returns allowed active player actions
 func (g *GameManager) GetPlayerActions() map[string]bool {
 	return map[string]bool{
-		// "can_play": g.canPlay(),
+		"can_play": true,
 	}
 }
 

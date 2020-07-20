@@ -6,15 +6,13 @@ import (
 
 const (
 	// ActionPlay is a play action
-	ActionPlay = "bet"
-	// ActionPass is a pass action
-	ActionPass = "pass"
+	ActionPlay = "play"
 )
 
 // Action holds the info regarding a holdem action
 type Action struct {
-	Name  string       `json:"name"`
-	Cards []cards.Card `json:"cards"`
+	Name string
+	Card cards.Card
 }
 
 func getCardsForAction(cardStrings []string) []cards.Card {
@@ -28,11 +26,6 @@ func getCardsForAction(cardStrings []string) []cards.Card {
 }
 
 // NewActionPlay returns a new play action
-func NewActionPlay(cardStrings []string) Action {
-	return Action{ActionPlay, getCardsForAction(cardStrings)}
-}
-
-// NewActionPass returns a new pass action
-func NewActionPass(cardStrings []string) Action {
-	return Action{ActionPass, getCardsForAction(cardStrings)}
+func NewActionPlay(c string) Action {
+	return Action{ActionPlay, cards.CardFromString(c)}
 }

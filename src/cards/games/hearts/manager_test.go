@@ -28,7 +28,7 @@ func createTestManager(t *testing.T, players ...*Player) *GameManager {
 	return manager
 }
 
-func TestPlayHand(t *testing.T) {
+func TestPlay4Hands(t *testing.T) {
 	var nilMap map[string]bool
 	var player *models.Player
 
@@ -57,15 +57,13 @@ func TestPlayHand(t *testing.T) {
 	}
 
 	// Try to move out of turn
-	for i, player := range players {
-		if i != 4 {
-			assert.Equal(t, nilMap, player.Options)
-			_, err = gm.PlayerAction(player.ID, NewActionPlay([]string{"AC"}))
-			assert.Error(t, err)
-		}
+	for _, player := range players {
+		assert.Equal(t, nilMap, player.Options)
+		_, err = gm.PlayerAction(player.ID, NewActionPlay("AC"))
+		assert.Error(t, err)
 	}
 
-	assert.True(t, players[4].Options["can_play"])
+	// assert.True(t, players[4].Options["can_play"])
 	// complete, err := gm.PlayerAction(players[4].ID, NewActionFold())
 	// assert.NoError(t, err)
 	// assert.False(t, complete)
