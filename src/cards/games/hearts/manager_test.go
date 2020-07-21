@@ -59,44 +59,35 @@ func TestPlay4Hands(t *testing.T) {
 	// Try to move out of turn
 	for _, player := range players {
 		assert.Equal(t, nilMap, player.Options)
-		_, err = gm.PlayerAction(player.ID, NewActionPlay("AC"))
+		_, err = gm.PlayerAction(player.ID, NewActionPlay(player.Cards[0].ToString()))
 		assert.Error(t, err)
 	}
 
-	// assert.True(t, players[4].Options["can_play"])
-	// complete, err := gm.PlayerAction(players[4].ID, NewActionFold())
-	// assert.NoError(t, err)
-	// assert.False(t, complete)
-	// assert.Equal(t, nilMap, players[4].Options)
+	for j := 0; j < 4; j++ {
+		// Pass cards
+		if j != 3 {
+			for i := range players {
+				player := players[(i+j)%4] // Let arbitrary player pass first
+				gm.PlayerPass(player.ID, player.Cards[:3])
+			}
+		}
 
-	// assert.True(t, players[0].Options["can_bet"])
-	// assert.True(t, players[0].Options["can_call"])
-	// assert.True(t, players[0].Options["can_fold"])
-	// assert.False(t, players[0].Options["can_check"])
-	// complete, err = gm.PlayerAction(players[0].ID, NewActionFold())
-	// assert.NoError(t, err)
-	// assert.False(t, complete)
-	// assert.Equal(t, nilMap, players[0].Options)
+		// Play round
+		for i := 0; i < 52; i++ {
+			player := gm.State.Table.GetActivePlayer()
+			_, err = gm.PlayerAction(player.ID, NewActionPlay(player.Cards[0].ToString()))
+		}
 
-	// complete, err = gm.PlayerAction(players[1].ID, NewActionFold())
-	// assert.NoError(t, err)
-	// assert.False(t, complete)
-	// complete, err = gm.PlayerAction(players[2].ID, NewActionFold())
-	// assert.NoError(t, err)
-	// assert.True(t, complete)
+		// Count save hearts (ensure all accounted for)
+		totalPoints := int64(0)
+		for _, hand := range gm.gamePlayerHands {
+			totalPoints += int64(hand.EndingStack - hand.StartingStack)
+		}
 
-	// // check game hand final save expected values
-	// expectedFinalStacks := []int64{200, 200, 150, 250, 200}
-	// assert.Equal(t, 0, len(gm.gameHand.Board))
-	// assert.Equal(t, int64(150), gm.gameHand.Payouts[players[3].ID])
-	// assert.Equal(t, int64(100), gm.gameHand.Bets[players[3].ID])
-	// assert.Equal(t, int64(50), gm.gameHand.Bets[players[2].ID])
-	// assert.Equal(t, gm.gameHand.GameID, game.ID)
-	// for i := 0; i < 5; i++ {
-	// 	assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
-	// 	assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
-	// 	assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
-	// 	assert.Equal(t, expectedFinalStacks[i], gm.gamePlayerHands[players[i].ID].EndingStack, fmt.Sprintf("Final Player Hand: pos(%d) %+v\n", i, gm.gamePlayerHands[players[i].ID]))
-	// 	assert.False(t, players[i].CardsVisible)
-	// }
+		assert.True(t, totalPoints == int64(26) || totalPoints == int64(78))
+
+		// Proceed to next hand
+		err = gm.NextHand()
+		assert.NoError(t, err)
+	}
 }

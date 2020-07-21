@@ -18,8 +18,10 @@ const (
 	// StatePassing game state when all players are selecting cards to pass
 	StatePassing = "Passing"
 	// StateActive game state after game is active
-	StateActive = "Flop"
+	StateActive = "Active"
 )
+
+var passDirections []byte = []byte{PassLeft, PassRight, PassAcross, PassNone}
 
 // Hearts contains game state
 type Hearts struct {
@@ -30,7 +32,8 @@ type Hearts struct {
 	State  string               `json:"state"`
 	Scores map[int64]int        `json:"scores"`
 
-	passes map[int64][]cards.Card
+	passes    map[int64][]cards.Card
+	passIndex int
 }
 
 // NewHearts creates and returns the resources for a new Hearts game
@@ -41,10 +44,11 @@ func NewHearts(table *Table, state string) *Hearts {
 	}
 
 	return &Hearts{
-		Deck:   cards.NewDeck(),
-		Table:  table,
-		State:  state,
-		Scores: scores,
+		Deck:      cards.NewDeck(),
+		Table:     table,
+		State:     state,
+		Scores:    scores,
+		passIndex: -1,
 	}
 }
 
@@ -54,8 +58,10 @@ func (h *Hearts) Deal() error {
 	h.Table.NextHand()
 
 	// reset board
+	h.State = StatePassing
 	h.Board = map[int64]cards.Card{}
 	h.passes = map[int64][]cards.Card{}
+	h.passIndex = (h.passIndex + 1) % len(passDirections)
 
 	// shuffle cards
 	h.Deck.Shuffle()
@@ -74,7 +80,9 @@ func (h *Hearts) Deal() error {
 		next = h.Table.NextPos(next)
 	}
 
-	h.State = StatePassing
+	if h.skipPass() {
+		h.State = StateActive
+	}
 
 	return nil
 }
@@ -98,4 +106,52 @@ func (h *Hearts) playerPlay(playerID int64, card cards.Card) {
 
 func (h *Hearts) addPass(playerID int64, cards []cards.Card) {
 	h.passes[playerID] = cards
+
+	if len(h.passes) == len(h.Table.Players) {
+		// commit passes
+		h.pass()
+		h.State = StateActive
+	}
+}
+
+func (h *Hearts) getPassToPlayer(playerPos int) *Player {
+	var passPlayerPos int
+
+	switch passDirections[h.passIndex] {
+	case PassLeft:
+		passPlayerPos = h.Table.NextPos(h.Table.NextPos(h.Table.NextPos(playerPos)))
+	case PassRight:
+		passPlayerPos = h.Table.NextPos(playerPos)
+	case PassAcross:
+		passPlayerPos = h.Table.NextPos(h.Table.NextPos(playerPos))
+	}
+
+	return h.Table.GetPlayerByID(h.Table.GetPlayerID(passPlayerPos))
+}
+
+func (h *Hearts) pass() {
+	if h.State != StatePassing {
+		return
+	}
+
+	start := h.Table.ActiveIndex
+	curr := start
+	for {
+		player, passPlayer := h.Table.GetPlayerByID(h.Table.GetPlayerID(curr)), h.getPassToPlayer(curr)
+		player.RemoveCards(h.passes[player.ID])
+		passPlayer.AddCards(h.passes[player.ID])
+
+		curr = h.Table.NextPos(curr)
+		if curr == start {
+			break
+		}
+	}
+}
+
+func (h *Hearts) skipPass() bool {
+	return passDirections[h.passIndex] == PassNone
+}
+
+func (h *Hearts) passesComplete() bool {
+	return h.State == StateActive
 }

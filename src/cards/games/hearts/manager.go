@@ -77,7 +77,10 @@ func (g *GameManager) NextHand() error {
 		return err
 	}
 
-	g.UpdateStatus(StatusActive)
+	if g.State.skipPass() {
+		g.UpdateStatus(StatusActive)
+	}
+
 	g.ProcessAction()
 
 	return nil
@@ -113,6 +116,10 @@ func (g *GameManager) PlayerPass(playerID int64, cards []cards.Card) error {
 
 	g.State.addPass(playerID, cards)
 
+	if g.State.passesComplete() {
+		g.UpdateStatus(StatusActive)
+	}
+
 	return nil
 }
 
@@ -123,7 +130,17 @@ func (g *GameManager) playerPlay(action Action) error {
 		return fmt.Errorf("Player (%d) cannot play, has no cards", player.ID)
 	}
 
-	// TODO: Ensure card is in players hand
+	found := false
+	for i := range player.Cards {
+		if player.Cards[i].ToString() == action.Card.ToString() {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("Card (%s) does not exist for player (%d)", action.Card.ToString(), player.ID)
+	}
 
 	g.State.playerPlay(player.ID, action.Card)
 	return nil
@@ -133,6 +150,10 @@ func (g *GameManager) playerPlay(action Action) error {
 func (g *GameManager) PlayerAction(playerID int64, action Action) (bool, error) {
 	if g.isComplete() {
 		return false, fmt.Errorf("Game is already complete")
+	}
+
+	if g.Status != StatusActive {
+		return false, fmt.Errorf("Game is not yet active: %s", g.Status)
 	}
 
 	if playerID != g.State.Table.GetActivePlayer().ID {
@@ -159,7 +180,9 @@ func (g *GameManager) ProcessAction() (bool, error) {
 		return true, err
 	}
 
-	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+	if g.Status == StatusActive {
+		g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
+	}
 
 	return false, nil
 }

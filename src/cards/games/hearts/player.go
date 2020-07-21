@@ -42,3 +42,31 @@ func (p *Player) IsActive() bool {
 func (p *Player) IsReady() bool {
 	return true
 }
+
+// AddCards adds cards to players hand
+func (p *Player) AddCards(cards []cards.Card) {
+	p.Cards = append(p.Cards, cards...)
+	// TODO: sort cards
+}
+
+// RemoveCards removes cards from players hand
+func (p *Player) RemoveCards(cards []cards.Card) {
+	cardMap := map[string]bool{}
+	for _, c := range cards {
+		cardMap[c.ToString()] = true
+	}
+
+	for i := 0; ; {
+		if i >= len(p.Cards) {
+			break
+		}
+
+		c := p.Cards[i]
+		if _, ok := cardMap[c.ToString()]; !ok {
+			i++
+			continue
+		}
+
+		p.Cards = append(p.Cards[:i], p.Cards[i+1:]...)
+	}
+}
