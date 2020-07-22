@@ -1,4 +1,4 @@
-package holdem
+package hearts
 
 import (
 	"qpoker/cards"

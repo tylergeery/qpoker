@@ -1,4 +1,4 @@
-package holdem
+package hearts
 
 import (
 	"fmt"
@@ -154,4 +154,59 @@ func (h *Hearts) skipPass() bool {
 
 func (h *Hearts) passesComplete() bool {
 	return h.State == StateActive
+}
+
+// PointTotals calculates player point totals
+func (h *Hearts) PointTotals(players []*Player) map[int64]int64 {
+	totals := map[int64]int64{}
+	shooter := int64(0)
+
+	for i := range players {
+		playerHearts := players[i].HeartsCount()
+		totals[players[i].ID] = playerHearts
+		if playerHearts == 26 {
+			shooter = players[i].ID
+		}
+	}
+
+	if shooter == int64(0) {
+		return totals
+	}
+
+	for i := range players {
+		totals[players[i].ID] = 26
+		if players[i].ID == shooter {
+			totals[players[i].ID] = 0
+		}
+	}
+
+	return totals
+}
+
+// CleanPile collects cards and adds them to player's pile
+func (h *Hearts) CleanPile(resetBoard bool) error {
+	if len(h.Board) != 4 {
+		return fmt.Errorf("Cannot clean pile, board doesn't have expected cards: %+v", h.Board)
+	}
+
+	players := h.Table.GetActivePlayers()
+	suit, value := h.Board[players[0].ID].Suit, h.Board[players[0].ID].Value
+	winner := players[0].ID
+	for i := range players {
+		playedCard := h.Board[players[i].ID]
+		if playedCard.Suit == suit && playedCard.Value > value {
+			value, winner = playedCard.Value, players[i].ID
+		}
+	}
+
+	winningPlayer := h.Table.GetPlayerByID(winner)
+	for _, card := range h.Board {
+		winningPlayer.Pile = append(winningPlayer.Pile, card)
+	}
+
+	if resetBoard {
+		h.Board = map[int64]cards.Card{}
+	}
+
+	return nil
 }

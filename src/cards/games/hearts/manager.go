@@ -1,4 +1,4 @@
-package holdem
+package hearts
 
 import (
 	"fmt"
@@ -64,7 +64,7 @@ func (g *GameManager) RemovePlayer(playerID int64) error {
 
 // NextHand moves game manager on to next hand
 func (g *GameManager) NextHand() error {
-	g.Status = StatusInit
+	g.Status = StatusReady
 
 	err := g.State.Deal()
 	if err != nil {
@@ -208,7 +208,7 @@ func (g *GameManager) StartHand() error {
 			GameHandID:    g.gameHand.ID,
 			Cards:         g.cardsToStringArray(player.Cards),
 			PlayerID:      player.ID,
-			StartingStack: int64(player.Score),
+			StartingStack: player.Score,
 		}
 		err = g.gamePlayerHands[player.ID].Save()
 		if err != nil {
@@ -221,23 +221,28 @@ func (g *GameManager) StartHand() error {
 
 // EndHand saves the ending game state to the DB
 func (g *GameManager) EndHand() error {
-	// g.gameHand.Payouts = payouts
+	g.State.CleanPile(false)
 
-	// err := g.gameHand.Save()
-	// if err != nil {
-	// 	return err
-	// }
+	players := g.State.Table.GetAllPlayers()
+	g.gameHand.Payouts = g.State.PointTotals(players)
+	fmt.Println("Payouts: ", g.gameHand.Payouts)
 
-	for _, player := range g.State.Table.GetAllPlayers() {
+	err := g.gameHand.Save()
+	if err != nil {
+		return err
+	}
+
+	for _, player := range players {
 		hand, ok := g.gamePlayerHands[player.ID]
 		if !ok {
 			continue
 		}
 
-		// if amount, ok := payouts[player.ID]; ok {
-		// 	player.Stack += amount
-		// }
+		if amount, ok := g.gameHand.Payouts[player.ID]; ok {
+			player.Score += amount
+		}
 
+		hand.EndingStack = player.Score
 		err := hand.Save()
 		if err != nil {
 			fmt.Printf("Error saving user hand: %s\n", err)
@@ -265,4 +270,9 @@ func (g *GameManager) UpdateStatus(status string) {
 		}
 		break
 	}
+}
+
+// CleanPile collects cards and adds them to player's pile
+func (g *GameManager) CleanPile() error {
+	return g.State.CleanPile(true)
 }

@@ -1,4 +1,4 @@
-package holdem
+package hearts
 
 import (
 	"qpoker/cards"
@@ -12,7 +12,7 @@ type Player struct {
 	Cards    []cards.Card    `json:"-"`
 	Pile     []cards.Card    `json:"pile"`
 	Options  map[string]bool `json:"options"`
-	Score    int
+	Score    int64
 }
 
 // NewPlayer creates a new Player
@@ -44,16 +44,16 @@ func (p *Player) IsReady() bool {
 }
 
 // AddCards adds cards to players hand
-func (p *Player) AddCards(cards []cards.Card) {
-	p.Cards = append(p.Cards, cards...)
-	// TODO: sort cards
+func (p *Player) AddCards(c []cards.Card) {
+	p.Cards = append(p.Cards, c...)
+	cards.SortSuitedAcesHigh(p.Cards)
 }
 
 // RemoveCards removes cards from players hand
-func (p *Player) RemoveCards(cards []cards.Card) {
+func (p *Player) RemoveCards(c []cards.Card) {
 	cardMap := map[string]bool{}
-	for _, c := range cards {
-		cardMap[c.ToString()] = true
+	for _, card := range c {
+		cardMap[card.ToString()] = true
 	}
 
 	for i := 0; ; {
@@ -61,12 +61,27 @@ func (p *Player) RemoveCards(cards []cards.Card) {
 			break
 		}
 
-		c := p.Cards[i]
-		if _, ok := cardMap[c.ToString()]; !ok {
+		card := p.Cards[i]
+		if _, ok := cardMap[card.ToString()]; !ok {
 			i++
 			continue
 		}
 
 		p.Cards = append(p.Cards[:i], p.Cards[i+1:]...)
 	}
+}
+
+// HeartsCount gets hearts count in pile
+func (p *Player) HeartsCount() int64 {
+	count := int64(0)
+	for _, c := range p.Pile {
+		if c.Suit == cards.SuitHearts {
+			count++
+		}
+		if c.Suit == cards.SuitSpades && c.Value == 12 {
+			count += 13
+		}
+	}
+
+	return count
 }
