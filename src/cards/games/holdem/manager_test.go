@@ -125,7 +125,7 @@ func TestPlayHandAllFold(t *testing.T) {
 		assert.Equal(t, gm.gamePlayerHands[players[i].ID].GameHandID, gm.gameHand.ID)
 		assert.Equal(t, players[i].ID, gm.gamePlayerHands[players[i].ID].PlayerID)
 		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
-		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].Starting)
 	}
 
 	// Try to move out of turn
@@ -172,8 +172,8 @@ func TestPlayHandAllFold(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
 		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
-		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
-		assert.Equal(t, expectedFinalStacks[i], gm.gamePlayerHands[players[i].ID].EndingStack, fmt.Sprintf("Final Player Hand: pos(%d) %+v\n", i, gm.gamePlayerHands[players[i].ID]))
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].Starting)
+		assert.Equal(t, expectedFinalStacks[i], gm.gamePlayerHands[players[i].ID].Ending, fmt.Sprintf("Final Player Hand: pos(%d) %+v\n", i, gm.gamePlayerHands[players[i].ID]))
 		assert.False(t, players[i].CardsVisible)
 	}
 }
@@ -202,7 +202,7 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 		assert.Equal(t, gm.gamePlayerHands[players[i].ID].GameHandID, gm.gameHand.ID)
 		assert.Equal(t, players[i].ID, gm.gamePlayerHands[players[i].ID].PlayerID)
 		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
-		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].Starting)
 	}
 
 	complete, err := gm.PlayerAction(players[1].ID, NewActionCall())
@@ -281,10 +281,10 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		assert.Greater(t, gm.gamePlayerHands[players[i].ID].ID, int64(0))
 		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
-		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].StartingStack)
+		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].Starting)
 		assert.Equal(t, int64(100), gm.gameHand.Bets[players[i].ID])
-		min, max = utils.MinInt64(min, gm.gamePlayerHands[players[i].ID].EndingStack), utils.MaxInt64(max, gm.gamePlayerHands[players[i].ID].EndingStack)
-		total += gm.gamePlayerHands[players[i].ID].EndingStack
+		min, max = utils.MinInt64(min, gm.gamePlayerHands[players[i].ID].Ending), utils.MaxInt64(max, gm.gamePlayerHands[players[i].ID].Ending)
+		total += gm.gamePlayerHands[players[i].ID].Ending
 		assert.True(t, players[i].CardsVisible)
 	}
 

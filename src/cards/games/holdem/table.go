@@ -2,23 +2,12 @@ package holdem
 
 import (
 	"fmt"
-	"qpoker/utils"
-	"time"
+	"qpoker/cards/games"
 )
 
 // Table holds the information about a given card table
 type Table struct {
-	Players  []*Player `json:"players"`
-	Capacity int       `json:"capacity"`
-
-	// Used for internal hand logic
-	activeIndex int
-	dealerIndex int
-
-	// Public facing for clients
-	Active   int64 `json:"active"`
-	ActiveAt int64 `json:"active_at"`
-	Dealer   int64 `json:"dealer"`
+	*games.Table
 }
 
 // NewTable returns a new table object
@@ -27,84 +16,61 @@ func NewTable(capacity int, players []*Player) *Table {
 		capacity = len(players)
 	}
 
-	tablePlayers := make([]*Player, capacity)
+	table := games.NewTable(capacity)
+	holdemTable := &Table{
+		table,
+	}
+
 	for i := range players {
-		tablePlayers[i] = players[i]
+		holdemTable.AddPlayer(players[i])
 	}
 
-	return &Table{
-		Players:     tablePlayers,
-		Capacity:    capacity,
-		activeIndex: 0,
-		dealerIndex: 0, // TODO: Random?
-	}
-}
-
-func (t *Table) next(pos int) int {
-	return (pos + 1) % t.Capacity
-}
-
-func (t *Table) nextPos(pos int) int {
-	next := pos
-	for {
-		next = t.next(next)
-		if next == pos {
-			return -1
-		}
-
-		if next == pos {
-			fmt.Printf("Error: next pos could not find a next: %d, %d\n", pos, t.Capacity)
-			return pos // TODO: this is an error state
-		}
-
-		if t.Players[next] == nil || !t.Players[next].IsActive() {
-			continue
-		}
-
-		break
-	}
-
-	return next
-}
-
-func (t *Table) getPlayerID(pos int) int64 {
-	return t.Players[pos].ID
+	return holdemTable
 }
 
 // GetActivePlayer returns the currently active player
 func (t *Table) GetActivePlayer() *Player {
-	return t.Players[t.activeIndex]
+	return t.GetActiveIPlayer().(*Player)
 }
 
-// GetActivePlayers returns the currently active players ordered by turn
-func (t *Table) GetActivePlayers() []*Player {
-	players := []*Player{}
-	playerIndexes := []int{}
-	start := t.activeIndex
-	next := t.nextPos(start)
+// GetPlayerByID returns player with id
+func (t *Table) GetPlayerByID(id int64) *Player {
+	return t.GetIPlayerByID(id).(*Player)
+}
 
-	for next != -1 && !utils.IntSliceHasValue(playerIndexes, next) {
-		players = append(players, t.Players[next])
-		playerIndexes = append(playerIndexes, next)
-		next = t.nextPos(next)
+func getPlayers(iPlayers []games.IPlayer) []*Player {
+	players := make([]*Player, len(iPlayers))
+	for i := range iPlayers {
+		players[i] = iPlayers[i].(*Player)
 	}
 
 	return players
 }
 
-// ActivateNextPlayer moves the table focus to the next player
-func (t *Table) ActivateNextPlayer(getActions func() map[string]bool) {
-	t.GetActivePlayer().SetPlayerActions(nil)
-	t.activeIndex = t.nextPos(t.activeIndex)
-	t.Active = t.getPlayerID(t.activeIndex)
-	t.ActiveAt = time.Now().Unix()
-	t.GetActivePlayer().SetPlayerActions(getActions())
+// GetAllPlayers returns the currently active players ordered by turn
+func (t *Table) GetAllPlayers() []*Player {
+	return getPlayers(t.GetAllIPlayers())
+}
+
+// GetActivePlayers returns the currently active players ordered by turn
+func (t *Table) GetActivePlayers() []*Player {
+	return getPlayers(t.GetActiveIPlayers())
+}
+
+// GetReadyPlayers return the players ready to play
+func (t *Table) GetReadyPlayers() []*Player {
+	return getPlayers(t.GetReadyIPlayers())
+}
+
+// GetPlayersFromIDs return all IPlayers with ID
+func (t *Table) GetPlayersFromIDs(ids []int64) []*Player {
+	return getPlayers(t.GetIPlayersFromIDs(ids))
 }
 
 // NextRound moves the table focus to first bet for a new betting round
 func (t *Table) NextRound(getActions func() map[string]bool) {
 	t.resetPlayerRoundStates()
-	t.activeIndex = t.dealerIndex
+	t.ActiveIndex = t.DealerIndex
 	t.ActivateNextPlayer(getActions)
 }
 
@@ -113,9 +79,9 @@ func (t *Table) NextHand() error {
 	t.resetPlayerHandStates()
 
 	// Boot invalid stacks to pending
-	for i := range t.Players {
-		if t.Players[i] != nil && t.Players[i].Stack == int64(0) {
-			t.Players[i].State = PlayerStatePending
+	for _, player := range t.GetAllPlayers() {
+		if player.Stack == int64(0) {
+			player.State = PlayerStatePending
 		}
 	}
 
@@ -124,87 +90,30 @@ func (t *Table) NextHand() error {
 		return fmt.Errorf("Not enough active players: %+v", activePlayers)
 	}
 
-	t.dealerIndex = t.nextPos(t.dealerIndex)
-	t.Dealer = t.getPlayerID(t.dealerIndex)
-	t.activeIndex = t.nextPos(t.dealerIndex)
-	t.Active = t.getPlayerID(t.activeIndex)
+	t.DealerIndex = t.NextPos(t.DealerIndex)
+	t.Dealer = t.GetPlayerID(t.DealerIndex)
+	t.ActiveIndex = t.NextPos(t.DealerIndex)
+	t.Active = t.GetPlayerID(t.ActiveIndex)
 
 	return nil
 }
 
-// AddPlayer to table
-func (t *Table) AddPlayer(player *Player) error {
-	for i := range t.Players {
-		if t.Players[i] != nil && t.Players[i].ID == player.ID {
-			return fmt.Errorf("Player %d already exists at table", player.ID)
-		}
-	}
-
-	for i := range t.Players {
-		if t.Players[i] == nil {
-			t.Players[i] = player
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Table is full at %d players", t.Capacity)
-}
-
-// RemovePlayer from table
-func (t *Table) RemovePlayer(playerID int64) error {
-	for i := range t.Players {
-		if t.Players[i] != nil && t.Players[i].ID == playerID {
-			t.Players[i] = nil
-			return nil
-		}
-	}
-
-	return fmt.Errorf("Player %d was not found at the table", playerID)
-}
-
-// GetAllPlayers retrieves all players at table
-func (t *Table) GetAllPlayers() []*Player {
-	players := []*Player{}
-
-	for i := range t.Players {
-		if t.Players[i] == nil {
-			continue
-		}
-
-		if t.Players[i].State == PlayerStateInit && t.Players[i].Stack <= int64(0) {
-			continue
-		}
-
-		players = append(players, t.Players[i])
-	}
-
-	return players
-}
-
 func (t *Table) resetPlayerRoundStates() {
-	for i := range t.Players {
-		if t.Players[i] == nil {
+	for _, player := range t.GetAllPlayers() {
+		if !player.IsActive() {
 			continue
 		}
 
-		if !t.Players[i].IsActive() {
-			continue
-		}
-
-		t.Players[i].State = PlayerStateInit
-		t.Players[i].SetPlayerActions(nil)
+		player.State = PlayerStateInit
+		player.SetPlayerActions(nil)
 	}
 }
 
 func (t *Table) resetPlayerHandStates() {
-	for i := range t.Players {
-		if t.Players[i] == nil {
-			continue
-		}
-
-		t.Players[i].State = PlayerStateInit
-		t.Players[i].SetPlayerActions(nil)
-		t.Players[i].BigBlind = false
-		t.Players[i].LittleBlind = false
+	for _, player := range t.GetAllPlayers() {
+		player.State = PlayerStateInit
+		player.SetPlayerActions(nil)
+		player.BigBlind = false
+		player.LittleBlind = false
 	}
 }

@@ -43,6 +43,11 @@ func NewPlayer(player *models.Player) *Player {
 	}
 }
 
+// GetID returns player ID
+func (p *Player) GetID() int64 {
+	return p.ID
+}
+
 // SetPlayerActions sets the moves a player is allowed to make
 func (p *Player) SetPlayerActions(actions map[string]bool) {
 	p.Options = actions
@@ -55,6 +60,11 @@ func (p *Player) IsActive() bool {
 	}
 
 	return true
+}
+
+// IsReady returns whether the player is ready for next game
+func (p *Player) IsReady() bool {
+	return p.State != PlayerStateInit || p.Stack > int64(0)
 }
 
 // HasOptions returns whether the player has options

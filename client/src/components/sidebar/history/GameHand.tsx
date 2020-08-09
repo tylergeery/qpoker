@@ -7,8 +7,8 @@ type GameHandProps = {
     board: any;
     cards: any;
     bets: any
-    endingStack: number;
-    startingStack: number;
+    ending: number;
+    starting: number;
 }
 
 export class GameHand extends React.Component<GameHandProps, {}> {

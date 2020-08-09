@@ -24,23 +24,23 @@ func TestGamePlayerHandsCrud(t *testing.T) {
 	assert.Equal(t, hand.UpdatedAt, fetchedHand.UpdatedAt)
 
 	playerHand1 := &GamePlayerHand{
-		GameHandID:    hand.ID,
-		PlayerID:      player1.ID,
-		StartingStack: int64(50),
+		GameHandID: hand.ID,
+		PlayerID:   player1.ID,
+		Starting:   int64(50),
 	}
 	err = playerHand1.Save()
 	assert.NoError(t, err)
 	playerHand2 := &GamePlayerHand{
-		GameHandID:    hand.ID,
-		PlayerID:      player2.ID,
-		StartingStack: int64(150),
+		GameHandID: hand.ID,
+		PlayerID:   player2.ID,
+		Starting:   int64(150),
 	}
 	err = playerHand2.Save()
 	assert.NoError(t, err)
 	playerHand3 := &GamePlayerHand{
-		GameHandID:    hand.ID,
-		PlayerID:      player3.ID,
-		StartingStack: int64(150),
+		GameHandID: hand.ID,
+		PlayerID:   player3.ID,
+		Starting:   int64(150),
 	}
 	err = playerHand3.Save()
 	assert.NoError(t, err)
@@ -50,32 +50,32 @@ func TestGamePlayerHandsCrud(t *testing.T) {
 	assert.Equal(t, playerHand1.ID, fetchedPlayerHand1.ID)
 	assert.Equal(t, playerHand1.GameHandID, fetchedPlayerHand1.GameHandID)
 	assert.Equal(t, playerHand1.PlayerID, fetchedPlayerHand1.PlayerID)
-	assert.Equal(t, playerHand1.StartingStack, fetchedPlayerHand1.StartingStack)
+	assert.Equal(t, playerHand1.Starting, fetchedPlayerHand1.Starting)
 
 	fetchedPlayerHand2, err := GetGamePlayerHandBy("id", playerHand2.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, playerHand2.ID, fetchedPlayerHand2.ID)
 	assert.Equal(t, playerHand2.GameHandID, fetchedPlayerHand2.GameHandID)
 	assert.Equal(t, playerHand2.PlayerID, fetchedPlayerHand2.PlayerID)
-	assert.Equal(t, playerHand2.StartingStack, fetchedPlayerHand2.StartingStack)
+	assert.Equal(t, playerHand2.Starting, fetchedPlayerHand2.Starting)
 
 	fetchedPlayerHand3, err := GetGamePlayerHandBy("id", playerHand3.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, playerHand3.ID, fetchedPlayerHand3.ID)
 	assert.Equal(t, playerHand3.GameHandID, fetchedPlayerHand3.GameHandID)
 	assert.Equal(t, playerHand3.PlayerID, fetchedPlayerHand3.PlayerID)
-	assert.Equal(t, playerHand3.StartingStack, fetchedPlayerHand3.StartingStack)
+	assert.Equal(t, playerHand3.Starting, fetchedPlayerHand3.Starting)
 	assert.Equal(t, fetchedPlayerHand3.CreatedAt.Unix(), playerHand3.CreatedAt.Unix())
 	assert.Equal(t, fetchedPlayerHand3.UpdatedAt.Unix(), playerHand3.UpdatedAt.Unix())
 
 	// Update hand on completion
 	playerHand3.Cards = []string{"1A", "5D"}
-	playerHand3.EndingStack = int64(25)
+	playerHand3.Ending = int64(25)
 	err = playerHand3.Save()
 	assert.NoError(t, err)
 	fetchedPlayerHand3, err = GetGamePlayerHandBy("id", playerHand3.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, playerHand3.Cards, fetchedPlayerHand3.Cards)
-	assert.Equal(t, playerHand3.EndingStack, fetchedPlayerHand3.EndingStack)
+	assert.Equal(t, playerHand3.Ending, fetchedPlayerHand3.Ending)
 	assert.Equal(t, fetchedPlayerHand3.UpdatedAt.Unix(), playerHand3.UpdatedAt.Unix())
 }

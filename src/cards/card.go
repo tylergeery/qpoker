@@ -40,6 +40,25 @@ func NewCard(value int, suit byte) Card {
 	return Card{value, suit, strconv.Itoa(value)[0]}
 }
 
+// CardFromString returns a Card from string value
+func CardFromString(card string) Card {
+	cardmap := map[byte]int{
+		'A': 1,
+		'T': 10,
+		'J': 11,
+		'Q': 12,
+		'K': 13,
+	}
+
+	value, ok := cardmap[card[0]]
+	if !ok {
+		val, _ := strconv.Atoi(string(card[0]))
+		value = int(val)
+	}
+
+	return NewCard(value, card[1])
+}
+
 // ToString gets string representation of a card
 func (c Card) ToString() string {
 	return fmt.Sprintf("%c%c", c.Char, c.Suit)

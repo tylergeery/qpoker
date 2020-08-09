@@ -52,9 +52,9 @@ type GameHand struct {
 // GameHandWithPlayer returns game hand with player info
 type GameHandWithPlayer struct {
 	GameHand
-	Cards         []string      `json:"cards"`
-	StartingStack sql.NullInt64 `json:"starting_stack"`
-	EndingStack   sql.NullInt64 `json:"ending_stack"`
+	Cards    []string      `json:"cards"`
+	Starting sql.NullInt64 `json:"starting"`
+	Ending   sql.NullInt64 `json:"ending"`
 }
 
 // GetGameHandBy returns a GameHand found from key,val
@@ -95,8 +95,8 @@ func GetHandsForGame(gameID, playerID int64, since time.Time, count int) ([]*Gam
 			gh.created_at,
 			gh.updated_at,
 			gph.cards,
-			gph.starting_stack,
-			gph.ending_stack
+			gph.starting,
+			gph.ending
 		FROM game_hand gh
 		LEFT JOIN game_player_hand gph ON (
 			gh.id = gph.game_hand_id AND gph.player_id = $3
@@ -117,7 +117,7 @@ func GetHandsForGame(gameID, playerID int64, since time.Time, count int) ([]*Gam
 		rows.Scan(
 			&hand.ID, &hand.GameID, pq.Array(&hand.Board), &hand.Payouts,
 			&hand.Bets, &hand.CreatedAt, &hand.UpdatedAt,
-			pq.Array(&hand.Cards), &hand.StartingStack, &hand.EndingStack,
+			pq.Array(&hand.Cards), &hand.Starting, &hand.Ending,
 		)
 		hands = append(hands, hand)
 	}

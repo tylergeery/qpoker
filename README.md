@@ -4,8 +4,29 @@ A live video multi-player Texas HoldEm Poker game.
 
 Host your own poker game with your friends.
 
+Try it out [here]()
 
-## API
+## Supported Card Games
+- Holdem (Poker)
+- Hearts
+
+## Hosting / Deployment Support
+QCards supports Docker runtimes deployable with either
+
+- Ansible
+- k8s
+
+## Architecture
+QCards compromises 2 publicly exposed Go services, dependent upon shared Postgres and Redis databases:
+- http server
+  - handles REST-like API support for games/users
+- websocket server
+  - handles real-time event communication:
+    - game events
+    - video
+    - messages
+
+## REST API
 
 | Method | URL                             | Description                       
 |--------|---------------------------------|-----------------------------------
@@ -17,7 +38,6 @@ Host your own poker game with your friends.
 | POST   | /api/v1/games                   | Create a game
 | PUT    | /api/v1/games/:game_id          | Update a game
 | GET    | /api/v1/games/:game_id/history  | Get game history
-
 
 ## Development
 
@@ -31,26 +51,9 @@ make
 make test
 ```
 
-## TODO
-- Add tests for websocket server
-- Client
-  - Landing page
-    - Join game by code
-    - Features
-      - Card games
-        - hearts
-        - gang gin
-    - Hosting options
-      - Charge for hosting
-      - Free hosting w/ ads
-      - Host your own
-        - ansible deploy
-        - helm chart
-  - JS
-    - Table page
-      - Game History
-      - Remove nav choices
-    - Add tests
-- Deploy somewhere
-- Autovaccuum games
-  - Rules around when games should be removed from memory
+## Contributions
+Please. No guidelines yet.
+
+## Special thanks to (built on):
+- [material.css]()
+- [card svgs]()

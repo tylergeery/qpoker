@@ -293,11 +293,11 @@ func TestGetGameHistorySuccess(t *testing.T) {
 
 		if i == 0 {
 			gamePlayerHand := &models.GamePlayerHand{
-				GameHandID:    hand.ID,
-				PlayerID:      player.ID,
-				Cards:         []string{"JS", "JC"},
-				StartingStack: int64(120 + (i * 20)),
-				EndingStack:   int64(120 + ((i + 1) * 20)),
+				GameHandID: hand.ID,
+				PlayerID:   player.ID,
+				Cards:      []string{"JS", "JC"},
+				Starting:   int64(120 + (i * 20)),
+				Ending:     int64(120 + ((i + 1) * 20)),
 			}
 			err = gamePlayerHand.Save()
 			assert.NoError(t, err)
@@ -342,22 +342,22 @@ func TestGetGameHistorySuccess(t *testing.T) {
 	hand := gameHistory[2].(map[string]interface{})
 	assert.Equal(t, nil, hand["board"])
 	assert.Equal(t, []interface{}{"JS", "JC"}, hand["cards"])
-	assert.Equal(t, map[string]interface{}{"Int64": float64(140), "Valid": true}, hand["ending_stack"])
-	assert.Equal(t, map[string]interface{}{"Int64": float64(120), "Valid": true}, hand["starting_stack"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(140), "Valid": true}, hand["ending"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(120), "Valid": true}, hand["starting"])
 	assert.Equal(t, game.ID, i64(hand["game_id"]))
 
 	hand = gameHistory[3].(map[string]interface{})
 	assert.Equal(t, nil, hand["board"])
 	assert.Equal(t, nil, hand["cards"])
-	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["ending_stack"])
-	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["starting_stack"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["ending"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["starting"])
 	assert.Equal(t, game.ID, i64(hand["game_id"]))
 
 	hand = gameHistory[4].(map[string]interface{})
 	assert.Equal(t, nil, hand["board"])
 	assert.Equal(t, nil, hand["cards"])
-	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["ending_stack"])
-	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["starting_stack"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["ending"])
+	assert.Equal(t, map[string]interface{}{"Int64": float64(0), "Valid": false}, hand["starting"])
 	assert.Equal(t, game.ID, i64(hand["game_id"]))
 
 	chipRequest = gameHistory[5].(map[string]interface{})
