@@ -88,11 +88,11 @@ func TestGetHandsForGame(t *testing.T) {
 		err = gameHand.Save()
 		assert.NoError(t, err)
 		gamePlayerHand := &GamePlayerHand{
-			GameHandID:    gameHand.ID,
-			PlayerID:      player2.ID,
-			Cards:         []string{"AS", "AC"},
-			EndingStack:   int64(100),
-			StartingStack: int64(50),
+			GameHandID: gameHand.ID,
+			PlayerID:   player2.ID,
+			Cards:      []string{"AS", "AC"},
+			Ending:     int64(100),
+			Starting:   int64(50),
 		}
 		err = gamePlayerHand.Save()
 		assert.NoError(t, err)
@@ -117,12 +117,12 @@ func TestGetHandsForGame(t *testing.T) {
 
 		if i == 2 {
 			assert.Equal(t, totalHands[i].Cards, []string{"AS", "AC"})
-			assert.Equal(t, totalHands[i].StartingStack.Int64, int64(50))
-			assert.Equal(t, totalHands[i].EndingStack.Int64, int64(100))
+			assert.Equal(t, totalHands[i].Starting.Int64, int64(50))
+			assert.Equal(t, totalHands[i].Ending.Int64, int64(100))
 		} else {
 			assert.Equal(t, totalHands[i].Cards, nilCards)
-			assert.False(t, totalHands[i].StartingStack.Valid)
-			assert.False(t, totalHands[i].EndingStack.Valid)
+			assert.False(t, totalHands[i].Starting.Valid)
+			assert.False(t, totalHands[i].Ending.Valid)
 		}
 	}
 }

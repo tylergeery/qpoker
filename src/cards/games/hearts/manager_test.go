@@ -1,7 +1,6 @@
 package hearts
 
 import (
-	"fmt"
 	"qpoker/models"
 	"testing"
 
@@ -54,7 +53,7 @@ func TestPlay4Hands(t *testing.T) {
 		assert.Equal(t, gm.gamePlayerHands[players[i].ID].GameHandID, gm.gameHand.ID)
 		assert.Equal(t, players[i].ID, gm.gamePlayerHands[players[i].ID].PlayerID)
 		assert.Equal(t, 13, len(gm.gamePlayerHands[players[i].ID].Cards))
-		assert.Equal(t, int64(0), gm.gamePlayerHands[players[i].ID].StartingStack)
+		assert.Equal(t, int64(0), gm.gamePlayerHands[players[i].ID].Starting)
 	}
 
 	// Try to move out of turn
@@ -78,11 +77,6 @@ func TestPlay4Hands(t *testing.T) {
 
 		// Play round
 		for i := 0; i < 52; i++ {
-			if i > 0 && i%4 == 0 {
-				err = gm.CleanPile()
-				assert.NoError(t, err)
-			}
-
 			player := gm.State.Table.GetActivePlayer()
 			_, err = gm.PlayerAction(player.ID, NewActionPlay(player.Cards[0].ToString()))
 			assert.NoError(t, err)
@@ -92,8 +86,7 @@ func TestPlay4Hands(t *testing.T) {
 		// Count save hearts (ensure all accounted for)
 		totalPoints := int64(0)
 		for _, hand := range gm.gamePlayerHands {
-			fmt.Println("ending stack, starting stack: ", hand.EndingStack, hand.StartingStack)
-			totalPoints += hand.EndingStack - hand.StartingStack
+			totalPoints += hand.Ending - hand.Starting
 		}
 
 		assert.True(t, totalPoints == int64(26) || totalPoints == int64(78))

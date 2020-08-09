@@ -130,6 +130,13 @@ func (g *GameManager) playerPlay(action Action) error {
 		return fmt.Errorf("Player (%d) cannot play, has no cards", player.ID)
 	}
 
+	if len(g.State.Board) == 4 {
+		err := g.CleanPile()
+		if err != nil {
+			return err
+		}
+	}
+
 	found := false
 	for i := range player.Cards {
 		if player.Cards[i].ToString() == action.Card.ToString() {
@@ -205,10 +212,10 @@ func (g *GameManager) StartHand() error {
 	g.gamePlayerHands = map[int64]*models.GamePlayerHand{}
 	for _, player := range g.State.Table.GetAllPlayers() {
 		g.gamePlayerHands[player.ID] = &models.GamePlayerHand{
-			GameHandID:    g.gameHand.ID,
-			Cards:         g.cardsToStringArray(player.Cards),
-			PlayerID:      player.ID,
-			StartingStack: player.Score,
+			GameHandID: g.gameHand.ID,
+			Cards:      g.cardsToStringArray(player.Cards),
+			PlayerID:   player.ID,
+			Starting:   player.Score,
 		}
 		err = g.gamePlayerHands[player.ID].Save()
 		if err != nil {
@@ -241,7 +248,7 @@ func (g *GameManager) EndHand() error {
 			player.Score += amount
 		}
 
-		hand.EndingStack = player.Score
+		hand.Ending = player.Score
 		err := hand.Save()
 		if err != nil {
 			fmt.Printf("Error saving user hand: %s\n", err)

@@ -382,10 +382,10 @@ func (g *GameManager) StartHand() error {
 	g.gamePlayerHands = map[int64]*models.GamePlayerHand{}
 	for _, player := range g.State.Table.GetActivePlayers() {
 		g.gamePlayerHands[player.ID] = &models.GamePlayerHand{
-			GameHandID:    g.gameHand.ID,
-			Cards:         g.cardsToStringArray(player.Cards),
-			PlayerID:      player.ID,
-			StartingStack: player.Stack,
+			GameHandID: g.gameHand.ID,
+			Cards:      g.cardsToStringArray(player.Cards),
+			PlayerID:   player.ID,
+			Starting:   player.Stack,
 		}
 		err = g.gamePlayerHands[player.ID].Save()
 		if err != nil {
@@ -422,7 +422,7 @@ func (g *GameManager) EndHand() error {
 		if amount, ok := payouts[player.ID]; ok {
 			player.Stack += amount
 		}
-		hand.EndingStack = player.Stack
+		hand.Ending = player.Stack
 
 		err = hand.Save()
 		if err != nil {

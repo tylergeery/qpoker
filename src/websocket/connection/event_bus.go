@@ -108,9 +108,9 @@ func (e *EventBus) reloadPlayerStack(game *models.Game, player *holdem.Player) {
 	}
 
 	if playerHand.ID > int64(0) {
-		player.Stack = playerHand.StartingStack
-		if playerHand.EndingStack > -1 {
-			player.Stack = playerHand.EndingStack
+		player.Stack = playerHand.Starting
+		if playerHand.Ending > -1 {
+			player.Stack = playerHand.Ending
 			since = playerHand.UpdatedAt
 		}
 	}

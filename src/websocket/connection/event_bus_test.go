@@ -40,10 +40,10 @@ func TestReloadPlayerStack(t *testing.T) {
 	}
 	gameHand.Save()
 	gamePlayerHand := &models.GamePlayerHand{
-		GameHandID:    gameHand.ID,
-		PlayerID:      player.ID,
-		StartingStack: int64(100),
-		EndingStack:   int64(25),
+		GameHandID: gameHand.ID,
+		PlayerID:   player.ID,
+		Starting:   int64(100),
+		Ending:     int64(25),
 	}
 	gamePlayerHand.Save()
 	gameChipRequest = &models.GameChipRequest{
