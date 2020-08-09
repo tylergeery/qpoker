@@ -75,11 +75,13 @@ func (p *Player) RemoveCards(c []cards.Card) {
 func (p *Player) HeartsCount() int64 {
 	count := int64(0)
 	for _, c := range p.Pile {
-		if c.Suit == cards.SuitHearts {
-			count++
-		}
 		if c.Suit == cards.SuitSpades && c.Value == 12 {
 			count += 13
+			continue
+		}
+
+		if c.Suit == cards.SuitHearts {
+			count++
 		}
 	}
 

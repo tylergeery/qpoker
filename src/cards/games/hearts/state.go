@@ -138,8 +138,8 @@ func (h *Hearts) pass() {
 	curr := start
 	for {
 		player, passPlayer := h.Table.GetPlayerByID(h.Table.GetPlayerID(curr)), h.getPassToPlayer(curr)
-		player.RemoveCards(h.passes[player.ID])
 		passPlayer.AddCards(h.passes[player.ID])
+		player.RemoveCards(h.passes[player.ID])
 
 		curr = h.Table.NextPos(curr)
 		if curr == start {

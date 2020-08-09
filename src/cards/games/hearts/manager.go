@@ -225,7 +225,6 @@ func (g *GameManager) EndHand() error {
 
 	players := g.State.Table.GetAllPlayers()
 	g.gameHand.Payouts = g.State.PointTotals(players)
-	fmt.Println("Payouts: ", g.gameHand.Payouts)
 
 	err := g.gameHand.Save()
 	if err != nil {
