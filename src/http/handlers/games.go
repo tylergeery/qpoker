@@ -11,8 +11,9 @@ import (
 )
 
 type createGameRequest struct {
-	Name    string             `json:"name"`
-	Options models.GameOptions `json:"options"`
+	Name       string                 `json:"name"`
+	GameTypeID int64                  `json:"game_type_id"`
+	Options    map[string]interface{} `json:"options"`
 }
 
 func (req createGameRequest) validate() error {
@@ -20,13 +21,8 @@ func (req createGameRequest) validate() error {
 		return fmt.Errorf("Game name must be at least 6 characters")
 	}
 
-	// Allow -1 as an infinite capacity
-	if req.Options.Capacity == 0 || req.Options.Capacity < -1 {
-		return fmt.Errorf("Invalid capacity: %d", req.Options.Capacity)
-	}
-
-	if req.Options.BigBlind <= 0 || req.Options.BigBlind%2 == 1 {
-		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
+	if req.GameTypeID <= int64(0) {
+		return fmt.Errorf("Invalid game type id: %d", req.GameTypeID)
 	}
 
 	return nil
@@ -72,13 +68,7 @@ func CreateGame(c *fiber.Ctx) {
 		return
 	}
 
-	// Sane defaults
-	req.Options.TimeBetweenHands = 5
-	req.Options.DecisionTime = 30
-	req.Options.BuyInMin = req.Options.BigBlind
-	req.Options.BuyInMax = req.Options.BigBlind * 10
-
-	options := &models.GameOptionsRecord{
+	options := &models.GameOptions{
 		GameID:  game.ID,
 		Options: req.Options,
 	}
@@ -100,31 +90,6 @@ type updateGameRequest createGameRequest
 func (req updateGameRequest) validate() error {
 	if req.Name != "" && len(req.Name) < 6 {
 		return fmt.Errorf("Game name must be at least 6 characters")
-	}
-
-	// Allow -1 as an infinite capacity
-	if req.Options.Capacity < -1 {
-		return fmt.Errorf("Invalid capacity: %d", req.Options.Capacity)
-	}
-
-	if req.Options.BigBlind < 0 || req.Options.BigBlind%2 == 1 {
-		return fmt.Errorf("Invalid big blind: %d", req.Options.BigBlind)
-	}
-
-	if req.Options.TimeBetweenHands < 0 || req.Options.TimeBetweenHands > 30 {
-		return fmt.Errorf("Invalid time between hands: %d", req.Options.TimeBetweenHands)
-	}
-
-	if req.Options.DecisionTime < 0 || req.Options.DecisionTime > 60 {
-		return fmt.Errorf("Invalid player decision time: %d", req.Options.DecisionTime)
-	}
-
-	if req.Options.BuyInMin < 0 {
-		return fmt.Errorf("Invalid min buy in: %d", req.Options.BuyInMin)
-	}
-
-	if req.Options.BuyInMax < 0 {
-		return fmt.Errorf("Invalid max buy in: %d", req.Options.BuyInMax)
 	}
 
 	return nil
@@ -163,31 +128,6 @@ func UpdateGame(c *fiber.Ctx) {
 		return
 	}
 
-	if req.Options.Capacity != 0 {
-		game.Options.Capacity = req.Options.Capacity
-	}
-	if req.Options.BigBlind != 0 {
-		game.Options.BigBlind = req.Options.BigBlind
-	}
-	if req.Options.TimeBetweenHands != 0 {
-		game.Options.TimeBetweenHands = req.Options.TimeBetweenHands
-	}
-	if req.Options.DecisionTime != 0 {
-		game.Options.DecisionTime = req.Options.DecisionTime
-	}
-	if req.Options.BuyInMin != 0 {
-		game.Options.BuyInMin = req.Options.BuyInMin
-	}
-	if req.Options.BuyInMax != 0 {
-		game.Options.BuyInMax = req.Options.BuyInMax
-	}
-
-	if req.Options.BuyInMax < req.Options.BuyInMin {
-		c.SendStatus(400)
-		c.JSON(utils.FormatErrors(fmt.Errorf("Game buy in max cannot be less than min")))
-		return
-	}
-
 	if req.Name != "" {
 		game.Name = req.Name
 	}
@@ -199,13 +139,20 @@ func UpdateGame(c *fiber.Ctx) {
 		return
 	}
 
-	optionsRecord, err := models.GetGameOptionsRecordBy("game_id", game.ID)
+	options, err := models.GetGameOptionsForGame(game.ID, game.GameTypeID)
 	if err != nil {
-		optionsRecord = &models.GameOptionsRecord{GameID: game.ID}
+		options = models.GameOptions{
+			GameID:     game.ID,
+			GameTypeID: game.GameTypeID,
+			Options:    map[string]interface{}{},
+		}
 	}
 
-	optionsRecord.Options = game.Options
-	err = optionsRecord.Save()
+	for k, v := range req.Options {
+		options.Options[k] = v
+	}
+
+	err = options.Save()
 	if err != nil {
 		c.SendStatus(400)
 		c.JSON(utils.FormatErrors(err))

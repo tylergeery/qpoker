@@ -2,102 +2,139 @@ package models
 
 import (
 	"fmt"
-	"time"
-
-	"database/sql/driver"
-	"encoding/json"
 )
 
-// GameOptions is a config object used to control game settings
+// GameOptions handles getting/setting game specific options
 type GameOptions struct {
-	Capacity         int   `json:"capacity"`
-	BigBlind         int64 `json:"big_blind"`
-	DecisionTime     int   `json:"decision_time"`
-	TimeBetweenHands int   `json:"time_between_hands"`
-	BuyInMin         int64 `json:"buy_in_min"`
-	BuyInMax         int64 `json:"buy_in_max"`
+	GameID     int64                  `json:"game_id"`
+	GameTypeID int64                  `json:"game_type_id`
+	Options    map[string]interface{} `json:"options"`
 }
 
-// Value makes the GameOptions struct implement the driver.Valuer interface. This method
-// simply returns the JSON-encoded representation of the struct.
-func (g GameOptions) Value() (driver.Value, error) {
-	return json.Marshal(g)
+// GameOption contains information to create game option
+type GameOption struct {
+	GameTypeGameOptionID int64       `json:"game_type_game_option_id"`
+	GameTypeID           int64       `json:"game_type_id"`
+	GameOptionID         int64       `json:"game_option_id"`
+	IsActive             bool        `json:"is_active"`
+	DefaultValue         interface{} `json:"default_value"`
+	Name                 string      `json:"name"`
+	Label                string      `json:"label"`
+	Type                 string      `json:"type"`
 }
 
-// Scan makes the GameOptions struct implement the sql.Scanner interface. This method
-// simply decodes a JSON-encoded value into the struct fields.
-func (g *GameOptions) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("Could not get GameOptions as []byte")
-	}
-
-	return json.Unmarshal(b, &g)
+func getValueByType(valueType, value string) interface{} {
+	return value
 }
 
-// GameOptionsRecord handles user info
-type GameOptionsRecord struct {
-	ID        int64       `json:"id"`
-	GameID    int64       `json:"game_id"`
-	Options   GameOptions `json:"options"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+func getStringForType(valueType string, value interface{}) string {
+	return value.(string)
 }
 
 // GetGameOptionsForGame returns options for game
-func GetGameOptionsForGame(gameID int64) (GameOptions, error) {
-	record, err := GetGameOptionsRecordBy("game_id", gameID)
-	if err != nil {
-		return GameOptions{}, err
+func GetGameOptionsForGame(gameID int64, gameTypeID int64) (GameOptions, error) {
+	options := GameOptions{
+		GameID:  gameID,
+		Options: map[string]interface{}{},
 	}
 
-	return record.Options, nil
+	rows, err := ConnectToDB().Query(fmt.Sprintf(`
+		SELECT go.name, go.type, COALESCE(gov.value, gtgo.default_value)
+		FROM game_type_game_option gtgo
+		LEFT JOIN game_option go ON go.id = gtgo.game_option_id
+		LEFT JOIN game_game_option_value gov
+			ON (gov.game_type_game_option_id = gtgo.id AND gov.game_id = $1)
+		WHERE game_type_id = $2
+		ORDER BY created_at ASC
+	`), gameID, gameTypeID)
+
+	if err != nil {
+		return options, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var name, valueType, value string
+		rows.Scan(&name, &valueType, &value)
+		options.Options[name] = getValueByType(valueType, value)
+	}
+
+	return options, err
 }
 
-// GetGameOptionsRecordBy returns a GameOptionsRecord found from key,val
-func GetGameOptionsRecordBy(key string, val interface{}) (*GameOptionsRecord, error) {
-	record := &GameOptionsRecord{}
+// GetGameOptionRecordsForGameType returns all GameOption records for game type
+func GetGameOptionRecordsForGameType(gameTypeID int64) ([]GameOption, error) {
+	records := []GameOption{}
 
-	err := ConnectToDB().QueryRow(fmt.Sprintf(`
-		SELECT id, game_id, options, created_at, updated_at
-		FROM game_options
-		WHERE %s = $1
-		LIMIT 1
-	`, key), val).Scan(&record.ID, &record.GameID, &record.Options, &record.CreatedAt, &record.UpdatedAt)
+	rows, err := ConnectToDB().Query(fmt.Sprintf(`
+		SELECT
+			gtgo.id, gtgo.game_type_id, gtgo.game_option_id,
+			gtgo.is_active, gtgo.default_value,
+			go.name, go.label, go.type
+		FROM game_type_game_option gtgo
+		LEFT JOIN game_option go ON go.id = gtgo.game_option_id
+		WHERE game_type_id = $1
+		ORDER BY created_at ASC
+	`), gameTypeID)
 
-	if record.ID == 0 {
-		return record, fmt.Errorf("GameOptionsRecord could not be found for %s=%s", key, val)
+	defer rows.Close()
+	for rows.Next() {
+		record, defaultValue := GameOption{}, ""
+		rows.Scan(
+			&record.GameTypeGameOptionID, &record.GameTypeID, &record.GameOptionID,
+			&record.IsActive, &defaultValue, &record.Name, &record.Label, &record.Type)
+		record.DefaultValue = getStringForType(record.Type, defaultValue)
 	}
 
-	return record, err
+	return records, err
+}
+
+func (g GameOptions) validate() error {
+	buyInMin, buyInMinOk := g.Options["buy_in_min"]
+	buyInMax, buyInMaxOk := g.Options["buy_in_max"]
+
+	if buyInMinOk && buyInMaxOk && buyInMax.(int64) < buyInMin.(int64) {
+		fmt.Errorf("Game buy in max (%d) cannot be less than min (%d)", buyInMax, buyInMin)
+	}
+
+	return nil
 }
 
 // Save writes the Game object to the database
-func (g *GameOptionsRecord) Save() error {
-	if g.ID == 0 {
-		return g.insert()
+func (g GameOptions) Save() error {
+	// Validate all option types
+	err := g.validate()
+	if err != nil {
+		return err
 	}
 
-	return g.update()
+	records, err := GetGameOptionRecordsForGameType(g.GameTypeID)
+	if err != nil {
+		return err
+	}
+
+	// TODO: remove any that no longer apply
+
+	// save all options
+	for i := range records {
+		value, ok := g.Options[records[i].Name]
+		if !ok {
+			value = records[i].DefaultValue
+		}
+
+		recordValue := getStringForType(records[i].Type, value)
+		g.save(records[i].GameTypeGameOptionID, recordValue)
+	}
+
+	return nil
 }
 
-func (g *GameOptionsRecord) insert() error {
-	err := ConnectToDB().QueryRow(`
-		INSERT INTO game_options (game_id, options)
-		VALUES ($1, $2)
-		RETURNING id, created_at, updated_at
-	`, g.GameID, g.Options).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
-
-	return err
-}
-
-func (g *GameOptionsRecord) update() error {
-	err := ConnectToDB().QueryRow(`
-		UPDATE game_options
-		SET options = $2, updated_at = NOW()
-		WHERE id = $1
-		RETURNING updated_at
-	`, g.ID, g.Options).Scan(&g.UpdatedAt)
+func (g GameOptions) save(gameTypeGameOptionID int64, value string) error {
+	_, err := ConnectToDB().Exec(`
+		INSERT INTO game_game_option_value (game_id, game_type_game_option_id, value)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (did) DO UPDATE SET value = $4, updated_at = NOW();
+	`, g.GameID, gameTypeGameOptionID, value, value)
 
 	return err
 }

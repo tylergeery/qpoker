@@ -28,8 +28,15 @@ type GameManager struct {
 	gamePlayerHands map[int64]*models.GamePlayerHand
 }
 
+// GameOptions holds game options
+type GameOptions struct {
+	Capacity     int   `json:"capacity"`
+	BigBlind     int64 `json:"big_blind"`
+	DecisionTime int   `json:"decision_time"`
+}
+
 // NewGameManager returns a new GameManager
-func NewGameManager(gameID int64, players []*Player, options models.GameOptions) (*GameManager, error) {
+func NewGameManager(gameID int64, players []*Player, options GameOptions) (*GameManager, error) {
 	if len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}

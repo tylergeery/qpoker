@@ -20,7 +20,7 @@ func createTestPlayer(t *testing.T, score int) *Player {
 func createTestManager(t *testing.T, players ...*Player) *GameManager {
 	game := models.CreateTestGame(players[0].ID)
 
-	manager, err := NewGameManager(game.ID, players, models.GameOptions{BigBlind: 50})
+	manager, err := NewGameManager(game.ID, players, GameOptions{})
 	assert.NoError(t, err)
 	err = manager.NextHand()
 	assert.NoError(t, err)
@@ -39,7 +39,7 @@ func TestPlay4Hands(t *testing.T) {
 	}
 	game := models.CreateTestGame(player.ID)
 
-	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(game.ID, players, GameOptions{Capacity: 4})
 	assert.NoError(t, err)
 
 	err = gm.NextHand()

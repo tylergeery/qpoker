@@ -20,14 +20,15 @@ const (
 
 // Game handles user info
 type Game struct {
-	ID        int64       `json:"id"`
-	Name      string      `json:"name"`
-	Slug      string      `json:"slug"`
-	OwnerID   int64       `json:"-"`
-	Status    string      `json:"status"`
-	Options   GameOptions `json:"options"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	ID         int64                  `json:"id"`
+	Name       string                 `json:"name"`
+	Slug       string                 `json:"slug"`
+	OwnerID    int64                  `json:"-"`
+	GameTypeID int64                  `json:"game_type_id"`
+	Status     string                 `json:"status"`
+	Options    map[string]interface{} `json:"options"`
+	CreatedAt  time.Time              `json:"created_at"`
+	UpdatedAt  time.Time              `json:"updated_at"`
 }
 
 // GetGameBy returns a Game found from the id
@@ -35,19 +36,20 @@ func GetGameBy(key string, val interface{}) (*Game, error) {
 	game := &Game{}
 
 	err := ConnectToDB().QueryRow(fmt.Sprintf(`
-		SELECT id, name, slug, owner_id, status, created_at, updated_at
+		SELECT id, name, slug, owner_id, game_type_id, status, created_at, updated_at
 		FROM game
 		WHERE %s = $1
 		LIMIT 1
 	`, key), val).Scan(
-		&game.ID, &game.Name, &game.Slug, &game.OwnerID,
+		&game.ID, &game.Name, &game.Slug, &game.OwnerID, &game.GameTypeID,
 		&game.Status, &game.CreatedAt, &game.UpdatedAt)
 
 	if err != nil {
 		return game, err
 	}
 
-	game.Options, _ = GetGameOptionsForGame(game.ID)
+	gameOptions, _ := GetGameOptionsForGame(game.ID, game.GameTypeID)
+	game.Options = gameOptions.Options
 
 	return game, err
 }
@@ -81,10 +83,10 @@ func (g *Game) createSlug() {
 
 func (g *Game) insert() error {
 	err := ConnectToDB().QueryRow(`
-		INSERT INTO game (name, slug, owner_id, status)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO game (name, slug, owner_id, game_type_id, status)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at, updated_at
-	`, g.Name, g.Slug, g.OwnerID, g.Status).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
+	`, g.Name, g.Slug, g.OwnerID, g.GameTypeID, g.Status).Scan(&g.ID, &g.CreatedAt, &g.UpdatedAt)
 
 	return err
 }
@@ -96,11 +98,12 @@ func (g *Game) update() error {
 			name = $2,
 			slug = $3,
 			owner_id = $4,
-			status = $5,
+			game_type_id = $5,
+			status = $6,
 			updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at
-	`, g.ID, g.Name, g.Slug, g.OwnerID, g.Status).Scan(&g.UpdatedAt)
+	`, g.ID, g.Name, g.Slug, g.OwnerID, g.GameTypeID, g.Status).Scan(&g.UpdatedAt)
 
 	return err
 }

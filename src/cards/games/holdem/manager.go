@@ -32,8 +32,18 @@ type GameManager struct {
 	gamePlayerHands map[int64]*models.GamePlayerHand
 }
 
+// GameOptions is a config object used to control game settings
+type GameOptions struct {
+	Capacity         int   `json:"capacity"`
+	BigBlind         int64 `json:"big_blind"`
+	DecisionTime     int   `json:"decision_time"`
+	TimeBetweenHands int   `json:"time_between_hands"`
+	BuyInMin         int64 `json:"buy_in_min"`
+	BuyInMax         int64 `json:"buy_in_max"`
+}
+
 // NewGameManager returns a new GameManager
-func NewGameManager(gameID int64, players []*Player, options models.GameOptions) (*GameManager, error) {
+func NewGameManager(gameID int64, players []*Player, options GameOptions) (*GameManager, error) {
 	if len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}

@@ -23,7 +23,7 @@ func createTestPlayer(t *testing.T, stack int) *Player {
 func createTestManager(t *testing.T, players ...*Player) *GameManager {
 	game := models.CreateTestGame(players[0].ID)
 
-	manager, err := NewGameManager(game.ID, players, models.GameOptions{BigBlind: 50})
+	manager, err := NewGameManager(game.ID, players, GameOptions{BigBlind: 50})
 	assert.NoError(t, err)
 	err = manager.NextHand()
 	assert.NoError(t, err)
@@ -67,7 +67,7 @@ func TestNewGameError(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := NewGameManager(int64(0), c.players, models.GameOptions{})
+		_, err := NewGameManager(int64(0), c.players, GameOptions{})
 		assert.Equal(t, c.expected, err.Error())
 	}
 }
@@ -78,7 +78,7 @@ func TestPlayTooManyPlayers(t *testing.T) {
 		players = append(players, &Player{ID: int64(i)})
 	}
 
-	_, err := NewGameManager(int64(0), players, models.GameOptions{Capacity: 4, BigBlind: 100})
+	_, err := NewGameManager(int64(0), players, GameOptions{Capacity: 4, BigBlind: 100})
 	assert.Error(t, err)
 }
 
@@ -88,7 +88,7 @@ func TestPlayHandNotEnoughPlayersDueToStacks(t *testing.T) {
 		players = append(players, &Player{ID: int64(i)})
 	}
 
-	gm, err := NewGameManager(int64(0), players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(int64(0), players, GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	err = gm.NextHand()
@@ -106,7 +106,7 @@ func TestPlayHandAllFold(t *testing.T) {
 	}
 	game := models.CreateTestGame(player.ID)
 
-	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(game.ID, players, GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	// 1 becomes dealer, 2 LB, 3 BB, 4 active
@@ -187,7 +187,7 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 	}
 	game := models.CreateTestGame(player.ID)
 
-	gm, err := NewGameManager(game.ID, players, models.GameOptions{Capacity: 5, BigBlind: 100})
+	gm, err := NewGameManager(game.ID, players, GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
 
 	// 1 becomes dealer, 2 LB, 0 BB, 1 active
