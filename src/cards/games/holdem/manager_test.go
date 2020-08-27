@@ -3,7 +3,7 @@ package holdem
 import (
 	"fmt"
 	"qpoker/models"
-	"qpoker/utils"
+	"qpoker/qutils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,7 +21,7 @@ func createTestPlayer(t *testing.T, stack int) *Player {
 }
 
 func createTestManager(t *testing.T, players ...*Player) *GameManager {
-	game := models.CreateTestGame(players[0].ID)
+	game := models.CreateTestGame(players[0].ID, 1)
 
 	manager, err := NewGameManager(game.ID, players, GameOptions{BigBlind: 50})
 	assert.NoError(t, err)
@@ -104,7 +104,7 @@ func TestPlayHandAllFold(t *testing.T) {
 		player = models.CreateTestPlayer()
 		players = append(players, &Player{ID: player.ID, Stack: int64(200)})
 	}
-	game := models.CreateTestGame(player.ID)
+	game := models.CreateTestGame(player.ID, 1)
 
 	gm, err := NewGameManager(game.ID, players, GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
@@ -185,7 +185,7 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 		player = models.CreateTestPlayer()
 		players = append(players, &Player{ID: player.ID, Stack: int64(200)})
 	}
-	game := models.CreateTestGame(player.ID)
+	game := models.CreateTestGame(player.ID, 1)
 
 	gm, err := NewGameManager(game.ID, players, GameOptions{Capacity: 5, BigBlind: 100})
 	assert.NoError(t, err)
@@ -283,7 +283,7 @@ func TestPlayHandAllCheckAndCall(t *testing.T) {
 		assert.Equal(t, 2, len(gm.gamePlayerHands[players[i].ID].Cards))
 		assert.Equal(t, int64(200), gm.gamePlayerHands[players[i].ID].Starting)
 		assert.Equal(t, int64(100), gm.gameHand.Bets[players[i].ID])
-		min, max = utils.MinInt64(min, gm.gamePlayerHands[players[i].ID].Ending), utils.MaxInt64(max, gm.gamePlayerHands[players[i].ID].Ending)
+		min, max = qutils.MinInt64(min, gm.gamePlayerHands[players[i].ID].Ending), qutils.MaxInt64(max, gm.gamePlayerHands[players[i].ID].Ending)
 		total += gm.gamePlayerHands[players[i].ID].Ending
 		assert.True(t, players[i].CardsVisible)
 	}

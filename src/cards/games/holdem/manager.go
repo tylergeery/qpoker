@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"qpoker/cards"
 	"qpoker/models"
-	"qpoker/utils"
+	"qpoker/qutils"
 )
 
 const (
@@ -42,13 +42,25 @@ type GameOptions struct {
 	BuyInMax         int64 `json:"buy_in_max"`
 }
 
+// NewGameOptions creates game options from options map
+func NewGameOptions(options map[string]interface{}) GameOptions {
+	return GameOptions{
+		Capacity:         qutils.IfaceToInt(options["capacity"]),
+		BigBlind:         qutils.IfaceToI64(options["big_blind"]),
+		DecisionTime:     qutils.IfaceToInt(options["decision_time"]),
+		TimeBetweenHands: qutils.IfaceToInt(options["time_between_hands"]),
+		BuyInMin:         qutils.IfaceToI64(options["buy_in_min"]),
+		BuyInMax:         qutils.IfaceToI64(options["buy_in_max"]),
+	}
+}
+
 // NewGameManager returns a new GameManager
 func NewGameManager(gameID int64, players []*Player, options GameOptions) (*GameManager, error) {
 	if len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}
 
-	if options.Capacity > 0 && len(players) > options.Capacity {
+	if options.Capacity > 0 && len(players) > int(options.Capacity) {
 		return nil, fmt.Errorf("Player count (%d) is greater than capacity (%d)", len(players), options.Capacity)
 	}
 
@@ -107,12 +119,12 @@ func (g *GameManager) NextHand() error {
 
 	// little
 	g.State.Table.GetActivePlayer().LittleBlind = true
-	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind/2, g.State.Table.GetActivePlayer().Stack)))
+	g.playerBet(NewActionBet(qutils.MinInt64(g.BigBlind/2, g.State.Table.GetActivePlayer().Stack)))
 	g.State.Table.ActivateNextPlayer(g.GetPlayerActions)
 
 	// big blind
 	g.State.Table.GetActivePlayer().BigBlind = true
-	g.playerBet(NewActionBet(utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)))
+	g.playerBet(NewActionBet(qutils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)))
 
 	g.UpdateStatus(StatusActive)
 	g.ProcessAction()
@@ -253,14 +265,14 @@ func (g *GameManager) playerBet(action Action) error {
 			return fmt.Errorf("Cannot bet")
 		}
 
-		minBet := utils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)
+		minBet := qutils.MinInt64(g.BigBlind, g.State.Table.GetActivePlayer().Stack)
 		if action.Amount < minBet {
 			return fmt.Errorf("Insufficient bet amount")
 		}
 	}
 
 	player := g.State.Table.GetActivePlayer()
-	amount := utils.MinInt64(action.Amount, player.Stack)
+	amount := qutils.MinInt64(action.Amount, player.Stack)
 
 	g.Pot.AddBet(player.ID, amount)
 	player.Stack -= amount
@@ -275,7 +287,7 @@ func (g *GameManager) playerCall(action Action) error {
 	}
 
 	player := g.State.Table.GetActivePlayer()
-	amount := utils.MinInt64(
+	amount := qutils.MinInt64(
 		g.Pot.MaxBet()-g.Pot.PlayerBets[player.ID],
 		g.State.Table.GetActivePlayer().Stack,
 	)

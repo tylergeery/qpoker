@@ -7,6 +7,7 @@ import (
 	"qpoker/cards"
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
+	"qpoker/qutils"
 	"strconv"
 	"time"
 )
@@ -79,7 +80,7 @@ func (e *EventBus) reloadGameState(client *Client) error {
 	}
 
 	players := []*holdem.Player{}
-	manager, err := holdem.NewGameManager(game.ID, players, game.Options)
+	manager, err := holdem.NewGameManager(game.ID, players, holdem.NewGameOptions(game.Options))
 	if err != nil {
 		return err
 	}
@@ -426,7 +427,7 @@ func (e *EventBus) processGame(gameID int64, complete bool) {
 
 	if complete {
 		go func() {
-			time.Sleep(time.Duration(controller.game.Options.TimeBetweenHands) * time.Second)
+			time.Sleep(time.Duration(qutils.IfacetoInt(controller.game.Options["time_between_hands"])) * time.Second)
 			e.advanceNextHand(gameID)
 			fmt.Printf("Advancing to next hand: %d\n", gameID)
 		}()
@@ -479,7 +480,7 @@ func (e *EventBus) IdleGameUpdates() {
 			// this is way too specific to holdem
 			lastMoveAt := controller.manager.State.Table.ActiveAt
 			currentTime := time.Now().Unix()
-			allowedTime := controller.game.Options.DecisionTime
+			allowedTime := qutils.IfacetoInt(controller.game.Options["decision_time"])
 			if controller.manager.Status != holdem.StatusActive {
 				continue
 			}

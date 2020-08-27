@@ -18,7 +18,7 @@ func createTestPlayer(t *testing.T, score int) *Player {
 }
 
 func createTestManager(t *testing.T, players ...*Player) *GameManager {
-	game := models.CreateTestGame(players[0].ID)
+	game := models.CreateTestGame(players[0].ID, 2)
 
 	manager, err := NewGameManager(game.ID, players, GameOptions{})
 	assert.NoError(t, err)
@@ -35,9 +35,11 @@ func TestPlay4Hands(t *testing.T) {
 	players := []*Player{}
 	for i := 0; i < 4; i++ {
 		player = models.CreateTestPlayer()
+		assert.Greater(t, player.ID, int64(0))
 		players = append(players, &Player{ID: player.ID})
 	}
-	game := models.CreateTestGame(player.ID)
+	game := models.CreateTestGame(player.ID, 2)
+	assert.Greater(t, game.ID, int64(0))
 
 	gm, err := NewGameManager(game.ID, players, GameOptions{Capacity: 4})
 	assert.NoError(t, err)

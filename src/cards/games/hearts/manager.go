@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"qpoker/cards"
 	"qpoker/models"
+	"qpoker/qutils"
 )
 
 const (
@@ -33,6 +34,17 @@ type GameOptions struct {
 	Capacity     int   `json:"capacity"`
 	BigBlind     int64 `json:"big_blind"`
 	DecisionTime int   `json:"decision_time"`
+}
+
+// NewGameOptions creates game options from options map
+func NewGameOptions(options map[string]interface{}) GameOptions {
+	m := qutils.MaxInt64(int64(1), int64(2))
+	fmt.Println(m)
+	return GameOptions{
+		Capacity:     qutils.IfaceToInt(options["capacity"]),
+		BigBlind:     qutils.IfaceToI64(options["big_blind"]),
+		DecisionTime: qutils.IfaceToInt(options["decision_time"]),
+	}
 }
 
 // NewGameManager returns a new GameManager

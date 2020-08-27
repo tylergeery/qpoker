@@ -30,15 +30,19 @@ func CreateTestPlayer() *Player {
 }
 
 // CreateTestGame creates a game for a test game
-func CreateTestGame(playerID int64) *Game {
+func CreateTestGame(playerID, gameTypeID int64) *Game {
 	setSeed()
 
 	game := &Game{
-		Name:    fmt.Sprintf("Testing Game %d", time.Now().UTC().UnixNano()),
-		OwnerID: playerID,
-		Status:  GameStatusInit,
+		Name:       fmt.Sprintf("Testing Game %d", time.Now().UTC().UnixNano()),
+		OwnerID:    playerID,
+		Status:     GameStatusInit,
+		GameTypeID: gameTypeID,
 	}
-	game.Save()
+	err := game.Save()
+	if err != nil {
+		panic(err)
+	}
 
 	return game
 }

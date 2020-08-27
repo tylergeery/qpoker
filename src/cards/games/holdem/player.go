@@ -3,7 +3,7 @@ package holdem
 import (
 	"qpoker/cards"
 	"qpoker/models"
-	"qpoker/utils"
+	"qpoker/qutils"
 )
 
 const (
@@ -69,5 +69,5 @@ func (p *Player) IsReady() bool {
 
 // HasOptions returns whether the player has options
 func (p *Player) HasOptions() bool {
-	return utils.HasTrueValues(p.Options)
+	return qutils.HasTrueValues(p.Options)
 }

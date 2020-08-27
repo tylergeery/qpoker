@@ -56,9 +56,10 @@ func CreateGame(c *fiber.Ctx) {
 	}
 
 	game := &models.Game{
-		Name:    req.Name,
-		OwnerID: player.ID,
-		Status:  models.GameStatusInit,
+		Name:       req.Name,
+		OwnerID:    player.ID,
+		Status:     models.GameStatusInit,
+		GameTypeID: req.GameTypeID,
 	}
 	err = game.Save()
 	if err != nil {
@@ -69,17 +70,16 @@ func CreateGame(c *fiber.Ctx) {
 	}
 
 	options := &models.GameOptions{
-		GameID:  game.ID,
-		Options: req.Options,
+		GameID:     game.ID,
+		GameTypeID: game.GameTypeID,
+		Options:    req.Options,
 	}
 	err = options.Save()
 	if err != nil {
 		fmt.Printf("Game options save error: %s\n", err)
 	}
-	fmt.Printf("gameOptions after save: %+v\n", options)
-	if err == nil {
-		game.Options = options.Options
-	}
+
+	game, _ = models.GetGameBy("id", game.ID)
 
 	c.SendStatus(201)
 	c.JSON(game)
@@ -134,6 +134,7 @@ func UpdateGame(c *fiber.Ctx) {
 
 	err = game.Save()
 	if err != nil {
+		fmt.Printf("Game save error: %s", err)
 		c.SendStatus(400)
 		c.JSON(utils.FormatErrors(err))
 		return
@@ -158,6 +159,8 @@ func UpdateGame(c *fiber.Ctx) {
 		c.JSON(utils.FormatErrors(err))
 		return
 	}
+
+	game, _ = models.GetGameBy("id", game.ID)
 
 	c.SendStatus(200)
 	c.JSON(game)

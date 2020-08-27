@@ -1,4 +1,4 @@
-package utils
+package qutils
 
 // HasTrueValues checks if the map has any true values
 func HasTrueValues(m map[string]bool) bool {

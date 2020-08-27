@@ -1,4 +1,4 @@
-package utils
+package qutils
 
 // MaxInt64 gets max of int64 values
 func MaxInt64(nums ...int64) int64 {

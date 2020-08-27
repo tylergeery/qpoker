@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"qpoker/utils"
+	"qpoker/qutils"
 	"strings"
 	"time"
 
@@ -76,7 +76,7 @@ func (g *Game) createSlug() {
 	}
 
 	slug = strings.TrimSuffix(slug, "-")
-	slug = fmt.Sprintf("%s-%s", slug, utils.GenerateVariedLengthSlug(5, 15))
+	slug = fmt.Sprintf("%s-%s", slug, qutils.GenerateVariedLengthSlug(5, 15))
 
 	g.Slug = strings.ToLower(slug)
 }

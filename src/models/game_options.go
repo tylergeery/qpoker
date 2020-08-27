@@ -2,6 +2,8 @@ package models
 
 import (
 	"fmt"
+	"qpoker/qutils"
+	"strconv"
 )
 
 // GameOptions handles getting/setting game specific options
@@ -24,18 +26,49 @@ type GameOption struct {
 }
 
 func getValueByType(valueType, value string) interface{} {
-	return value
+	switch valueType {
+	case "boolean":
+		v, err := strconv.ParseBool(value)
+		if err != nil {
+			fmt.Printf("Parse boolean err: %s\n", err)
+		}
+		return v
+	case "number":
+		v, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			fmt.Printf("Parse float err: %s\n", err)
+		}
+		return v
+	case "integer":
+		v, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			fmt.Printf("Parse integer err: %s\n", err)
+		}
+		return v
+	default:
+		return value
+	}
 }
 
 func getStringForType(valueType string, value interface{}) string {
-	return value.(string)
+	switch valueType {
+	case "boolean":
+		return fmt.Sprintf("%b", value)
+	case "number":
+		return fmt.Sprintf("%f", value)
+	case "integer":
+		return fmt.Sprintf("%d", qutils.IfacetoI64(value))
+	default:
+		return value.(string)
+	}
 }
 
 // GetGameOptionsForGame returns options for game
 func GetGameOptionsForGame(gameID int64, gameTypeID int64) (GameOptions, error) {
 	options := GameOptions{
-		GameID:  gameID,
-		Options: map[string]interface{}{},
+		GameID:     gameID,
+		GameTypeID: gameTypeID,
+		Options:    map[string]interface{}{},
 	}
 
 	rows, err := ConnectToDB().Query(fmt.Sprintf(`
@@ -45,7 +78,7 @@ func GetGameOptionsForGame(gameID int64, gameTypeID int64) (GameOptions, error) 
 		LEFT JOIN game_game_option_value gov
 			ON (gov.game_type_game_option_id = gtgo.id AND gov.game_id = $1)
 		WHERE game_type_id = $2
-		ORDER BY created_at ASC
+		ORDER BY go.created_at ASC
 	`), gameID, gameTypeID)
 
 	if err != nil {
@@ -74,8 +107,11 @@ func GetGameOptionRecordsForGameType(gameTypeID int64) ([]GameOption, error) {
 		FROM game_type_game_option gtgo
 		LEFT JOIN game_option go ON go.id = gtgo.game_option_id
 		WHERE game_type_id = $1
-		ORDER BY created_at ASC
+		ORDER BY go.created_at ASC
 	`), gameTypeID)
+	if err != nil {
+		return records, err
+	}
 
 	defer rows.Close()
 	for rows.Next() {
@@ -83,7 +119,8 @@ func GetGameOptionRecordsForGameType(gameTypeID int64) ([]GameOption, error) {
 		rows.Scan(
 			&record.GameTypeGameOptionID, &record.GameTypeID, &record.GameOptionID,
 			&record.IsActive, &defaultValue, &record.Name, &record.Label, &record.Type)
-		record.DefaultValue = getStringForType(record.Type, defaultValue)
+		record.DefaultValue = getValueByType(record.Type, defaultValue)
+		records = append(records, record)
 	}
 
 	return records, err
@@ -93,8 +130,11 @@ func (g GameOptions) validate() error {
 	buyInMin, buyInMinOk := g.Options["buy_in_min"]
 	buyInMax, buyInMaxOk := g.Options["buy_in_max"]
 
-	if buyInMinOk && buyInMaxOk && buyInMax.(int64) < buyInMin.(int64) {
-		fmt.Errorf("Game buy in max (%d) cannot be less than min (%d)", buyInMax, buyInMin)
+	if buyInMinOk && buyInMaxOk {
+		bMax, bMin := qutils.IfacetoI64(buyInMax), qutils.IfacetoI64(buyInMin)
+		if bMax < bMin {
+			return fmt.Errorf("Game buy in max (%d) cannot be less than min (%d)", buyInMax, buyInMin)
+		}
 	}
 
 	return nil
@@ -133,7 +173,7 @@ func (g GameOptions) save(gameTypeGameOptionID int64, value string) error {
 	_, err := ConnectToDB().Exec(`
 		INSERT INTO game_game_option_value (game_id, game_type_game_option_id, value)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (did) DO UPDATE SET value = $4, updated_at = NOW();
+		ON CONFLICT (game_id, game_type_game_option_id) DO UPDATE SET value = $4, updated_at = NOW();
 	`, g.GameID, gameTypeGameOptionID, value, value)
 
 	return err

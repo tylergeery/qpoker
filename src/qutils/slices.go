@@ -1,4 +1,4 @@
-package utils
+package qutils
 
 // IntSliceHasValue returns whether an int is in Slice
 func IntSliceHasValue(haystack []int, needle int) bool {

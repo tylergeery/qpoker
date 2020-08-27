@@ -11,9 +11,9 @@ VALUES
     (1, 'capacity', 'Capacity', 'integer'),
     (2, 'time_between_hands', 'Time Between Hands (s)', 'integer'),
     (3, 'decision_time', 'Player Decision Time (s)', 'integer'),
-    (4, 'big_blind', 'Big Blind', 'number'),
-    (5, 'buy_in_min', 'Min Buy In', 'number'),
-    (6, 'buy_in_max', 'Max Buy In', 'number');
+    (4, 'big_blind', 'Big Blind', 'integer'),
+    (5, 'buy_in_min', 'Min Buy In', 'integer'),
+    (6, 'buy_in_max', 'Max Buy In', 'integer');
 
 
 INSERT INTO game_type_game_option
