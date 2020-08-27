@@ -45,12 +45,12 @@ type GameOptions struct {
 // NewGameOptions creates game options from options map
 func NewGameOptions(options map[string]interface{}) GameOptions {
 	return GameOptions{
-		Capacity:         qutils.IfaceToInt(options["capacity"]),
-		BigBlind:         qutils.IfaceToI64(options["big_blind"]),
-		DecisionTime:     qutils.IfaceToInt(options["decision_time"]),
-		TimeBetweenHands: qutils.IfaceToInt(options["time_between_hands"]),
-		BuyInMin:         qutils.IfaceToI64(options["buy_in_min"]),
-		BuyInMax:         qutils.IfaceToI64(options["buy_in_max"]),
+		Capacity:         qutils.ToInt(options["capacity"]),
+		BigBlind:         qutils.ToI64(options["big_blind"]),
+		DecisionTime:     qutils.ToInt(options["decision_time"]),
+		TimeBetweenHands: qutils.ToInt(options["time_between_hands"]),
+		BuyInMin:         qutils.ToI64(options["buy_in_min"]),
+		BuyInMax:         qutils.ToI64(options["buy_in_max"]),
 	}
 }
 

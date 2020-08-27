@@ -57,7 +57,7 @@ func getStringForType(valueType string, value interface{}) string {
 	case "number":
 		return fmt.Sprintf("%f", value)
 	case "integer":
-		return fmt.Sprintf("%d", qutils.IfacetoI64(value))
+		return fmt.Sprintf("%d", qutils.ToI64(value))
 	default:
 		return value.(string)
 	}
@@ -131,7 +131,7 @@ func (g GameOptions) validate() error {
 	buyInMax, buyInMaxOk := g.Options["buy_in_max"]
 
 	if buyInMinOk && buyInMaxOk {
-		bMax, bMin := qutils.IfacetoI64(buyInMax), qutils.IfacetoI64(buyInMin)
+		bMax, bMin := qutils.ToI64(buyInMax), qutils.ToI64(buyInMin)
 		if bMax < bMin {
 			return fmt.Errorf("Game buy in max (%d) cannot be less than min (%d)", buyInMax, buyInMin)
 		}

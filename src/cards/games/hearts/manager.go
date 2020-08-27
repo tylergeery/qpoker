@@ -41,9 +41,9 @@ func NewGameOptions(options map[string]interface{}) GameOptions {
 	m := qutils.MaxInt64(int64(1), int64(2))
 	fmt.Println(m)
 	return GameOptions{
-		Capacity:     qutils.IfaceToInt(options["capacity"]),
-		BigBlind:     qutils.IfaceToI64(options["big_blind"]),
-		DecisionTime: qutils.IfaceToInt(options["decision_time"]),
+		Capacity:     qutils.ToInt(options["capacity"]),
+		BigBlind:     qutils.ToI64(options["big_blind"]),
+		DecisionTime: qutils.ToInt(options["decision_time"]),
 	}
 }
 
