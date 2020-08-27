@@ -9,53 +9,42 @@ import (
 func TestGameOptionsCrud(t *testing.T) {
 	// Given
 	player := CreateTestPlayer()
-	game := CreateTestGame(player.ID)
-	record := GameOptionsRecord{
-		GameID: game.ID,
-		Options: GameOptions{
-			Capacity: 5,
-			BigBlind: int64(1000),
+	game := CreateTestGame(player.ID, 1)
+	record := GameOptions{
+		GameID:     game.ID,
+		GameTypeID: game.GameTypeID,
+		Options: map[string]interface{}{
+			"capacity":  int64(5),
+			"big_blind": int64(1000),
 		},
 	}
 	err := record.Save()
 	assert.NoError(t, err)
 
 	// When
-	fetchedRecord, err := GetGameOptionsRecordBy("id", record.ID)
-	assert.NoError(t, err)
-	options, err := GetGameOptionsForGame(game.ID)
+	options, err := GetGameOptionsForGame(game.ID, game.GameTypeID)
 	assert.NoError(t, err)
 
 	// Then
-	assert.Greater(t, fetchedRecord.ID, int64(0))
-	assert.Equal(t, fetchedRecord.ID, record.ID)
-	assert.Equal(t, fetchedRecord.GameID, game.ID)
-	assert.Equal(t, fetchedRecord.Options, record.Options)
-	assert.Equal(t, fetchedRecord.CreatedAt.Unix(), record.CreatedAt.Unix())
-	assert.Equal(t, fetchedRecord.UpdatedAt.Unix(), record.UpdatedAt.Unix())
-	assert.Equal(t, record.Options, options)
-	assert.Equal(t, 5, options.Capacity)
-	assert.Equal(t, int64(1000), options.BigBlind)
+	assert.Equal(t, options.GameID, game.ID)
+	assert.Equal(t, options.Options["capacity"], record.Options["capacity"])
+	assert.Equal(t, options.Options["big_blind"], record.Options["big_blind"])
+	assert.Equal(t, int64(5), options.Options["capacity"])
+	assert.Equal(t, int64(1000), options.Options["big_blind"])
 
 	// Update Options
-	record.Options.Capacity = 10
-	record.Options.BigBlind = int64(200)
+	record.Options["capacity"] = int64(10)
+	record.Options["big_blind"] = int64(200)
 	err = record.Save()
 	assert.NoError(t, err)
 
-	fetchedRecord, err = GetGameOptionsRecordBy("id", record.ID)
-	assert.NoError(t, err)
-	options, err = GetGameOptionsForGame(game.ID)
+	options, err = GetGameOptionsForGame(game.ID, game.GameTypeID)
 	assert.NoError(t, err)
 
 	// Then
-	assert.Greater(t, fetchedRecord.ID, int64(0))
-	assert.Equal(t, fetchedRecord.ID, record.ID)
-	assert.Equal(t, fetchedRecord.GameID, game.ID)
-	assert.Equal(t, fetchedRecord.Options, record.Options)
-	assert.Equal(t, fetchedRecord.CreatedAt.Unix(), record.CreatedAt.Unix())
-	assert.Equal(t, fetchedRecord.UpdatedAt.Unix(), record.UpdatedAt.Unix())
-	assert.Equal(t, record.Options, options)
-	assert.Equal(t, 10, options.Capacity)
-	assert.Equal(t, int64(200), options.BigBlind)
+	assert.Equal(t, options.GameID, game.ID)
+	assert.Equal(t, options.Options["capacity"], record.Options["capacity"])
+	assert.Equal(t, options.Options["big_blind"], record.Options["big_blind"])
+	assert.Equal(t, int64(10), options.Options["capacity"])
+	assert.Equal(t, int64(200), options.Options["big_blind"])
 }

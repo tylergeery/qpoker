@@ -18,12 +18,3 @@ CREATE TABLE IF NOT EXISTS game (
     updated_at timestamptz DEFAULT NOW(),
     CONSTRAINT unique_slug UNIQUE(slug)
 );
-
-CREATE TABLE IF NOT EXISTS game_options (
-    id serial PRIMARY KEY,
-    game_id integer NOT NULL REFERENCES game(id),
-    options jsonb NOT NULL,
-    created_at timestamptz DEFAULT NOW(),
-    updated_at timestamptz DEFAULT NOW(),
-    CONSTRAINT unique_game_options_game_id UNIQUE(game_id)
-);

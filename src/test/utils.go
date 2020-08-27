@@ -34,14 +34,17 @@ func CreateTestPlayer() *models.Player {
 }
 
 // CreateTestGame creates a new game for a test
-func CreateTestGame(player *models.Player) *models.Game {
+func CreateTestGame(player *models.Player, gameTypeID int64) *models.Game {
 	ts := time.Now().UTC().UnixNano()
 	game := &models.Game{
-		Name:    fmt.Sprintf("Test Game %d", ts),
-		OwnerID: player.ID,
-		Status:  models.GameStatusInit,
+		Name:       fmt.Sprintf("Test Game %d", ts),
+		OwnerID:    player.ID,
+		Status:     models.GameStatusInit,
+		GameTypeID: gameTypeID,
 	}
 	_ = game.Save()
+	options, _ := models.GetGameOptionsForGame(game.ID, game.GameTypeID)
+	game.Options = options.Options
 
 	return game
 }

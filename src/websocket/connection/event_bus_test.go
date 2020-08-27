@@ -10,7 +10,7 @@ import (
 
 func TestReloadGameState(t *testing.T) {
 	player := models.CreateTestPlayer()
-	game := models.CreateTestGame(player.ID)
+	game := models.CreateTestGame(player.ID, 1)
 	game.Status = models.GameStatusStart
 	game.Save()
 	client := &Client{PlayerID: player.ID, GameID: game.ID}
@@ -26,7 +26,7 @@ func TestReloadGameState(t *testing.T) {
 
 func TestReloadPlayerStack(t *testing.T) {
 	player := models.CreateTestPlayer()
-	game := models.CreateTestGame(player.ID)
+	game := models.CreateTestGame(player.ID, 1)
 	gameChipRequest := &models.GameChipRequest{
 		GameID:   game.ID,
 		PlayerID: player.ID,
