@@ -3,48 +3,25 @@ import * as Modal from "react-modal";
 
 import { BaseModal } from "./Base";
 import { Errors } from "./Errors";
-import { Game } from "../../objects/Game";
+import { Game, GameType, Option } from "../../objects/Game";
 import { CreateGameRequest } from "../../requests/createGame";
-import { GameTypesRequest } from "../../requests/getGameTypes";
 import { userStorage } from "../../utils/storage";
+import { getGameTypes } from "../../utils/gameType";
 
 type GameModalProps = {
     game?: Game;
-}
-
-type Option = {
-    name: string;
-    label: string;
-    type: string;
-    default_value: any;
-};
-
-type GameType = {
-    id: number;
-    key: string;
-    display_name: string;
-    options: Option[];
 }
 
 export class GameModal extends BaseModal<GameModalProps> {
     constructor(props: any) {
         super(props)
 
-        this.state.ctx.selectedType = null;
         this.state.ctx.types = [];
         this.state.values.options = {};
     }
 
     public componentDidMount() {
-        let req = new GameTypesRequest<any[]>();
-        req.request({userToken: userStorage.getToken()})
-            .then(resp => {
-                console.log('got game types:', resp)
-                this.setState({ctx: {types: resp}})
-                this.state.ctx.types = resp;
-            }, err => {
-                console.error('error fetching game types: ', err)
-            });
+        this.fetchGameTypes()
     }
 
     async submit(event: any) {
@@ -64,12 +41,45 @@ export class GameModal extends BaseModal<GameModalProps> {
         return
     }
 
+    private fetchGameTypes() {
+        if (this.state.ctx.types.length) {
+            return
+        }
+
+        if (!userStorage.getID()) {
+            return
+        }
+
+        getGameTypes()
+            .then(resp => {
+                if (resp) {
+                    this.setState({ctx: {types: resp}})
+                }
+            }, err => {
+                console.error('error fetching game types: ', err)
+            });
+    }
+
+    private getSelectedIndex() {
+        let gameTypeID = this.state.values.game_type_id;
+
+        for (let i=0; i < this.state.ctx.types.length; i++) {
+            if (this.state.ctx.types[i].id == gameTypeID) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     private getOptions(): Option[] {
-        if (this.state.ctx.selectedType == null) {
+        let selected = this.getSelectedIndex()
+
+        if (selected === -1) {
             return []
         }
 
-        return this.state.ctx.types[this.state.ctx.selectedType].options;
+        return this.state.ctx.types[selected].options;
     }
 
     private getOptionType(opt: Option): string {
@@ -83,6 +93,8 @@ export class GameModal extends BaseModal<GameModalProps> {
     }
 
     render() {
+        this.fetchGameTypes();
+
         return (
             <Modal
             isOpen={this.isActive()}
@@ -110,7 +122,7 @@ export class GameModal extends BaseModal<GameModalProps> {
                     <div>
                         <label>
                             Game Type:
-                            <select onChange={this.recordValue.bind(this)} name="game_type_id">
+                            <select className="show-select" onChange={this.recordValue.bind(this)} name="game_type_id" data-type="number">
                                 <option>Select Game Type</option>
                                 {this.state.ctx.types.map((type: GameType) => {
                                     return <option value={type.id}>{type.display_name}</option>;
@@ -125,7 +137,7 @@ export class GameModal extends BaseModal<GameModalProps> {
                         </label>
                     </div>
                     {this.getOptions().map((opt: Option) => {
-                        return <div>
+                        return <div key={`${opt.game_type_id}-${opt.game_option_id}`}>
                             <label>
                                 {opt.label}:
                                 <input onChange={this.recordValue.bind(this)} type={this.getOptionType(opt)}

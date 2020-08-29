@@ -61,11 +61,13 @@ export class SideBar extends React.Component<SideBarProps, SideBarState> {
                     </a>;
                 })}
             </div>
-            <div>
-                <Chat {...this.props} active={this.state.selectedTab === 'chat'}/>
-                <History {...this.props} active={this.state.selectedTab === 'history'}/>
-                <Settings {...this.props} active={this.state.selectedTab === 'settings' || this.state.selectedTab === 'admin'}/>
-            </div>
+            {this.props.game ? (
+                <div>
+                    <Chat {...this.props} active={this.state.selectedTab === 'chat'}/>
+                    <History {...this.props} active={this.state.selectedTab === 'history'}/>
+                    <Settings {...this.props} active={this.state.selectedTab === 'settings' || this.state.selectedTab === 'admin'}/>
+                </div>
+            ) : ''}
         </div>;
     }
 }
