@@ -94,7 +94,8 @@ func TestCreateGameSuccess(t *testing.T) {
 	capacity := 20
 	bigBlind := int64(100)
 	body := map[string]interface{}{
-		"name": name,
+		"name":         name,
+		"game_type_id": 1,
 		"options": map[string]interface{}{
 			"capacity":  capacity,
 			"big_blind": bigBlind,
@@ -121,11 +122,11 @@ func TestCreateGameSuccess(t *testing.T) {
 	assert.Equal(t, name, game.Name)
 	assert.True(t, len(game.Slug) >= 15)
 	assert.Equal(t, game.Status, models.GameStatusInit)
-	assert.Equal(t, capacity, game.Options.Capacity)
-	assert.Equal(t, bigBlind, game.Options.BigBlind)
-	assert.Equal(t, 5, game.Options.TimeBetweenHands)
-	assert.Equal(t, int64(10)*bigBlind, game.Options.BuyInMax)
-	assert.Equal(t, bigBlind, game.Options.BuyInMin)
+	assert.Equal(t, float64(capacity), game.Options["capacity"])
+	assert.Equal(t, float64(bigBlind), game.Options["big_blind"])
+	assert.Equal(t, float64(5), game.Options["time_between_hands"])
+	assert.Equal(t, float64(5000), game.Options["buy_in_max"])
+	assert.Equal(t, float64(500), game.Options["buy_in_min"])
 	assert.Greater(t, game.CreatedAt.Unix(), int64(0))
 	assert.Greater(t, game.UpdatedAt.Unix(), int64(0))
 }
@@ -135,12 +136,13 @@ func TestGameUpdateSuccess(t *testing.T) {
 	var updatedGame models.Game
 
 	player := test.CreateTestPlayer()
-	game := test.CreateTestGame(player)
+	game := test.CreateTestGame(player, 1)
 	body := map[string]interface{}{
 		"name": "temp " + game.Name,
 		"options": map[string]interface{}{
-			"capacity":  10,
-			"big_blind": 60,
+			"capacity":   10,
+			"big_blind":  60,
+			"buy_in_min": 5,
 		},
 	}
 	req := test.CreateTestRequest("PUT", fmt.Sprintf("/api/v1/games/%d", game.ID), map[string]string{"Authorization": fmt.Sprintf("Bearer %s", player.Token)}, body)
@@ -159,8 +161,9 @@ func TestGameUpdateSuccess(t *testing.T) {
 	assert.Equal(t, 200, response.StatusCode)
 	assert.Equal(t, game.ID, updatedGame.ID)
 	assert.Equal(t, body["name"], updatedGame.Name)
-	assert.Equal(t, 10, updatedGame.Options.Capacity)
-	assert.Equal(t, int64(60), updatedGame.Options.BigBlind)
+	assert.Equal(t, float64(10), updatedGame.Options["capacity"])
+	assert.Equal(t, float64(60), updatedGame.Options["big_blind"])
+	assert.Equal(t, float64(5), updatedGame.Options["buy_in_min"])
 	assert.Equal(t, game.Slug, updatedGame.Slug)
 	assert.Equal(t, updatedGame.CreatedAt.Unix(), game.CreatedAt.Unix())
 	assert.GreaterOrEqual(t, updatedGame.UpdatedAt.Unix(), game.UpdatedAt.Unix())
@@ -169,7 +172,7 @@ func TestGameUpdateSuccess(t *testing.T) {
 func TestGetGameFailure(t *testing.T) {
 	player := test.CreateTestPlayer()
 	player2 := test.CreateTestPlayer()
-	game := test.CreateTestGame(player)
+	game := test.CreateTestGame(player, 1)
 
 	type TestCase struct {
 		headers  map[string]string
@@ -205,7 +208,7 @@ func TestGetGameSuccess(t *testing.T) {
 	var retrievedGame models.Game
 
 	player := test.CreateTestPlayer()
-	game := test.CreateTestGame(player)
+	game := test.CreateTestGame(player, 1)
 	headers := map[string]string{"Content-Type": "application/json", "Authorization": fmt.Sprintf("Bearer %s", player.Token)}
 	req := test.CreateTestRequest("GET", fmt.Sprintf("/api/v1/games/%d", game.ID), headers, nil)
 	app := CreateApp()
@@ -224,7 +227,7 @@ func TestGetGameSuccess(t *testing.T) {
 	assert.Equal(t, retrievedGame.ID, game.ID)
 	assert.Equal(t, retrievedGame.Name, game.Name)
 	assert.Equal(t, retrievedGame.Slug, game.Slug)
-	assert.Equal(t, retrievedGame.Options.Capacity, game.Options.Capacity)
+	assert.Equal(t, retrievedGame.Options["capacity"], float64(game.Options["capacity"].(int64)))
 	assert.Equal(t, game.CreatedAt.Unix(), retrievedGame.CreatedAt.Unix())
 	assert.Equal(t, game.UpdatedAt.Unix(), retrievedGame.CreatedAt.Unix())
 }
@@ -234,7 +237,7 @@ func TestGetGameHistoryEmpty(t *testing.T) {
 	var gameHistory []interface{}
 
 	player := test.CreateTestPlayer()
-	game := test.CreateTestGame(player)
+	game := test.CreateTestGame(player, 1)
 	headers := map[string]string{"Content-Type": "application/json", "Authorization": fmt.Sprintf("Bearer %s", player.Token)}
 	req := test.CreateTestRequest("GET", fmt.Sprintf("/api/v1/games/%d/history", game.ID), headers, nil)
 	app := CreateApp()
@@ -258,7 +261,7 @@ func TestGetGameHistorySuccess(t *testing.T) {
 	// Create GameHistory
 	player := test.CreateTestPlayer()
 	player2 := test.CreateTestPlayer()
-	game := test.CreateTestGame(player)
+	game := test.CreateTestGame(player, 1)
 	req1 := &models.GameChipRequest{
 		GameID:   game.ID,
 		PlayerID: player.ID,

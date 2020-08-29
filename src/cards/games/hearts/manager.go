@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"qpoker/cards"
 	"qpoker/models"
+	"qpoker/qutils"
 )
 
 const (
@@ -28,8 +29,26 @@ type GameManager struct {
 	gamePlayerHands map[int64]*models.GamePlayerHand
 }
 
+// GameOptions holds game options
+type GameOptions struct {
+	Capacity     int   `json:"capacity"`
+	BigBlind     int64 `json:"big_blind"`
+	DecisionTime int   `json:"decision_time"`
+}
+
+// NewGameOptions creates game options from options map
+func NewGameOptions(options map[string]interface{}) GameOptions {
+	m := qutils.MaxInt64(int64(1), int64(2))
+	fmt.Println(m)
+	return GameOptions{
+		Capacity:     qutils.ToInt(options["capacity"]),
+		BigBlind:     qutils.ToI64(options["big_blind"]),
+		DecisionTime: qutils.ToInt(options["decision_time"]),
+	}
+}
+
 // NewGameManager returns a new GameManager
-func NewGameManager(gameID int64, players []*Player, options models.GameOptions) (*GameManager, error) {
+func NewGameManager(gameID int64, players []*Player, options GameOptions) (*GameManager, error) {
 	if len(players) > MaxPlayerCount {
 		return nil, fmt.Errorf("Invalid player count: %d", len(players))
 	}

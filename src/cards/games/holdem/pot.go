@@ -2,7 +2,7 @@ package holdem
 
 import (
 	"fmt"
-	"qpoker/utils"
+	"qpoker/qutils"
 )
 
 // Pot controls betting pot
@@ -83,7 +83,7 @@ func (p *Pot) GetPayouts(orderedPlayers []int64) map[int64]int64 {
 				continue
 			}
 
-			amount := utils.MinInt64(otherPlayerTotal, playerAmount)
+			amount := qutils.MinInt64(otherPlayerTotal, playerAmount)
 			remaining -= amount
 			playerPayout += amount
 		}

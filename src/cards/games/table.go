@@ -2,7 +2,7 @@ package games
 
 import (
 	"fmt"
-	"qpoker/utils"
+	"qpoker/qutils"
 	"time"
 )
 
@@ -116,7 +116,7 @@ func (t *Table) GetActiveIPlayers() []IPlayer {
 	start := t.ActiveIndex
 	next := t.NextPos(start)
 
-	for next != -1 && !utils.IntSliceHasValue(playerIndexes, next) {
+	for next != -1 && !qutils.IntSliceHasValue(playerIndexes, next) {
 		players = append(players, t.Players[next])
 		playerIndexes = append(playerIndexes, next)
 		next = t.NextPos(next)
@@ -150,7 +150,7 @@ func (t *Table) GetIPlayersFromIDs(ids []int64) []IPlayer {
 	allPlayers := t.GetAllIPlayers()
 
 	for i := range allPlayers {
-		if !utils.Int64SliceHasValue(ids, allPlayers[i].GetID()) {
+		if !qutils.Int64SliceHasValue(ids, allPlayers[i].GetID()) {
 			continue
 		}
 

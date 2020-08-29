@@ -10,7 +10,7 @@ func TestGamePlayerHandsCrud(t *testing.T) {
 	player1 := CreateTestPlayer()
 	player2 := CreateTestPlayer()
 	player3 := CreateTestPlayer()
-	game := CreateTestGame(player1.ID)
+	game := CreateTestGame(player1.ID, 1)
 	hand := &GameHand{GameID: game.ID}
 	err := hand.Save()
 	assert.NoError(t, err)
