@@ -27,6 +27,7 @@ func CreateApp() *fiber.App {
 	apiV1.Put("/players/:id", middleware.Authorize, UpdatePlayer)
 	apiV1.Get("/players/:id", middleware.Authorize, GetPlayer)
 
+	apiV1.Get("/games/types", middleware.Authorize, GetGameTypes)
 	apiV1.Post("/games", middleware.Authorize, CreateGame)
 	apiV1.Post("/games/:slug/join", middleware.Authorize, CreateGame)
 	apiV1.Put("/games/:gameID", middleware.Authorize, UpdateGame)

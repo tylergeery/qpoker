@@ -34,6 +34,7 @@ QCards compromises 2 publicly exposed Go services, dependent upon shared Postgre
 | POST   | /api/v1/players                 | Create player
 | POST   | /api/v1/players/login           | Player login
 | PUT    | /api/v1/players/:id             | Update player
+| GET    | /api/v1/games/types             | Get game types and options
 | GET    | /api/v1/games/:game_id          | Get game
 | POST   | /api/v1/games                   | Create a game
 | PUT    | /api/v1/games/:game_id          | Update a game

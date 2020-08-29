@@ -44,9 +44,9 @@ export class History extends React.Component<HistoryProps, HistoryState> {
             <div>
                 {this.state.history.map((history) => {
                     return history.hasOwnProperty("status") ? (
-                        <ChipRequest {...history} />
+                        <ChipRequest {...history} player={this.props.es.getPlayer(history.player_id)} />
                     ) : (
-                        <GameHand {...history} />
+                        <GameHand {...history} player={this.props.es.getPlayer(history.player_id)} />
                     );
                 })}
             </div>

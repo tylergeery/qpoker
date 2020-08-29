@@ -82,8 +82,8 @@ func PageTable(c *fiber.Ctx) {
 
 	RenderPage(c, "table", pageVars(fiber.Map{
 		"title":       fmt.Sprintf("Table %s", game.Name),
-		"stylesheets": []string{"game", "games/poker"},
-		"scripts":     []string{"game", "games/poker"},
+		"stylesheets": []string{"common", "game", "games/poker"},
+		"scripts":     []string{"common", "games/poker"},
 		"game":        string(gameObject),
 		"gameOwner":   game.OwnerID,
 	}))
