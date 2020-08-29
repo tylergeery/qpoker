@@ -3,6 +3,9 @@ import * as React from "react";
 interface ModalState {
     isOpen: boolean;
     errors: string[];
+    ctx: {
+        [key: string]: any;
+    };
     values: {
         [key: string]: any;
     }
@@ -12,7 +15,7 @@ export abstract class BaseModal<P> extends React.Component<P, ModalState> {
     constructor(props: any) {
         super(props)
 
-        this.state = {isOpen: false, errors: [],  values: {}};
+        this.state = {isOpen: false, errors: [], ctx: {}, values: {}};
     }
 
     openModal() {

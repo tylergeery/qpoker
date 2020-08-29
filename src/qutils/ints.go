@@ -1,5 +1,7 @@
 package qutils
 
+import "fmt"
+
 // ToI64 converts numeric interface to int64
 func ToI64(i interface{}) int64 {
 	switch i.(type) {
@@ -10,10 +12,8 @@ func ToI64(i interface{}) int64 {
 	case float64:
 		return int64(i.(float64))
 	default:
-		// panic(fmt.Sprintf("Cannot convert %s to int64", i))
+		panic(fmt.Sprintf("Cannot convert %s to int64", i))
 	}
-
-	return int64(0)
 }
 
 // ToInt converts numeric interface to int
@@ -26,10 +26,8 @@ func ToInt(i interface{}) int {
 	case float64:
 		return int(i.(float64))
 	default:
-		// panic(fmt.Sprintf("Cannot convert %s to int64", i))
+		panic(fmt.Sprintf("Cannot convert %s to int64", i))
 	}
-
-	return 0
 }
 
 // MaxInt64 gets max of int64 values

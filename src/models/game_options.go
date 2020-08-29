@@ -4,7 +4,43 @@ import (
 	"fmt"
 	"qpoker/qutils"
 	"strconv"
+	"time"
 )
+
+// GameType holds game type info
+type GameType struct {
+	ID          int64     `json:"id"`
+	Key         string    `json:"key"`
+	DisplayName string    `json:"display_name"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// GetGameTypes gets all game type records
+func GetGameTypes() ([]GameType, error) {
+	records := []GameType{}
+
+	rows, err := ConnectToDB().Query(`
+		SELECT id, key, display_name, is_active
+		FROM game_type
+		WHERE is_active = '1'
+		ORDER BY display_name ASC
+	`)
+	if err != nil {
+		return records, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var record GameType
+
+		rows.Scan(&record.ID, &record.Key, &record.DisplayName, &record.IsActive)
+		records = append(records, record)
+	}
+
+	return records, err
+}
 
 // GameOptions handles getting/setting game specific options
 type GameOptions struct {
