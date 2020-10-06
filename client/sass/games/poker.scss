@@ -29,16 +29,17 @@
     left: calc(50% - 150px); top: calc(50% - 20px);
 }
 
-.player, .seat { width: 120px; height: 120px; position: absolute; z-index: 10; }
+.player { width: 120px; height: 120px; position: absolute; z-index: 10; }
+.seat { width: 15px; height: 15px; position: absolute; z-index: 10; }
 
 .seat {
     border: 1px solid ivory;
     box-shadow: 5px ivory;
     border-radius: 50%;
 
-    &:hover {
-        background-color: ivory;
-    }
+    // &:hover {
+    //     background-color: ivory;
+    // }
 }
 
 .table-pos-0 { top: calc(15% - 30px); left: calc(50% - 30px); }
@@ -52,8 +53,8 @@
 .table-pos-3 { top: calc(50% - 30px); right: calc(10% - 30px); }
 .table-pos-9 { top: calc(50% - 30px); left: calc(10% - 30px); }
 
-.table-pos-4 { bottom: calc(35% - 30px); right: calc(20% - 30px); }
-.table-pos-8 { bottom: calc(35% - 30px); left: calc(20% - 30px); }
+.table-pos-4 { bottom: calc(30% - 30px); right: calc(20% - 30px); }
+.table-pos-8 { bottom: calc(30% - 30px); left: calc(20% - 30px); }
 
 .table-pos-5 { bottom: calc(20% - 30px); right: calc(35% - 30px); }
 .table-pos-7 { bottom: calc(20% - 30px); left: calc(35% - 30px); }

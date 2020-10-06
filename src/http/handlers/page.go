@@ -56,7 +56,7 @@ func RenderPage(c *fiber.Ctx, filename string, bind fiber.Map) {
 // PageLanding renders the default app landing page
 func PageLanding(c *fiber.Ctx) {
 	RenderPage(c, "main", pageVars(fiber.Map{
-		"title":       "App",
+		"title":       "QCards - Video Social Card Games",
 		"stylesheets": []string{"main"},
 		"scripts":     []string{"main"},
 	}))
@@ -81,9 +81,9 @@ func PageTable(c *fiber.Ctx) {
 	}
 
 	RenderPage(c, "table", pageVars(fiber.Map{
-		"title":       fmt.Sprintf("Table %s", game.Name),
-		"stylesheets": []string{"common", "game", "games/poker"},
-		"scripts":     []string{"common", "games/poker"},
+		"title":       fmt.Sprintf("%s | QCards Table", game.Name),
+		"stylesheets": []string{"game", "games/poker"},
+		"scripts":     []string{"games/poker"},
 		"game":        string(gameObject),
 		"gameOwner":   game.OwnerID,
 	}))

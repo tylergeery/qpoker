@@ -35,7 +35,10 @@ export class History extends React.Component<HistoryProps, HistoryState> {
             userToken: userStorage.getToken(),
         });
 
-        this.setState({history});
+        console.log('history:', history);
+        if (history) {
+            this.setState({history});
+        }
     }
 
     public render() {
@@ -43,10 +46,12 @@ export class History extends React.Component<HistoryProps, HistoryState> {
             <h3>Game History</h3>
             <div>
                 {this.state.history.map((history) => {
+                    let historyPlayer = this.props.es.getPlayer(history.player_id)
+
                     return history.hasOwnProperty("status") ? (
-                        <ChipRequest {...history} player={this.props.es.getPlayer(history.player_id)} />
+                        <ChipRequest {...history} player={this.props.es.getPlayer(this.props.playerID)} />
                     ) : (
-                        <GameHand {...history} player={this.props.es.getPlayer(history.player_id)} />
+                        <GameHand {...history} player={historyPlayer} />
                     );
                 })}
             </div>

@@ -105,7 +105,7 @@ export class Table extends React.Component<TableProps, TableState> {
                                         manager={this.state.es.manager}
                                         game={this.props.game}
                                         cards={this.state.es.getPlayerCards(player.id)} />
-                                : (chooseSeat ? <Seat index={i} /> : '');
+                                : <Seat index={i} />;
                         }) : ''}
                         <img className="w100 bg" src="/assets/media/card_table.png" alt="Card table"/>
                     </div>
