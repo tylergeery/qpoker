@@ -1,11 +1,13 @@
 import * as React from "react";
 
+import { classNames } from "../../utils";
 import { Game } from "../../objects/Game";
 import { EventState } from "../../objects/State";
 
 type ChipSettingProps = {
     es: EventState;
     game: Game;
+    playerID: string;
     requests: any[];
     sendAction: (type: string, data: any) => void;
 }
@@ -49,6 +51,12 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
         )
     }
 
+    private hasChips(): boolean {
+        let player = this.props.es.getPlayer(this.props.playerID)
+
+        return player && player.stack > 0;
+    }
+
     public render() {
         return <tbody>
             <tr>
@@ -70,7 +78,7 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
                     </td>
                 </tr>
             })}
-            <tr>
+            <tr className={classNames({'setting-highlight': !this.hasChips()})}>
                 <td colSpan={2}>Request Chips</td>
                 <td>
                     <input type="number" step={this.props.game.options.big_blind}

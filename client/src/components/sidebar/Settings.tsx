@@ -162,7 +162,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     {isAdmin ? (<tr></tr>) : ''}
 
                     {supportsChips ? (
-                        <ChipSettings es={this.props.es} requests={this.state.requests}
+                        <ChipSettings es={this.props.es} requests={this.state.requests} playerID={this.props.playerID}
                                         game={this.props.game} sendAction={this.sendAction.bind(this)} />
                     ) : ''}
 

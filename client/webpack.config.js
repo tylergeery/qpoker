@@ -2,7 +2,7 @@ const path = require('path');
 const glob = require('glob');
 
 module.exports = {
-    mode: "production",
+    mode: process.env.WEBPACK_MODE || 'development',
 
     // Enable sourcemaps for debugging webpack's output.
     devtool: "source-map",

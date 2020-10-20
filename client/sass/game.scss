@@ -1,6 +1,10 @@
 .w100  { max-width: 100%; min-width: 100%; width: 100%; }
 .bg { z-index: 0; }
 
+/** Global override navbar */
+#nav-mobile {
+    display: none;
+}
 
 /* Sidebar */
 .sidebar-holder {
@@ -22,4 +26,9 @@
             background: none !important;
         }
     }
+}
+
+.setting-highlight {
+    border: 4px solid #4CAF50;
+    transition: border 2s;
 }
