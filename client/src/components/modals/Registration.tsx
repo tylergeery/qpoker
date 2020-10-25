@@ -40,6 +40,7 @@ export class RegistrationModal extends React.Component<RegisterModalProps, Regis
     }
 
     submit(event: any) {
+        event.preventDefault();
         this.props.register(this.state.values);
     }
 
@@ -66,7 +67,7 @@ export class RegistrationModal extends React.Component<RegisterModalProps, Regis
 
                 <h2>Register</h2>
 
-                <form>
+                <form onSubmit={this.submit.bind(this)}>
                     <Errors errors={this.state.errors} />
                     <div>
                         <label>
@@ -89,7 +90,7 @@ export class RegistrationModal extends React.Component<RegisterModalProps, Regis
                     <div className="row center">
                         <br/>
                         <button type="button" className="btn-large transparent grey-text text-darken-3" onClick={this.closeModal.bind(this)}>Close</button>
-                        <button type="button" className="btn-large grey darken-3" onClick={this.submit.bind(this)}>Submit</button>
+                        <button type="submit" className="btn-large grey darken-3">Submit</button>
                     </div>
                     <div className="row center">
                         <br/>

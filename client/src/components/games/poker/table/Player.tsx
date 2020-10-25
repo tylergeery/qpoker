@@ -67,7 +67,7 @@ class HandActions extends React.Component<PlayerProps, {}> {
 
     public getOptions(): string[] {
         let options: string[] = [];
-        let ordered: string[] = ['can_fold', 'can_check', 'can_call', 'can_bet'];
+        let ordered: string[] = ['can_fold', 'can_check', 'can_call', 'can_bet'].reverse();
 
         if (!this.props.player.options) {
             return options
@@ -116,15 +116,19 @@ class HandActions extends React.Component<PlayerProps, {}> {
         let options = this.getOptions();
         let betAmount = this.defaultBetAmount();
 
-        return this.props.playerID.toString() === this.props.player.id.toString() ? <div>
-            {options.map((opt) => {
-                return <button onClick={this.sendAction.bind(this)} type="button">{opt}</button>;
-            })}
-            {options.length ? (
-                <input type="number" defaultValue={betAmount}
-                    onChange={this.registerBet.bind(this)} />
-             ) : ''}
-        </div> : ''
+        return this.props.playerID.toString() === this.props.player.id.toString() ? (
+            <div className={classNames('global-action-bar', {'active': !!options.length})}>
+                {(options.length && options[0] === 'bet') ? (
+                    <div className="input-field inline">
+                        <input type="number" defaultValue={betAmount}
+                            onChange={this.registerBet.bind(this)} />
+                    </div>
+                ) : ''}
+                {options.map((opt) => {
+                    return <button onClick={this.sendAction.bind(this)} type="button" className="waves-light btn-small">{opt}</button>;
+                })}
+            </div>
+        ) : '';
     }
 }
 

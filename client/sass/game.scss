@@ -6,6 +6,36 @@
     display: none;
 }
 
+
+/** Global action bar */
+.global-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 0;
+    width: 100%;
+    transition: height 1s;
+    background: rgba(255,255,255,.9);
+    display: flex;
+    flex-direction: row-reverse;
+
+    &.active {
+        height: 50px;
+        border-top: solid 1px black;
+    }
+
+    button {
+        margin: 0.6em;
+    }
+
+    & > div.inline > input {
+        height: 100%;
+    }
+}
+
+
+
+
 /* Sidebar */
 .sidebar-holder {
     max-height: 800px;
