@@ -58,13 +58,13 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
     }
 
     public render() {
-        return <tbody>
+        return <>
             <tr>
                 <th colSpan={4}>Chip Requests</th>
             </tr>
 
-            {this.props.requests.map((req) => {
-                return <tr>
+            {this.props.requests.map((req, i) => {
+                return <tr key={i}>
                     <td colSpan={2}>{this.props.es.getPlayer(req.player_id).username}</td>
                     <td>
                         <button onClick={this.sendChipsResponse.bind(this, req.player_id.toString())} className="btn-flat green lighten-2" type="button">
@@ -93,6 +93,6 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
                 </td>
             </tr>
             <tr></tr>
-        </tbody>;
+        </>;
     }
 }

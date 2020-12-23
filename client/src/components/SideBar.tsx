@@ -54,7 +54,7 @@ export class SideBar extends React.Component<SideBarProps, SideBarState> {
                 {this.getNavOptions().map((option) => {
                     let label = this.getNavLabel(option);
 
-                    return <a href="#"
+                    return <a key={option} href="#"
                                 className={classNames("btn-flat", { underline: this.state.selectedTab === label })}
                                 onClick={this.navSelect.bind(this)} >
                         {label}

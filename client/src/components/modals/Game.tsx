@@ -124,9 +124,11 @@ export class GameModal extends BaseModal<GameModalProps> {
                             Game Type:
                             <select className="show-select" onChange={this.recordValue.bind(this)} name="game_type_id" data-type="number">
                                 <option>Select Game Type</option>
-                                {this.state.ctx.types.map((type: GameType) => {
-                                    return <option value={type.id}>{type.display_name}</option>;
-                                })}
+                                {this.state.ctx.types.map((type: GameType) =>
+                                    <option key={type.id} value={type.id}>
+                                        {type.display_name}
+                                    </option>
+                                )}
                             </select>
                         </label>
                     </div>

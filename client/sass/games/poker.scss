@@ -1,5 +1,7 @@
 @use '../partials/video';
 
+$card_width: 58px; 
+
 .table-holder {
     position: relative;
 
@@ -42,24 +44,24 @@
     // }
 }
 
-.table-pos-0 { top: calc(15% - 30px); left: calc(50% - 30px); }
+.table-pos-0 { top: calc(15% - 30px); left: calc(50% - #{$card_width}); }
 
-.table-pos-1 { top: calc(20% - 30px); right: calc(35% - 30px); }
-.table-pos-11 { top: calc(20% - 30px); left: calc(35% - 30px); }
+.table-pos-1 { top: calc(20% - 30px); right: calc(35% - #{$card_width}); }
+.table-pos-11 { top: calc(20% - 30px); left: calc(35% - #{$card_width}); }
 
-.table-pos-2 { top: calc(30% - 30px); right: calc(20% - 30px); }
-.table-pos-10 { top: calc(30% - 30px); left: calc(20% - 30px); }
+.table-pos-2 { top: calc(30% - 30px); right: calc(20% - #{$card_width}); }
+.table-pos-10 { top: calc(30% - 30px); left: calc(20% - #{$card_width}); }
 
-.table-pos-3 { top: calc(50% - 30px); right: calc(10% - 30px); }
-.table-pos-9 { top: calc(50% - 30px); left: calc(10% - 30px); }
+.table-pos-3 { top: calc(50% - 30px); right: calc(10% - #{$card_width}); }
+.table-pos-9 { top: calc(50% - 30px); left: calc(10% - #{$card_width}); }
 
-.table-pos-4 { bottom: calc(30% - 30px); right: calc(20% - 30px); }
-.table-pos-8 { bottom: calc(30% - 30px); left: calc(20% - 30px); }
+.table-pos-4 { bottom: calc(30% - 30px); right: calc(20% - #{$card_width}); }
+.table-pos-8 { bottom: calc(30% - 30px); left: calc(20% - #{$card_width}); }
 
-.table-pos-5 { bottom: calc(20% - 30px); right: calc(35% - 30px); }
-.table-pos-7 { bottom: calc(20% - 30px); left: calc(35% - 30px); }
+.table-pos-5 { bottom: calc(20% - 30px); right: calc(35% - #{$card_width}); }
+.table-pos-7 { bottom: calc(20% - 30px); left: calc(35% - #{$card_width}); }
 
-.table-pos-6 { bottom: calc(15% - 30px); left: calc(50% - 30px); }
+.table-pos-6 { bottom: calc(15% - 30px); left: calc(50% - #{$card_width}); }
 
 .card { width: 58px;}
 .board-holder .card { margin: 0 2px 0 0; }

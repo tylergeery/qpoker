@@ -72,7 +72,7 @@ class State {
                     card.value.toString(),
                     String.fromCharCode(card.suit),
                     String.fromCharCode(card.char),
-                )
+                );
             }),
             Table.FromObj(stateObj.table),
             stateObj.state
@@ -152,8 +152,8 @@ export class EventState {
                     card.value.toString(),
                     String.fromCharCode(card.suit),
                     String.fromCharCode(card.char),
-                )
-            })
+                );
+            });
         }
 
         return new EventState(

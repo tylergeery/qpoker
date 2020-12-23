@@ -53,14 +53,14 @@ export class Chat extends React.Component<ChatProps, ChatState> {
         return <div className={classNames({"hidden": !this.props.active})}>
             <h3>Game Chat</h3>
             <div>
-                {this.state.chats.map((chat) => {
-                    return <Message player={this.props.es.getPlayer(chat.player_id)} message={chat.message}/>;
-                })}
+                {this.state.chats.map((chat, i) =>
+                    <Message key={i} player={this.props.es.getPlayer(chat.player_id)} message={chat.message}/>
+                )}
             </div>
             <div>
                 <form onSubmit={this.submit.bind(this)}>
                     <input type="text" name="chat" placeholder="Type to room"
-                        value={this.state.text}
+                        value={this.state.text || ""}
                         onChange={this.textUpdate.bind(this)}/>
                     <button disabled={!this.state.text} type="submit"
                         className={classNames("btn-large grey darken-3", {'disabled': !this.state.text})}>

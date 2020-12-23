@@ -169,13 +169,13 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     <tr></tr>
                     <th>Game Settings:</th>
                     {this.getOptions().map((option) => {
-                        return isAdmin ? (<tr>
+                        return isAdmin ? (<tr key={option.name}>
                             <td colSpan={2}>{option.label}:</td>
                             <td colSpan={2}>
                                 <input onChange={this.updateGame.bind(this)}
                                     type={option.type} name={option.name} defaultValue={option.value}></input>
                             </td>
-                        </tr>) : (<tr>
+                        </tr>) : (<tr key={option.name}>
                             <td colSpan={2}>{option.label}:</td>
                             <td colSpan={2}>{option.value}</td>
                         </tr>);

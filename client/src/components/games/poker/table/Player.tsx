@@ -124,9 +124,13 @@ class HandActions extends React.Component<PlayerProps, {}> {
                             onChange={this.registerBet.bind(this)} />
                     </div>
                 ) : ''}
-                {options.map((opt) => {
-                    return <button onClick={this.sendAction.bind(this)} type="button" className="waves-light btn-small">{opt}</button>;
-                })}
+                {options.map((opt) =>
+                    <button key={opt}
+                            onClick={this.sendAction.bind(this)} type="button"
+                            className="waves-light btn-small">
+                        {opt
+                    }</button>
+                )}
             </div>
         ) : '';
     }
@@ -195,7 +199,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
 
         return <div className={ `player table-pos-${this.props.index}` }>
             <video id={`player-video-${this.props.player.id}`} autoPlay></video>
-            {`${this.props.player.username} (${this.props.player.stack})` }
+            <small>{`${this.props.player.username} (${this.props.player.stack})` }</small>
             <Hand gameState={this.props.manager.state.state} cards={this.props.cards} />
             <HandActions {...this.props} />
             <HandTimer allIn={this.props.manager.allIn} timer={this.state.timer} decisionTime={this.props.game?.options.decision_time} />
