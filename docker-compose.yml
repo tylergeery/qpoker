@@ -44,7 +44,10 @@ services:
     volumes:
       - ./src:/src
   nginx:
-    image: nginx
+    build:
+      context: .
+      dockerfile: ./env/nginx/Dockerfile
+      target: dev
     restart: "always"
     depends_on:
       - app

@@ -1,0 +1,29 @@
+---
+- hosts: qcards
+  become: yes
+  vars:
+    ansible_ssh_user: root
+    ansible_python_interpreter: /usr/bin/python3
+    db_password: secret
+    
+  tasks:
+    - name: Ensure app network exists
+      docker_network:
+        name: qcards
+        state: present
+    - name: Start new postgres deployment
+      docker_container:
+        name: qcards_pg
+        image: postgres:10.5
+        detach: yes
+        restart_policy: unless-stopped
+        networks:
+          - name: qcards
+        ports:
+          - "5432"
+        volumes:
+          - /tmp:/tmp/mnt
+        env:
+          POSTGRES_PASSWORD: "{{ db_password }}"
+          POSTGRES_USER: "qcards"
+          POSTGRES_DB: "qcards"

@@ -4,7 +4,6 @@ WORKDIR /src
 
 
 
-
 FROM base as dev
 
 # Add auto-reload entry point for 
@@ -28,12 +27,29 @@ FROM base as migrator
 RUN go get -u github.com/lib/pq
 RUN go get -tags 'postgres' -u github.com/golang-migrate/migrate/cmd/migrate
 
+COPY ./db /go/db
 WORKDIR /go/db
 
-COPY ./db/migrate.sh migrate.sh
+
+
+FROM golang:alpine as base_prod
+
+COPY ./src /src
+WORKDIR /src
+
+RUN go get -d -v ./...
+
+RUN go build -o /go/bin/http ./http
+RUN go build -o /go/bin/ws ./websocket
 
 
 
-FROM base as prod
+FROM base_prod as http_prod
 
-# TODO: prod
+CMD ["/go/bin/http"]
+
+
+FROM base_prod as ws_prod
+
+
+CMD ["/go/bin/ws"]

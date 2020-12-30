@@ -1,0 +1,77 @@
+---
+- hosts: qcards
+  become: yes
+  vars:
+    ansible_ssh_user: root
+    ansible_python_interpreter: /usr/bin/python3
+    pg_connection: postgres://qcards:secret@qcards_pg:5432/qcards?sslmode=disable
+    token_signing_value: testsignvalue
+    qpoker_host: https://qcards.xyz
+
+  tasks:
+    - name: Ensure app network exists
+      docker_network:
+        name: qcards
+        state: present
+    - name: Migrate data
+      docker_container:
+        name: qcards_migrator
+        command: ./migrate.sh apply
+        image: tylergeery/qcards-migrator
+        pull: true
+        restart_policy: no
+        recreate: yes
+        networks:
+          - name: qcards
+        env:
+          ENV: "prod"
+          PG_CONNECTION: "{{ pg_connection }}"
+    - name: Start new http app
+      docker_container:
+        name: qcards_http
+        image: tylergeery/qcards-http
+        pull: true
+        detach: yes
+        restart_policy: unless-stopped
+        recreate: yes
+        networks:
+          - name: qcards
+        ports:
+          - "8080"
+        env:
+          ENV: "prod"
+          PG_CONNECTION: "{{ pg_connection }}"
+          TOKEN_SIGNING_VALUE: "{{ token_signing_value }}"
+          QPOKER_HOST: "{{ qpoker_host }}"
+    - name: Start new ws app
+      docker_container:
+        name: qcards_ws
+        image: tylergeery/qcards-ws
+        pull: true
+        detach: yes
+        restart_policy: unless-stopped
+        recreate: yes
+        networks:
+          - name: qcards
+        ports:
+          - "8080"
+        env:
+          ENV: "prod"
+          PG_CONNECTION: "{{ pg_connection }}"
+          TOKEN_SIGNING_VALUE: "{{ token_signing_value }}"
+    - name: Start new nginx app
+      docker_container:
+        name: qcards_nginx
+        image: tylergeery/qcards-nginx
+        pull: true
+        detach: yes
+        restart_policy: unless-stopped
+        recreate: yes
+        networks:
+          - name: qcards
+        ports:
+          - "80:80"
+          - "443:443"
+        volumes:
+          - /etc/letsencrypt/live/qcards.xyz/fullchain.pem:/etc/letsencrypt/qcards.xyz/fullchain.pem
+          - /etc/letsencrypt/live/qcards.xyz/privkey.pem:/etc/letsencrypt/qcards.xyz/privkey.pem

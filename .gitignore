@@ -1,5 +1,21 @@
+# Local env db
 db/data
+
+# FE
 client/node_modules
 client/assets/js
 client/assets/css
+
+# Editor
 .vscode
+
+# Terraform
+env/terra/linode/.env
+env/terra/linode/.terraform
+env/terra/linode/crash.log
+env/terra/linode/*.tfstate*
+env/terra/linode/key
+env/terra/linode/key.pub
+
+# Ansible
+env/ansible/*.retry
