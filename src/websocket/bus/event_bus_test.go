@@ -1,8 +1,9 @@
-package connection
+package bus
 
 import (
 	"qpoker/cards/games/holdem"
 	"qpoker/models"
+	"qpoker/websocket/connection"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,15 +14,15 @@ func TestReloadGameState(t *testing.T) {
 	game := models.CreateTestGame(player.ID, 1)
 	game.Status = models.GameStatusStart
 	game.Save()
-	client := &Client{PlayerID: player.ID, GameID: game.ID}
+	client := &connection.Client{PlayerID: player.ID, GameID: game.ID}
 	eventBus := NewEventBus()
 
-	err := eventBus.reloadGameState(client)
+	err := eventBus.loadGameState(client)
 	loadedGame, ok := eventBus.games[game.ID]
 
 	assert.NoError(t, err)
 	assert.True(t, ok)
-	assert.Equal(t, models.GameStatusStart, loadedGame.game.Status)
+	assert.Equal(t, models.GameStatusStart, loadedGame.Data().Game.Status)
 }
 
 func TestReloadPlayerStack(t *testing.T) {
@@ -54,14 +55,12 @@ func TestReloadPlayerStack(t *testing.T) {
 	}
 	gameChipRequest.Save()
 
-	client := &Client{PlayerID: player.ID, GameID: game.ID}
+	client := &connection.Client{PlayerID: player.ID, GameID: game.ID}
 	eventBus := NewEventBus()
-	eventBus.reloadGameState(client)
+	eventBus.loadGameState(client)
 
 	controller := eventBus.games[game.ID]
-	gamePlayer := holdem.NewPlayer(player)
-	_ = controller.manager.AddPlayer(gamePlayer)
-	eventBus.reloadPlayerStack(controller.game, gamePlayer)
+	gamePlayer := controller.AddPlayer(player).(*holdem.Player)
 
 	assert.Equal(t, int64(125), gamePlayer.Stack)
 }

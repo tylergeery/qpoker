@@ -87,7 +87,7 @@ class HandActions extends React.Component<PlayerProps, {}> {
             case 'bet':
                 this.props.conn.send(createGameAction({
                     name: event.target.innerHTML,
-                    amount: this.bet,
+                    amount: this.bet || this.defaultBetAmount(),
                 }));
                 break;
             default:
