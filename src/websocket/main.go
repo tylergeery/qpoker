@@ -50,11 +50,11 @@ func handleSocketConnection(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Sending player channel event")
-	eventBus.PlayerChannel <- events.PlayerEvent{client.GameID, client.PlayerID, events.ActionPlayerRegister}
+	eventBus.PlayerChannel <- events.PlayerEvent{client, events.ActionPlayerRegister}
 
 	// client will spin here until disconnected
 	client.ReadMessages(eventBus.HandleClientEvent)
 
-	eventBus.PlayerChannel <- events.PlayerEvent{client.GameID, client.PlayerID, events.ActionPlayerLeave}
+	eventBus.PlayerChannel <- events.PlayerEvent{client, events.ActionPlayerLeave}
 	fmt.Println("Websocket request terminated")
 }

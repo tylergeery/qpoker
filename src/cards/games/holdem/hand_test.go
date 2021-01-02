@@ -265,6 +265,34 @@ func TestEvaluate(t *testing.T) {
 			},
 			expectedScore: int64(101413121110),
 		},
+		TestCase{
+			hand: Hand{
+				Cards: []cards.Card{
+					cards.NewCard(11, cards.SuitDiamonds),
+					cards.NewCard(2, cards.SuitHearts),
+					cards.NewCard(4, cards.SuitClubs),
+					cards.NewCard(5, cards.SuitClubs),
+					cards.NewCard(12, cards.SuitClubs),
+					cards.NewCard(11, cards.SuitClubs),
+					cards.NewCard(3, cards.SuitClubs),
+				},
+			},
+			expectedScore: int64(61211050403),
+		},
+		TestCase{
+			hand: Hand{
+				Cards: []cards.Card{
+					cards.NewCard(4, cards.SuitHearts),
+					cards.NewCard(11, cards.SuitSpades),
+					cards.NewCard(4, cards.SuitClubs),
+					cards.NewCard(5, cards.SuitClubs),
+					cards.NewCard(12, cards.SuitClubs),
+					cards.NewCard(11, cards.SuitClubs),
+					cards.NewCard(3, cards.SuitClubs),
+				},
+			},
+			expectedScore: int64(61211050403),
+		},
 	}
 
 	for _, c := range cases {

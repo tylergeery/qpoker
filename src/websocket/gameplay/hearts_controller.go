@@ -25,12 +25,13 @@ func (c *HeartsGameController) PerformGameAction(playerID int64, action interfac
 		fmt.Printf("Error performing gameEvent: %+v, err: %s\n", action, err)
 	}
 
-	c.Advance(complete, broadcast)
+	c.advance(complete, broadcast)
 }
 
-// Advance hearts gameplay
-func (c *HeartsGameController) Advance(complete bool, broadcast func(int64)) {
-	// TODO
+// Start hearts gameplay
+func (c *HeartsGameController) Start(broadcast func(int64)) {
+	c.manager.NextHand()
+	c.advance(false, broadcast)
 }
 
 // UpdatePlayerChips updates players chips
@@ -54,4 +55,8 @@ func (c *HeartsGameController) GetState(playerID int64) interface{} {
 // GetTimedOutGameEvent gets a moved thats over time limit
 func (c *HeartsGameController) GetTimedOutGameEvent() (events.GameEvent, error) {
 	return events.GameEvent{}, fmt.Errorf("No idle game event needed")
+}
+
+func (c *HeartsGameController) advance(complete bool, broadcast func(int64)) {
+	broadcast(c.controller.Game.ID)
 }

@@ -35,9 +35,8 @@ type Chat struct {
 
 // PlayerEvent represents a player connection action
 type PlayerEvent struct {
-	GameID   int64
-	PlayerID int64
-	Action   string
+	Client *connection.Client
+	Action string
 }
 
 // GameEvent represents a player gameplay action

@@ -45,21 +45,6 @@ func StartEventBus() *EventBus {
 	return eventBus
 }
 
-func (e *EventBus) getGameClient(gameID, playerID int64) (*connection.Client, error) {
-	controller, ok := e.games[gameID]
-	if !ok {
-		return nil, fmt.Errorf("Game not found: %d", gameID)
-	}
-
-	clients := controller.Data().Clients
-	for i := range clients {
-		if clients[i].PlayerID != playerID {
-			return clients[i], nil
-		}
-	}
-
-	return nil, fmt.Errorf("Client not found for game and player: %d %d", gameID, playerID)
-}
 func (e *EventBus) loadGameState(client *connection.Client) error {
 	game, err := models.GetGameBy("id", client.GameID)
 	if err != nil {
@@ -185,7 +170,7 @@ func (e *EventBus) handleAdminEvent(event events.AdminEvent) {
 
 	switch event.Action {
 	case connection.ClientAdminStart:
-		controller.Advance(false, e.BroadcastState)
+		controller.Start(e.BroadcastState)
 		break
 	case connection.ClientChipRequest:
 		e.handleAdminChipRequest(event)
@@ -342,17 +327,12 @@ func (e *EventBus) ListenForEvents() {
 	for {
 		select {
 		case playerEvent := <-e.PlayerChannel:
-			fmt.Printf("PlayerAction: (%d %d %s)\n", playerEvent.GameID, playerEvent.PlayerID, playerEvent.Action)
-			client, err := e.getGameClient(playerEvent.GameID, playerEvent.PlayerID)
-			if err != nil {
-				fmt.Printf("Error finding game client: %s", err)
-				continue
-			}
+			fmt.Printf("PlayerAction: (%+v)\n", playerEvent)
 			playerEventMap := map[string]func(*connection.Client){
 				events.ActionPlayerRegister: e.SetClient,
 				events.ActionPlayerLeave:    e.RemoveClient,
 			}
-			playerEventMap[playerEvent.Action](client)
+			playerEventMap[playerEvent.Action](playerEvent.Client)
 		case adminEvent := <-e.AdminChannel:
 			fmt.Printf("AdminAction: (%+v)\n", adminEvent)
 			e.handleAdminEvent(adminEvent)
