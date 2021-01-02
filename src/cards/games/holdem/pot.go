@@ -56,39 +56,94 @@ func (p *Pot) MaxBet() int64 {
 	return max
 }
 
-// GetPayouts returns the winning amounts for each user by winning priority
-func (p *Pot) GetPayouts(orderedPlayers []int64) map[int64]int64 {
-	p.ClearBets()
+func (p *Pot) minTotalAmongstPlayers(playerIDs []int64) int64 {
+	amounts := []int64{}
 
+	for _, playerID := range playerIDs {
+		amounts = append(amounts, p.PlayerTotals[playerID])
+	}
+
+	return qutils.MinInt64(amounts...)
+}
+
+func (p *Pot) playersWithMoreThanTotal(amount int64, playerIDs []int64) []int64 {
+	remainingPlayerIDs := []int64{}
+
+	for _, playerID := range playerIDs {
+		if p.PlayerTotals[playerID] > amount {
+			remainingPlayerIDs = append(remainingPlayerIDs, playerID)
+		}
+	}
+
+	return remainingPlayerIDs
+}
+
+func (p *Pot) splitEvenlyAmongstPlayers(amount int64, playerIDs []int64, payouts map[int64]int64) {
+	portion := float64(1) / float64(len(playerIDs))
+	perPlayer := int64(portion * float64(amount))
+	remainder := amount - (perPlayer * int64(len(playerIDs)))
+
+	for _, playerID := range playerIDs {
+		payouts[playerID] += perPlayer
+
+		// handle rounding errors so game doesnt swallow money
+		if remainder > 0 {
+			remainder--
+			payouts[playerID]++
+		}
+	}
+}
+
+func (p *Pot) divyUpPlayerTotal(playerID, amount, paid int64, orderedPlayerIDs [][]int64, payouts map[int64]int64) {
+	if amount <= 0 {
+		return
+	}
+
+	if len(orderedPlayerIDs) == 0 {
+		fmt.Printf("Error: %d unpaid from player %d, payouts: %+v\n", amount, playerID, payouts)
+		return
+	}
+
+	// if user won the hand outright, give them back their bet
+	if paid == 0 && qutils.Int64SliceHasValue(orderedPlayerIDs[0], playerID) {
+		payouts[playerID] += amount
+		return
+	}
+
+	// only consider players who bet more than what has already been paid
+	nextTier, prevTier := paid, paid
+	remainingPlayerIDs := orderedPlayerIDs[0]
+	for nextTier < amount {
+		remainingPlayerIDs := p.playersWithMoreThanTotal(nextTier, remainingPlayerIDs)
+		if len(remainingPlayerIDs) == 0 {
+			// remaining amount will go to next best hands
+			p.divyUpPlayerTotal(playerID, amount, nextTier, orderedPlayerIDs[1:], payouts)
+			return
+		}
+
+		prevTier, nextTier = nextTier, qutils.MinInt64(amount, p.minTotalAmongstPlayers(remainingPlayerIDs))
+		p.splitEvenlyAmongstPlayers(nextTier-prevTier, remainingPlayerIDs, payouts)
+	}
+}
+
+func (p *Pot) initPayouts() map[int64]int64 {
 	payouts := map[int64]int64{}
-	remaining := p.Total
-	paid := int64(0)
+	for playerID := range p.PlayerTotals {
+		payouts[playerID] = 0
+	}
 
-	for _, playerID := range orderedPlayers {
-		if remaining <= 0 {
-			return payouts
-		}
+	return payouts
+}
 
-		if _, ok := payouts[playerID]; ok {
-			fmt.Printf("Error: Player included twice for payouts: %+v\n", orderedPlayers)
-			continue
-		}
+// GetPayouts returns the winning amounts for each user by winning priority
+func (p *Pot) GetPayouts(orderedPlayers [][]int64) map[int64]int64 {
+	p.ClearBets() // put everything to the pot
 
-		playerPayout := int64(0)
-		playerAmount := p.PlayerTotals[playerID] - paid
-		paid += playerAmount
-		for otherPlayerID, otherPlayerTotal := range p.PlayerTotals {
-			if _, ok := payouts[otherPlayerID]; ok {
-				// Other player beat this player, dont payout
-				continue
-			}
+	payouts := p.initPayouts()
 
-			amount := qutils.MinInt64(otherPlayerTotal, playerAmount)
-			remaining -= amount
-			playerPayout += amount
-		}
-
-		payouts[playerID] = playerPayout
+	// loop through all players
+	for playerID, playerTotal := range p.PlayerTotals {
+		p.divyUpPlayerTotal(playerID, playerTotal, 0, orderedPlayers, payouts)
 	}
 
 	p.Payouts = payouts

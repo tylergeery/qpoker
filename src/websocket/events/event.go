@@ -1,9 +1,10 @@
-package connection
+package events
 
 import (
 	"fmt"
-	"qpoker/cards/games/holdem"
 	"qpoker/models"
+	"qpoker/websocket/connection"
+	"qpoker/websocket/utils"
 )
 
 const (
@@ -34,21 +35,15 @@ type Chat struct {
 
 // PlayerEvent represents a player connection action
 type PlayerEvent struct {
-	Client *Client
+	Client *connection.Client
 	Action string
-}
-
-// AuthEvent is a client initiated event to verify game
-type AuthEvent struct {
-	Token  string `json:"token"`
-	GameID int64  `json:"game_id"`
 }
 
 // GameEvent represents a player gameplay action
 type GameEvent struct {
 	GameID   int64
 	PlayerID int64
-	Action   holdem.Action
+	Action   interface{}
 }
 
 // AdminEvent represent an admin action
@@ -62,7 +57,7 @@ type AdminEvent struct {
 // ValidateAuthorized ensures game owner is making admin decision
 func (e AdminEvent) ValidateAuthorized(game *models.Game) error {
 	switch e.Action {
-	case ClientChipRequest:
+	case connection.ClientChipRequest:
 		return nil
 	default:
 		if e.PlayerID != game.OwnerID {
@@ -79,7 +74,7 @@ func (e AdminEvent) GetChipRequest() *models.GameChipRequest {
 	return &models.GameChipRequest{
 		GameID:   e.GameID,
 		PlayerID: e.PlayerID,
-		Amount:   interfaceInt64(e.Value),
+		Amount:   utils.InterfaceInt64(e.Value),
 		Status:   models.GameChipRequestStatusInit,
 	}
 }

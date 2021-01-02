@@ -104,14 +104,35 @@ func (h *HoldEm) Advance() error {
 	return nil
 }
 
+func toTieredWinners(orderedPlayerIDs []int64, scores map[int64]int64) [][]int64 {
+	tiered := [][]int64{}
+	tier := []int64{}
+
+	for _, playerID := range orderedPlayerIDs {
+		// players tied and belong in same tier
+		if len(tier) == 0 || scores[tier[0]] == scores[playerID] {
+			tier = append(tier, playerID)
+			continue
+		}
+
+		// start new tier
+		tiered = append(tiered, tier)
+		tier = []int64{playerID}
+	}
+
+	tiered = append(tiered, tier)
+
+	return tiered
+}
+
 // GetWinningIDs returns the hand winners in order
-func (h *HoldEm) GetWinningIDs() []int64 {
+func (h *HoldEm) GetWinningIDs() [][]int64 {
 	players := h.Table.GetActivePlayers()
 	scores := map[int64]int64{}
 	playerIDs := []int64{}
 
 	if len(players) == 1 {
-		return []int64{players[0].ID}
+		return [][]int64{[]int64{players[0].ID}}
 	}
 
 	for i := range players {
@@ -129,7 +150,7 @@ func (h *HoldEm) GetWinningIDs() []int64 {
 
 	fmt.Printf("WinningIDs: %+v, scores: %+v\n", playerIDs, scores)
 
-	return playerIDs
+	return toTieredWinners(playerIDs, scores)
 }
 
 func (h *HoldEm) addCardToBoard() {
