@@ -15,6 +15,8 @@ const (
 	// PassNone means no pass
 	PassNone = 'n'
 
+	// StateInit is game waiting to start
+	StateInit = "Init"
 	// StatePassing game state when all players are selecting cards to pass
 	StatePassing = "Passing"
 	// StateActive game state after game is active

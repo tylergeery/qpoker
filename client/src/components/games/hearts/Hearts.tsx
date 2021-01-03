@@ -11,30 +11,18 @@ export type TableState = {
     es: EventState;
 }
 
-// State is never set so we use the '{}' type.
 export class Table extends VideoTable<EventState, TableState> {
 
     protected getUpdatedState(evtState?: EventState): TableState {
         return { es: evtState ?? defaultEventState };
     }
 
-    protected formatGameEvent(data: any): EventState {
-        return EventState.FromObj(data)
-    }
     protected needsSeat(): boolean {
-        let i = 0, players = this.state.es.manager.state.table.players;
+        return false
+    }
 
-        for (; i < players.length; i++) {
-            if (!players[i]) {
-                continue;
-            }
-
-            if (players[i].id.toString() === this.props.playerID.toString()) {
-                return false;
-            }
-        }
-
-        return true
+    protected formatGameEvent(data: any): EventState {
+        return EventState.FromObj(data);
     }
 
     public render() {
@@ -61,16 +49,16 @@ export class Table extends VideoTable<EventState, TableState> {
                                         manager={this.state.es.manager}
                                         game={this.props.game}
                                         cards={this.state.es.getPlayerCards(player.id)} />
-                                : <Seat key={i} index={i} />;
+                                : <Seat index={i} />;
                         }) : ''}
                         <img className="w100 bg" src="/assets/media/card_table.png" alt="Card table"/>
                     </div>
                 </div>
                 <div className="col s12 l3 sidebar-holder">
-                    <SideBar {...this.props} conn={this.conn}
+                    <SideBar game={this.props.game} conn={this.conn}
                         showStartButton={this.state.es.manager.status != "active"}
-                        disableStartButton={this.state.es.manager.status == "init"}
-                        players={this.state.es.manager.state.table.players} />
+                        disableStartButton={this.state.es.manager.status != "init"}
+                        playerID={this.props.playerID} players={this.state.es.manager.state.table.players} />
                 </div>
             </div>
         );

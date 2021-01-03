@@ -21,6 +21,15 @@ func pageVars(vars fiber.Map) fiber.Map {
 	return vars
 }
 
+func getGameAssetName(game *models.Game) string {
+	gameTypesToName := map[int64]string{
+		1: "games/poker",
+		2: "games/hearts",
+	}
+
+	return gameTypesToName[game.GameTypeID]
+}
+
 // RenderPage renders mustache templates
 func RenderPage(c *fiber.Ctx, filename string, bind fiber.Map) {
 	fp := &mustache.FileProvider{
@@ -80,10 +89,11 @@ func PageTable(c *fiber.Ctx) {
 		return
 	}
 
+	gameAsset := getGameAssetName(game)
 	RenderPage(c, "table", pageVars(fiber.Map{
 		"title":       fmt.Sprintf("%s | QCards Table", game.Name),
-		"stylesheets": []string{"game", "games/poker"},
-		"scripts":     []string{"games/poker"},
+		"stylesheets": []string{"game", gameAsset},
+		"scripts":     []string{gameAsset},
 		"game":        string(gameObject),
 		"gameOwner":   game.OwnerID,
 	}))

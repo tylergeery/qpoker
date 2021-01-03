@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import { GamePlayer } from "../../../objects/State";
+import { AnonymousPlayer } from "../../../objects/Player";
 
 type MessageProps = {
-    player: GamePlayer;
+    player: AnonymousPlayer;
     message: boolean;
     ts?: string;
-}
+};
 
 export class Message extends React.Component<MessageProps, {}> {
     public render() {

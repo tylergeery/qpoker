@@ -3,18 +3,18 @@ import * as React from "react";
 import { classNames } from "../../utils";
 import { ConnectionHandler } from "../../connection/ws";
 import { GameHistoryRequest } from "../../requests/gameHistory";
-import { EventState } from "../../objects/State";
 import { Game } from "../../objects/Game";
 import { userStorage } from "../../utils/storage";
 import { ChipRequest } from "./history/ChipRequest";
 import { GameHand } from "./history/GameHand";
+import { AnonymousPlayer, findPlayer } from "../../objects/Player";
 
 
 type HistoryProps = {
-    es: EventState;
     active: boolean;
-    playerID: string;
     game?: Game;
+    players: AnonymousPlayer[]
+    playerID: number;
     conn: ConnectionHandler;
 }
 
@@ -46,10 +46,10 @@ export class History extends React.Component<HistoryProps, HistoryState> {
             <h3>Game History</h3>
             <div>
                 {this.state.history.map((history, i) => {
-                    let historyPlayer = this.props.es.getPlayer(history.player_id)
+                    let historyPlayer = findPlayer(history.player_id, this.props.players)
 
                     return history.hasOwnProperty("status") ? (
-                        <ChipRequest key={i} {...history} player={this.props.es.getPlayer(this.props.playerID)} />
+                        <ChipRequest key={i} {...history} player={findPlayer(this.props.playerID, this.props.players)} />
                     ) : (
                         <GameHand key={i} {...history} player={historyPlayer} />
                     );

@@ -31,19 +31,18 @@ type GameManager struct {
 
 // GameOptions holds game options
 type GameOptions struct {
-	Capacity     int   `json:"capacity"`
-	BigBlind     int64 `json:"big_blind"`
-	DecisionTime int   `json:"decision_time"`
+	Capacity         int   `json:"capacity"`
+	TimeBetweenHands int64 `json:"time_between_hands"`
+	DecisionTime     int   `json:"decision_time"`
 }
 
 // NewGameOptions creates game options from options map
 func NewGameOptions(options map[string]interface{}) GameOptions {
-	m := qutils.MaxInt64(int64(1), int64(2))
-	fmt.Println(m)
+	fmt.Println("gameOptions:", options)
 	return GameOptions{
-		Capacity:     qutils.ToInt(options["capacity"]),
-		BigBlind:     qutils.ToI64(options["big_blind"]),
-		DecisionTime: qutils.ToInt(options["decision_time"]),
+		Capacity:         qutils.ToInt(options["capacity"]),
+		TimeBetweenHands: qutils.ToI64(options["time_between_hands"]),
+		DecisionTime:     qutils.ToInt(options["decision_time"]),
 	}
 }
 
@@ -56,7 +55,7 @@ func NewGameManager(gameID int64, players []*Player, options GameOptions) (*Game
 	table := NewTable(4, players)
 	gm := &GameManager{
 		GameID: gameID,
-		State:  NewHearts(table, ""), // TODO
+		State:  NewHearts(table, StateInit),
 		Status: StatusInit,
 	}
 
@@ -175,7 +174,7 @@ func (g *GameManager) playerPlay(action Action) error {
 // PlayerAction performs an action for player
 func (g *GameManager) PlayerAction(playerID int64, action Action) (bool, error) {
 	if g.isComplete() {
-		return false, fmt.Errorf("Game is already complete")
+		return false, fmt.Errorf("Game hand is already complete")
 	}
 
 	if g.Status != StatusActive {
@@ -300,4 +299,16 @@ func (g *GameManager) UpdateStatus(status string) {
 // CleanPile collects cards and adds them to player's pile
 func (g *GameManager) CleanPile() error {
 	return g.State.CleanPile(true)
+}
+
+// GetVisibleCards returns cards for player
+func (g *GameManager) GetVisibleCards(playerID int64) map[int64][]cards.Card {
+	playerCards := g.State.Table.GetPlayerByID(playerID).Cards
+	if playerCards == nil {
+		playerCards = []cards.Card{}
+	}
+
+	return map[int64][]cards.Card{
+		playerID: playerCards,
+	}
 }

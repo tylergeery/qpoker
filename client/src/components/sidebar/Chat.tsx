@@ -1,15 +1,15 @@
 import * as React from "react";
 
 import { classNames } from "../../utils";
-import { ConnectionHandler } from "../../connection/ws";
-import { EventState } from "../../objects/State";
+import { ConnectionHandler, EventType } from "../../connection/ws";
 import { Message } from "./chat/Message";
+import { AnonymousPlayer, findPlayer } from "../../objects/Player";
 
 type ChatProps = {
     active: boolean;
-    playerID: string;
+    playerID: number;
+    players: AnonymousPlayer[];
     conn: ConnectionHandler;
-    es: EventState;
 }
 
 type ChatState = {
@@ -22,7 +22,7 @@ export class Chat extends React.Component<ChatProps, ChatState> {
         super(props)
 
         this.state = { chats: [], text: null }
-        this.props.conn.subscribe('message', this.receiveMessages.bind(this))
+        this.props.conn.subscribe(EventType.message, this.receiveMessages.bind(this))
     }
 
     public receiveMessages(msg: any) {
@@ -54,7 +54,7 @@ export class Chat extends React.Component<ChatProps, ChatState> {
             <h3>Game Chat</h3>
             <div>
                 {this.state.chats.map((chat, i) =>
-                    <Message key={i} player={this.props.es.getPlayer(chat.player_id)} message={chat.message}/>
+                    <Message key={i} player={findPlayer(chat.player_id, this.props.players)} message={chat.message}/>
                 )}
             </div>
             <div>

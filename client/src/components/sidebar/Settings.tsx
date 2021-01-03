@@ -3,18 +3,20 @@ import * as React from "react";
 import { classNames } from "../../utils";
 import { ChipSettings } from "./ChipSettings";
 import { Game, GameType } from "../../objects/Game";
-import { ConnectionHandler } from "../../connection/ws";
-import { EventState } from "../../objects/State";
+import { ConnectionHandler, EventType } from "../../connection/ws";
 import { UpdateGameRequest } from "../../requests/updateGame";
 import { getGameType } from "../../utils/gameType";
 import { userStorage } from "../../utils/storage";
+import { AnonymousPlayer, AnonymousPlayerWithChips, findPlayer } from "../../objects/Player";
 
 type SettingsProps = {
     active: boolean;
-    playerID: string;
+    disableStartButton: boolean;
+    showStartButton: boolean;
     game?: Game;
+    players: AnonymousPlayer[]
+    playerID: number;
     conn: ConnectionHandler;
-    es: EventState;
 }
 
 type SettingsState = {
@@ -38,7 +40,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
     }
 
     public componentDidMount() {
-        this.props.conn.subscribe('admin', (event: any) => {
+        this.props.conn.subscribe(EventType.admin, (event: any) => {
             if (!event.data.requests) {
                 return
             }
@@ -125,7 +127,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
     }
 
     private isAdmin(): boolean {
-        return this.props.game.owner_id.toString() == this.props.playerID;
+        return this.props.game.owner_id.toString() == this.props.playerID.toString();
     }
 
     private supportsChips(): boolean {
@@ -145,14 +147,14 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                             <th colSpan={4}>Admin Control</th>
                         </tr>
                     ) : ''}
-                    {(isAdmin && this.props.es.manager.status != "active") ? (
+                    {(isAdmin && this.props.showStartButton) ? (
                         <tr>
                             <td colSpan={2}>Start Game:</td>
                             <td>
-                                <button disabled={this.props.es.manager.status == "init"}
+                                <button disabled={this.props.disableStartButton}
                                     onClick={this.startGame.bind(this)}
                                     className={classNames("btn-flat green lighten-1", {
-                                        'disabled': this.props.es.manager.status == "init" 
+                                        'disabled': this.props.disableStartButton, 
                                     })} type="button">
                                     Start
                                 </button>
@@ -162,8 +164,10 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     {isAdmin ? (<tr></tr>) : ''}
 
                     {supportsChips ? (
-                        <ChipSettings es={this.props.es} requests={this.state.requests} playerID={this.props.playerID}
-                                        game={this.props.game} sendAction={this.sendAction.bind(this)} />
+                        <ChipSettings requests={this.state.requests}
+                            player={findPlayer(this.props.playerID, this.props.players) as AnonymousPlayerWithChips}
+                            players={this.props.players} game={this.props.game}
+                            sendAction={this.sendAction.bind(this)} />
                     ) : ''}
 
                     <tr></tr>

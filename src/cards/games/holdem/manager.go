@@ -322,7 +322,7 @@ func (g *GameManager) playerFold(action Action) error {
 // PlayerAction performs an action for player
 func (g *GameManager) PlayerAction(playerID int64, action Action) (bool, error) {
 	if g.isComplete() {
-		return false, fmt.Errorf("Game is already complete")
+		return false, fmt.Errorf("Game hand is already complete")
 	}
 
 	if playerID != g.State.Table.GetActivePlayer().ID {
