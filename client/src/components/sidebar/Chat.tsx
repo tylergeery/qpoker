@@ -5,6 +5,12 @@ import { ConnectionHandler, EventType } from "../../connection/ws";
 import { Message } from "./chat/Message";
 import { AnonymousPlayer, findPlayer } from "../../objects/Player";
 
+type ChatMessage = {
+    player_id: number;
+    player_username: string;
+    message: string;
+};
+
 type ChatProps = {
     active: boolean;
     playerID: number;
@@ -13,7 +19,7 @@ type ChatProps = {
 }
 
 type ChatState = {
-    chats: any[];
+    chats: ChatMessage[];
     text?: string;
 }
 
@@ -36,10 +42,12 @@ export class Chat extends React.Component<ChatProps, ChatState> {
     public submit(event: any) {
         event.preventDefault();
 
-        let action = {
+        const player = findPlayer(this.props.playerID, this.props.players);
+        const action = {
             type: 'message',
             data: {
                 message: this.state.text,
+                username: player?.username,
             }
         };
 
@@ -53,8 +61,8 @@ export class Chat extends React.Component<ChatProps, ChatState> {
         return <div className={classNames({"hidden": !this.props.active})}>
             <h3>Game Chat</h3>
             <div>
-                {this.state.chats.map((chat, i) =>
-                    <Message key={i} player={findPlayer(chat.player_id, this.props.players)} message={chat.message}/>
+                {this.state.chats.map((chat: ChatMessage, i: number) =>
+                    <Message key={i} playerUsername={chat.player_username} message={chat.message}/>
                 )}
             </div>
             <div>

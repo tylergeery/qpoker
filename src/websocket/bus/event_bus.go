@@ -171,13 +171,16 @@ func (e *EventBus) handleAdminEvent(event events.AdminEvent) {
 	switch event.Action {
 	case connection.ClientAdminStart:
 		controller.Start(e.BroadcastState)
-		break
+	case connection.ClientAdminPause:
+		controller.Pause(true)
+		e.BroadcastState(controller.Data().Game.ID)
+	case connection.ClientAdminResume:
+		controller.Pause(false)
+		e.BroadcastState(controller.Data().Game.ID)
 	case connection.ClientChipRequest:
 		e.handleAdminChipRequest(event)
-		break
 	case connection.ClientChipResponse:
 		e.handleAdminChipResponse(event)
-		break
 	default:
 		fmt.Printf("Unknown admin event: %s\n", event.Action)
 	}

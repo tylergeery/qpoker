@@ -1,9 +1,11 @@
 import * as React from "react";
 
+import { classNames } from "../../../utils";
 import { EventState, defaultEventState } from "./objects/State";
 import { Player } from "./table/Player";
 import { Seat } from "../common/Seat";
 import { SideBar } from "../../SideBar";
+import { ManageButtonSettings } from "../../sidebar/Settings";
 import { VideoTable } from "../common/Table";
 
 
@@ -21,6 +23,7 @@ export class Table extends VideoTable<EventState, TableState> {
     protected formatGameEvent(data: any): EventState {
         return EventState.FromObj(data)
     }
+
     protected needsSeat(): boolean {
         let i = 0, players = this.state.es.manager.state.table.players;
 
@@ -37,6 +40,23 @@ export class Table extends VideoTable<EventState, TableState> {
         return true
     }
 
+    protected getManageButtonSettings(): ManageButtonSettings {
+        switch (this.state.es.manager.status) {
+            case 'ready':
+                return {text: 'start', disabled: false};
+            case 'paused':
+                return {text: 'resume', disabled: false};
+            case 'active':
+                return {text: 'pause', disabled: false};
+            default:
+                return {text: 'start', disabled: true};
+        }
+    }
+
+    protected isPaused(): boolean {
+        return this.state.es.manager.status === "paused";
+    }
+
     public render() {
         if (this.state.es.manager.state.table) {
             this.enableVideo();
@@ -45,7 +65,7 @@ export class Table extends VideoTable<EventState, TableState> {
         return (
             <div className="row white-text nmb">
                 <div className="col s12 l9">
-                    <div className="row w100 table-holder nmb">
+                    <div className={classNames("row w100 table-holder nmb", {"paused": this.isPaused()})}>
                         <div className="board-holder">
                             {this.state.es.manager.state.board.map((card, i) =>
                                 <img key={i} className="card" src={`/assets/media/cards/${card.imageName()}.svg`} />
@@ -68,8 +88,8 @@ export class Table extends VideoTable<EventState, TableState> {
                 </div>
                 <div className="col s12 l3 sidebar-holder">
                     <SideBar {...this.props} conn={this.conn}
-                        showStartButton={this.state.es.manager.status != "active"}
-                        disableStartButton={this.state.es.manager.status == "init"}
+                        shouldRefreshHistory={this.state.es.refreshHistory}
+                        manageButtonSettings={this.getManageButtonSettings()}
                         players={this.state.es.manager.state.table.players} />
                 </div>
             </div>

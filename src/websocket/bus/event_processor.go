@@ -40,6 +40,7 @@ func ToMsgEvent(e connection.ClientEvent, c *connection.Client) events.MsgEvent 
 		Value:    e.Data["message"].(string),
 		GameID:   c.GameID,
 		PlayerID: c.PlayerID,
+		Username: e.Data["username"].(string),
 	}
 }
 

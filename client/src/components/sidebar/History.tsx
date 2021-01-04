@@ -16,6 +16,7 @@ type HistoryProps = {
     players: AnonymousPlayer[]
     playerID: number;
     conn: ConnectionHandler;
+    shouldRefreshHistory: boolean;
 }
 
 type HistoryState = {
@@ -29,6 +30,16 @@ export class History extends React.Component<HistoryProps, HistoryState> {
     }
 
     public async componentDidMount() {
+        await this.refreshHistory();
+    }
+
+    public async componentDidUpdate(prevProps: HistoryProps) {
+        if (!prevProps.shouldRefreshHistory && this.props.shouldRefreshHistory) {
+            await this.refreshHistory();
+        }
+    }
+
+    public async refreshHistory() {
         let req = new GameHistoryRequest<any[]>();
         let history = await req.request({
             id: this.props.game.id.toString(),
@@ -49,7 +60,7 @@ export class History extends React.Component<HistoryProps, HistoryState> {
                     let historyPlayer = findPlayer(history.player_id, this.props.players)
 
                     return history.hasOwnProperty("status") ? (
-                        <ChipRequest key={i} {...history} player={findPlayer(this.props.playerID, this.props.players)} />
+                        <ChipRequest key={i} {...history} player={historyPlayer} />
                     ) : (
                         <GameHand key={i} {...history} player={historyPlayer} />
                     );

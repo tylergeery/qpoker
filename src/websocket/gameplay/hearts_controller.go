@@ -48,6 +48,11 @@ func (c *HeartsGameController) Start(broadcast func(int64)) {
 	c.advance(false, broadcast)
 }
 
+// Pause controls game pause state
+func (c *HeartsGameController) Pause(pause bool) {
+	// TODO
+}
+
 // UpdatePlayerChips updates players chips
 func (c *HeartsGameController) UpdatePlayerChips(playerID, amount int64) {
 	// unneccessary for hearts

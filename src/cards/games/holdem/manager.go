@@ -17,6 +17,8 @@ const (
 	StatusReady = "ready"
 	// StatusActive active
 	StatusActive = "active"
+	// StatusPaused paused
+	StatusPaused = "paused"
 )
 
 // GameManager holds game state and manages game flow
@@ -457,6 +459,7 @@ func (g *GameManager) EndHand() error {
 
 // UpdateStatus updates game status to most appropriate
 func (g *GameManager) UpdateStatus(status string) {
+	fmt.Printf("Game updating status %s->%s\n", g.Status, status)
 	switch {
 	case g.Status == StatusInit && status == StatusReady:
 		if len(g.State.Table.GetReadyPlayers()) > 1 {
@@ -472,9 +475,14 @@ func (g *GameManager) UpdateStatus(status string) {
 			g.Status = status
 		}
 		break
+	case g.Status == StatusActive && status == StatusPaused:
+		g.Status = status
+	case g.Status == StatusPaused && status == StatusActive:
+		g.Status = status
 	default:
 		break
 	}
+	fmt.Printf("Game updated status %s\n", g.Status)
 }
 
 // GetVisibleCards returns client representation of cards for those visible

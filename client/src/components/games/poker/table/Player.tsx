@@ -198,6 +198,11 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
         if (this.interval || !this.props.manager.state.table.activeAt) {
             return
         }
+
+        if (this.props.manager.status == "paused") {
+            return
+        }
+
         this.interval = 1;
 
         this.countDown(this.getCountdownTime());

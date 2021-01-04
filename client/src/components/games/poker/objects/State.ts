@@ -130,6 +130,7 @@ export class EventState {
     constructor(
         public manager: Manager,
         public cards: {[key: number]: Card[]},
+        public refreshHistory: boolean,
     ) {}
 
     public static FromObj(obj: any) {
@@ -145,7 +146,9 @@ export class EventState {
 
         return new EventState(
             Manager.FromObj(obj.manager),
-            obj.cards);
+            obj.cards,
+            obj.refresh_history,
+        );
     }
 
     public getPlayerCards(playerID: number): Card[] {
@@ -185,5 +188,6 @@ export const defaultEventState = EventState.FromObj({
         "status": "init",
         "all_in": false,
     },
-    "cards": {}
+    "cards": {},
+    "refresh_history": false,
 });

@@ -24,6 +24,11 @@ $card_width: 58px;
         vertical-align: middle;
         line-height: 250px;
     }
+    &.paused .board-holder {
+        background-color: black;
+        color: white;
+        content: "Paused";
+    }
 }
 
 .board-holder {

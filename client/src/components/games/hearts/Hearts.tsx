@@ -4,8 +4,8 @@ import { EventState, defaultEventState } from "./objects/State";
 import { Player } from "./table/Player";
 import { Seat } from "../common/Seat";
 import { SideBar } from "../../SideBar";
+import { ManageButtonSettings } from "../../sidebar/Settings";
 import { VideoTable } from "../common/Table";
-
 
 export type TableState = {
     es: EventState;
@@ -23,6 +23,10 @@ export class Table extends VideoTable<EventState, TableState> {
 
     protected formatGameEvent(data: any): EventState {
         return EventState.FromObj(data);
+    }
+
+    protected getManageButtonSettings(): ManageButtonSettings {
+        return {text: '', disabled: false}
     }
 
     public render() {
@@ -56,8 +60,8 @@ export class Table extends VideoTable<EventState, TableState> {
                 </div>
                 <div className="col s12 l3 sidebar-holder">
                     <SideBar game={this.props.game} conn={this.conn}
-                        showStartButton={this.state.es.manager.status != "active"}
-                        disableStartButton={this.state.es.manager.status != "init"}
+                        shouldRefreshHistory={this.state.es.refreshHistory}
+                        manageButtonSettings={this.getManageButtonSettings()}
                         playerID={this.props.playerID} players={this.state.es.manager.state.table.players} />
                 </div>
             </div>

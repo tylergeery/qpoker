@@ -14,6 +14,10 @@ import (
 const (
 	// ClientAdminStart is an admin start of game
 	ClientAdminStart = "start"
+	// ClientAdminPause is an admin pause of game
+	ClientAdminPause = "pause"
+	// ClientAdminResume is an admin resume of game
+	ClientAdminResume = "resume"
 
 	// ClientChipResponse is admin response to player's chip request
 	ClientChipResponse = "chip_response"

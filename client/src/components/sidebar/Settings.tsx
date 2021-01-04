@@ -9,14 +9,18 @@ import { getGameType } from "../../utils/gameType";
 import { userStorage } from "../../utils/storage";
 import { AnonymousPlayer, AnonymousPlayerWithChips, findPlayer } from "../../objects/Player";
 
+export type ManageButtonSettings = {
+    text: string;
+    disabled: boolean;
+};
+
 type SettingsProps = {
     active: boolean;
-    disableStartButton: boolean;
-    showStartButton: boolean;
     game?: Game;
     players: AnonymousPlayer[]
     playerID: number;
     conn: ConnectionHandler;
+    manageButtonSettings: ManageButtonSettings;
 }
 
 type SettingsState = {
@@ -58,8 +62,8 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
         this.state.options[event.target.name] = event.target.value;
     }
 
-    public startGame(action: string, valueKey: string) {
-        this.sendAction('admin', { action: 'start', value: {} })
+    public clientAdminAction(action: string) {
+        this.sendAction('admin', { action, value: {} })
     }
 
     public sendAction(type: string, data: any) {
@@ -147,16 +151,16 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                             <th colSpan={4}>Admin Control</th>
                         </tr>
                     ) : ''}
-                    {(isAdmin && this.props.showStartButton) ? (
+                    {(isAdmin) ? (
                         <tr>
-                            <td colSpan={2}>Start Game:</td>
+                            <td colSpan={2}>{this.props.manageButtonSettings.text} Game:</td>
                             <td>
-                                <button disabled={this.props.disableStartButton}
-                                    onClick={this.startGame.bind(this)}
+                                <button disabled={this.props.manageButtonSettings.disabled}
+                                    onClick={this.clientAdminAction.bind(this, this.props.manageButtonSettings.text)}
                                     className={classNames("btn-flat green lighten-1", {
-                                        'disabled': this.props.disableStartButton, 
+                                        'disabled': this.props.manageButtonSettings.disabled, 
                                     })} type="button">
-                                    Start
+                                    {this.props.manageButtonSettings.text}
                                 </button>
                             </td>
                         </tr>
