@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 
 import { GameModal } from "./components/modals/Game";
 import { userStorage } from "./utils/storage";
+import { handleAuth, QPoker } from "./shared/entry";
 
 let startGameButton = document.querySelector("#start-game-button")
 let gameModal: GameModal;
@@ -13,12 +14,12 @@ let userStartGameEvent = () => {
 
     if (!userID || !userToken) {
         userStorage.removePlayer();
-        window.QPoker.InitLogin();
-        window.QPoker.OnPlayerFound.push(userStartGameEvent);
+        QPoker.InitLogin();
+        QPoker.OnPlayerFound.push(userStartGameEvent);
         return
     }
 
-    window.QPoker.OnPlayerFound = window.QPoker.OnPlayerFound.slice(0, 1);
+    QPoker.OnPlayerFound = QPoker.OnPlayerFound.slice(0, 1);
     gameModal.setState({isOpen: true});
 }
 
@@ -31,6 +32,4 @@ ReactDOM.render(
     document.getElementById("game-modal")
 );
 
-// To communicate between entrypoints. TODO: move to a shared module
-window.QPoker.OnPlayerFound = window.QPoker.OnPlayerFound || [];
-window.QPoker.OnPlayerFound.push(userStorage.setUser.bind(userStorage));
+handleAuth();

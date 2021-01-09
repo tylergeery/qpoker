@@ -184,9 +184,9 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
     }
 
     private countDown(seconds: number) {
-        if (seconds <= 0 || !this.isSelected()) {
+        if (seconds <= 0 || !this.isSelected() || this.props.manager.status === 'paused') {
             this.interval = null;
-            this.setState({timer: 0})
+            this.setState({timer: 0});
             return;
         }
 

@@ -7,6 +7,7 @@ import { Seat } from "../common/Seat";
 import { SideBar } from "../../SideBar";
 import { ManageButtonSettings } from "../../sidebar/Settings";
 import { VideoTable } from "../common/Table";
+import { Chip } from "../common/Chip";
 
 
 export type TableState = {
@@ -67,9 +68,12 @@ export class Table extends VideoTable<EventState, TableState> {
                 <div className="col s12 l9">
                     <div className={classNames("row w100 table-holder nmb", {"paused": this.isPaused()})}>
                         <div className="board-holder">
-                            {this.state.es.manager.state.board.map((card, i) =>
-                                <img key={i} className="card" src={`/assets/media/cards/${card.imageName()}.svg`} />
-                            )}
+                            <div>
+                                {this.state.es.manager.state.board.map((card, i) =>
+                                    <img key={i} className="card" src={`/assets/media/cards/${card.imageName()}.svg`} />
+                                )}
+                            </div>
+                            <Chip amount={this.state.es.manager.pot.total} color="white" />
                         </div>
                         {this.state.es.manager.state.table ? this.state.es.manager.state.table.players.map((player: any, i: number) => {
                             return player ? 

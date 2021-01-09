@@ -18,7 +18,7 @@ let completePlayerAuth = (player: Player) => {
     userStorage.setUser(player);
     nav.setState({ player });
 
-    window.QPoker.OnPlayerFound.map((fn: Function) => {
+    QPoker.OnPlayerFound.map((fn: Function) => {
         fn(player);
     });
 }

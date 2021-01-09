@@ -14,13 +14,17 @@ type ChipSettingProps = {
 
 type ChipSettingsState = {
     chipRequest: number;
+    disableRequestButton: boolean;
 }
 
 export class ChipSettings extends React.Component<ChipSettingProps, ChipSettingsState> {
     constructor(props: any) {
         super(props);
 
-        this.state = {chipRequest: this.getDefaultBuyIn()};
+        this.state = {
+            chipRequest: this.getDefaultBuyIn(),
+            disableRequestButton: false,
+        };
     }
 
     private setChipsRequest(event: any) {
@@ -34,7 +38,14 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
                 action: 'chip_request',
                 value: this.state.chipRequest
             }
-        )
+        );
+
+        // disable button temporarily
+        this.setState({ disableRequestButton: true });
+        setTimeout(
+            this.setState.bind(this, { disableRequestButton: false }),
+            3000,
+        );
     }
 
     public sendChipsResponse(id: string) {

@@ -346,7 +346,7 @@ func (e *EventBus) ListenForEvents() {
 			fmt.Printf("MsgAction: (%+v)\n", msgAction)
 			e.handleMessageEvent(msgAction)
 		case videoAction := <-e.VideoChannel:
-			fmt.Printf("VideoAction: (%+v)\n", videoAction)
+			fmt.Printf("VideoAction: (%+v)\n", videoAction.Type)
 			e.handleVideoEvent(videoAction)
 		}
 	}

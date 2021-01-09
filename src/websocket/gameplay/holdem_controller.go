@@ -58,7 +58,7 @@ func (c *HoldemGameController) Pause(pause bool) {
 	if pause {
 		c.manager.UpdateStatus(holdem.StatusPaused)
 	} else {
-		// TODO: reset player timer
+		c.manager.State.Table.ActiveAt = time.Now().Unix()
 		c.manager.UpdateStatus(holdem.StatusActive)
 	}
 }
@@ -159,16 +159,17 @@ func (c *HoldemGameController) advanceAllIn() bool {
 func (c *HoldemGameController) reloadPlayerStack(game *models.Game, player *holdem.Player) {
 	// Search first for ending stack
 	since := game.CreatedAt
-	playerHand, err := models.GetGamePlayerHandForGameAndPlayer(game.ID, player.ID)
+	playerHand, err := models.GetLastGamePlayerHandForGameAndPlayer(game.ID, player.ID)
 	if err != nil && err != sql.ErrNoRows {
 		return
 	}
 
 	if playerHand.ID > int64(0) {
+		fmt.Printf("Found last player hand: %+v\n", playerHand)
 		player.Stack = playerHand.Starting
-		if playerHand.Ending > -1 {
+		since = playerHand.UpdatedAt
+		if playerHand.CreatedAt != playerHand.UpdatedAt {
 			player.Stack = playerHand.Ending
-			since = playerHand.UpdatedAt
 		}
 	}
 
@@ -179,7 +180,10 @@ func (c *HoldemGameController) reloadPlayerStack(game *models.Game, player *hold
 	}
 
 	if len(chipRequests) > 0 {
-		player.Stack += chipRequests[0].Amount
+		fmt.Printf("Found chip requests since last player hand: %+v\n", chipRequests[0])
+		for i := range chipRequests {
+			player.Stack += chipRequests[i].Amount
+		}
 	}
 }
 

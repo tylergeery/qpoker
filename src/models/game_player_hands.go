@@ -46,8 +46,8 @@ func GetGamePlayerHandBy(key string, val interface{}) (*GamePlayerHand, error) {
 	return playerHand, err
 }
 
-// GetGamePlayerHandForGameAndPlayer returns a GamePlayerHand found for game_id
-func GetGamePlayerHandForGameAndPlayer(gameID, playerID int64) (*GamePlayerHand, error) {
+// GetLastGamePlayerHandForGameAndPlayer returns a GamePlayerHand found for game_id
+func GetLastGamePlayerHandForGameAndPlayer(gameID, playerID int64) (*GamePlayerHand, error) {
 	var ending sql.NullInt64
 	playerHand := &GamePlayerHand{}
 

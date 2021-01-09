@@ -30,13 +30,19 @@ export const tableRender = async (render: renderMethod) => {
 
     if (!player) {
         userStorage.removePlayer();
-        window.QPoker.InitLogin();
-        window.QPoker.OnPlayerFound.push(tableRender.bind(null, render));
+        QPoker.InitLogin();
+        QPoker.OnPlayerFound.push(tableRender.bind(null, render));
 
         // TODO: render table silhouette
         return
     }
 
-    window.QPoker.OnPlayerFound = [];
+    QPoker.OnPlayerFound = [];
     render(game, player)
 }
+
+// To communicate between entrypoints.
+export const handleAuth = () => {
+    QPoker.OnPlayerFound = QPoker.OnPlayerFound || [];
+    QPoker.OnPlayerFound.push(userStorage.setUser.bind(userStorage));
+};

@@ -17,10 +17,30 @@ export const classNames = (...potentials: any[]): string => {
     return approved.join(" ");
 }
 
+export const getChipAmount = (amount?: number): string => {
+    if (!amount) {
+        return '';
+    }
+
+    if (amount >= 995000) {
+        return `${Math.round(amount / 1000000)}m`;
+    }
+
+    if (amount >= 10000) {
+        return `${Math.round(amount / 10000)}k`;
+    }
+
+    if (amount >= 1000) {
+        return `${(amount / 1000).toPrecision(1)}k`;
+    }
+
+    return `${Math.round(amount)}`;
+};
+
 export type ClientAction = {
     type: string;
     data: any;
-}
+};
 
 export const createAdminAction = (data: any): ClientAction => ({type: 'admin', data });
 export const createGameAction = (data: any): ClientAction => ({type: 'game', data });
