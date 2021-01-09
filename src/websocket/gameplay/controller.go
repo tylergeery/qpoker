@@ -66,6 +66,7 @@ type GameController interface {
 	Data() *Controller
 	PerformGameAction(playerID int64, action interface{}, broadcast func(int64))
 	Start(broadcast func(int64))
+	Pause(resume bool)
 	UpdatePlayerChips(playerID, amount int64)
 	AddPlayer(player *models.Player) interface{}
 	GetState(playerID int64) interface{}

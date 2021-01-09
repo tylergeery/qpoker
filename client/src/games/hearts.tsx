@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { Table } from "../components/games/poker/Poker";
+import { Table } from "../components/games/hearts/Hearts";
 import { Game } from "../objects/Game";
 import { Player } from "../objects/Player";
 import { handleAuth, tableRender } from "../shared/entry";

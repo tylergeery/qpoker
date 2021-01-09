@@ -3,18 +3,24 @@ import * as React from "react";
 import { classNames } from "../../utils";
 import { ChipSettings } from "./ChipSettings";
 import { Game, GameType } from "../../objects/Game";
-import { ConnectionHandler } from "../../connection/ws";
-import { EventState } from "../../objects/State";
+import { ConnectionHandler, EventType } from "../../connection/ws";
 import { UpdateGameRequest } from "../../requests/updateGame";
 import { getGameType } from "../../utils/gameType";
 import { userStorage } from "../../utils/storage";
+import { AnonymousPlayer, AnonymousPlayerWithChips, findPlayer } from "../../objects/Player";
+
+export type ManageButtonSettings = {
+    text: string;
+    disabled: boolean;
+};
 
 type SettingsProps = {
     active: boolean;
-    playerID: string;
     game?: Game;
+    players: AnonymousPlayer[]
+    playerID: number;
     conn: ConnectionHandler;
-    es: EventState;
+    manageButtonSettings: ManageButtonSettings;
 }
 
 type SettingsState = {
@@ -38,7 +44,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
     }
 
     public componentDidMount() {
-        this.props.conn.subscribe('admin', (event: any) => {
+        this.props.conn.subscribe(EventType.admin, (event: any) => {
             if (!event.data.requests) {
                 return
             }
@@ -56,8 +62,8 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
         this.state.options[event.target.name] = event.target.value;
     }
 
-    public startGame(action: string, valueKey: string) {
-        this.sendAction('admin', { action: 'start', value: {} })
+    public clientAdminAction(action: string) {
+        this.sendAction('admin', { action, value: {} })
     }
 
     public sendAction(type: string, data: any) {
@@ -125,7 +131,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
     }
 
     private isAdmin(): boolean {
-        return this.props.game.owner_id.toString() == this.props.playerID;
+        return this.props.game.owner_id.toString() == this.props.playerID.toString();
     }
 
     private supportsChips(): boolean {
@@ -145,16 +151,16 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                             <th colSpan={4}>Admin Control</th>
                         </tr>
                     ) : ''}
-                    {(isAdmin && this.props.es.manager.status != "active") ? (
+                    {(isAdmin) ? (
                         <tr>
-                            <td colSpan={2}>Start Game:</td>
+                            <td colSpan={2}>{this.props.manageButtonSettings.text} Game:</td>
                             <td>
-                                <button disabled={this.props.es.manager.status == "init"}
-                                    onClick={this.startGame.bind(this)}
+                                <button disabled={this.props.manageButtonSettings.disabled}
+                                    onClick={this.clientAdminAction.bind(this, this.props.manageButtonSettings.text)}
                                     className={classNames("btn-flat green lighten-1", {
-                                        'disabled': this.props.es.manager.status == "init" 
+                                        'disabled': this.props.manageButtonSettings.disabled, 
                                     })} type="button">
-                                    Start
+                                    {this.props.manageButtonSettings.text}
                                 </button>
                             </td>
                         </tr>
@@ -162,8 +168,10 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     {isAdmin ? (<tr></tr>) : ''}
 
                     {supportsChips ? (
-                        <ChipSettings es={this.props.es} requests={this.state.requests} playerID={this.props.playerID}
-                                        game={this.props.game} sendAction={this.sendAction.bind(this)} />
+                        <ChipSettings requests={this.state.requests}
+                            player={findPlayer(this.props.playerID, this.props.players) as AnonymousPlayerWithChips}
+                            players={this.props.players} game={this.props.game}
+                            sendAction={this.sendAction.bind(this)} />
                     ) : ''}
 
                     <tr></tr>

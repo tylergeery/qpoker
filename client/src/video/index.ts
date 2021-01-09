@@ -11,6 +11,9 @@ abstract class Player {
     ) {
         this.createConnection()
         this.prefix = this.getPrefix()
+        if (fromPlayerID == toPlayerID) {
+            this.mute();
+        }
     }
 
     protected abstract getPrefix(): string;
@@ -72,6 +75,13 @@ abstract class Player {
 
     protected getVideoElement(): HTMLVideoElement {
         return document.querySelector(`#player-video-${this.toPlayerID}`);
+    }
+
+    protected mute() {
+        const video = this.getVideoElement();
+        if (video) {
+            video.muted = true;
+        }
     }
 
     public handleCandidate(candidate: RTCIceCandidate) {
@@ -182,7 +192,7 @@ export class VideoChannel {
     ) {
         this.remote = {};
         this.local = {};
-        this.mediaStreamPromise = navigator.mediaDevices.getUserMedia({audio: false, video: true});
+        this.mediaStreamPromise = navigator.mediaDevices.getUserMedia({audio: true, video: true});
         this.userPlayer = new UserPlayer(this.playerID, this.playerID, this.onEventCreated)
         this.mediaStreamPromise.then(this.userPlayer.setStream.bind(this.userPlayer), console.error);
     }

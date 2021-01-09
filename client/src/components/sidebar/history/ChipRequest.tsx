@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { GamePlayer } from "../../../objects/State";
+import { AnonymousPlayer } from "../../../objects/Player";
 
 type ChipRequestProps = {
-    player: GamePlayer;
+    player: AnonymousPlayer;
     status: string;
     amount: number;
 }

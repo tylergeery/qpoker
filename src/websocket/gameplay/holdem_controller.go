@@ -13,8 +13,9 @@ import (
 
 // GameState controls the game state returned to clients
 type GameState struct {
-	Manager *holdem.GameManager    `json:"manager"`
-	Cards   map[int64][]cards.Card `json:"cards"`
+	Manager        *holdem.GameManager    `json:"manager"`
+	Cards          map[int64][]cards.Card `json:"cards"`
+	RefreshHistory bool                   `json:"refresh_history"`
 }
 
 // NewGameState returns the game state for clients
@@ -27,7 +28,7 @@ func NewGameState(manager *holdem.GameManager) GameState {
 // HoldemGameController is the GameController interface implementation for Holdem
 type HoldemGameController struct {
 	controller *Controller
-	manager *holdem.GameManager
+	manager    *holdem.GameManager
 }
 
 // Data returns Controller data object
@@ -49,6 +50,17 @@ func (c *HoldemGameController) PerformGameAction(playerID int64, action interfac
 func (c *HoldemGameController) Start(broadcast func(int64)) {
 	c.nextHand()
 	c.advance(false, broadcast)
+}
+
+// Pause controls game pause state
+func (c *HoldemGameController) Pause(pause bool) {
+	fmt.Printf("Pausing game: %t\n", pause)
+	if pause {
+		c.manager.UpdateStatus(holdem.StatusPaused)
+	} else {
+		c.manager.State.Table.ActiveAt = time.Now().Unix()
+		c.manager.UpdateStatus(holdem.StatusActive)
+	}
 }
 
 func (c *HoldemGameController) advance(complete bool, broadcast func(int64)) {
@@ -85,6 +97,7 @@ func (c *HoldemGameController) AddPlayer(player *models.Player) interface{} {
 func (c *HoldemGameController) GetState(playerID int64) interface{} {
 	state := NewGameState(c.manager)
 	state.Cards = c.manager.GetVisibleCards(playerID)
+	state.RefreshHistory = c.shouldRefreshHistory()
 
 	return state
 }
@@ -95,7 +108,7 @@ func (c *HoldemGameController) GetTimedOutGameEvent() (events.GameEvent, error) 
 	currentTime := time.Now().Unix()
 	allowedTime := qutils.ToInt(c.controller.Game.Options["decision_time"])
 	if c.manager.Status != holdem.StatusActive {
-		return events.GameEvent{}, fmt.Errorf("No idle event needed, game over")
+		return events.GameEvent{}, fmt.Errorf("No idle event needed, game not active")
 	}
 
 	if (currentTime - lastMoveAt) <= int64(allowedTime) {
@@ -146,16 +159,17 @@ func (c *HoldemGameController) advanceAllIn() bool {
 func (c *HoldemGameController) reloadPlayerStack(game *models.Game, player *holdem.Player) {
 	// Search first for ending stack
 	since := game.CreatedAt
-	playerHand, err := models.GetGamePlayerHandForGameAndPlayer(game.ID, player.ID)
+	playerHand, err := models.GetLastGamePlayerHandForGameAndPlayer(game.ID, player.ID)
 	if err != nil && err != sql.ErrNoRows {
 		return
 	}
 
 	if playerHand.ID > int64(0) {
+		fmt.Printf("Found last player hand: %+v\n", playerHand)
 		player.Stack = playerHand.Starting
-		if playerHand.Ending > -1 {
+		since = playerHand.UpdatedAt
+		if playerHand.Ending > 0 || !playerHand.CreatedAt.Equal(playerHand.UpdatedAt) {
 			player.Stack = playerHand.Ending
-			since = playerHand.UpdatedAt
 		}
 	}
 
@@ -166,6 +180,30 @@ func (c *HoldemGameController) reloadPlayerStack(game *models.Game, player *hold
 	}
 
 	if len(chipRequests) > 0 {
-		player.Stack += chipRequests[0].Amount
+		fmt.Printf("Found (%d) chip requests since last player hand: %+v\n", len(chipRequests), chipRequests[0])
+		for i := range chipRequests {
+			player.Stack += chipRequests[i].Amount
+		}
 	}
+}
+
+func (c *HoldemGameController) shouldRefreshHistory() bool {
+	if c.manager.Pot == nil || c.manager.Pot.Total != 0 {
+		return false
+	}
+
+	activePlayers := c.manager.State.Table.GetActivePlayers()
+	totalPlayers := c.manager.State.Table.GetAllPlayers()
+	if len(activePlayers) != len(totalPlayers) {
+		return false
+	}
+
+	playerBets := 0
+	for _, bet := range c.manager.Pot.PlayerBets {
+		if bet > 0 {
+			playerBets++
+		}
+	}
+
+	return playerBets == 2
 }

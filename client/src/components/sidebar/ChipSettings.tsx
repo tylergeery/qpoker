@@ -2,25 +2,29 @@ import * as React from "react";
 
 import { classNames } from "../../utils";
 import { Game } from "../../objects/Game";
-import { EventState } from "../../objects/State";
+import { AnonymousPlayer, AnonymousPlayerWithChips, findPlayer } from "../../objects/Player";
 
 type ChipSettingProps = {
-    es: EventState;
     game: Game;
-    playerID: string;
+    player: AnonymousPlayerWithChips;
+    players: AnonymousPlayer[];
     requests: any[];
     sendAction: (type: string, data: any) => void;
 }
 
 type ChipSettingsState = {
     chipRequest: number;
+    disableRequestButton: boolean;
 }
 
 export class ChipSettings extends React.Component<ChipSettingProps, ChipSettingsState> {
     constructor(props: any) {
         super(props);
 
-        this.state = {chipRequest: this.getDefaultBuyIn()};
+        this.state = {
+            chipRequest: this.getDefaultBuyIn(),
+            disableRequestButton: false,
+        };
     }
 
     private setChipsRequest(event: any) {
@@ -34,7 +38,14 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
                 action: 'chip_request',
                 value: this.state.chipRequest
             }
-        )
+        );
+
+        // disable button temporarily
+        this.setState({ disableRequestButton: true });
+        setTimeout(
+            this.setState.bind(this, { disableRequestButton: false }),
+            3000,
+        );
     }
 
     public sendChipsResponse(id: string) {
@@ -52,9 +63,7 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
     }
 
     private hasChips(): boolean {
-        let player = this.props.es.getPlayer(this.props.playerID)
-
-        return player && player.stack > 0;
+        return this.props.player && this.props.player.stack > 0;
     }
 
     public render() {
@@ -65,7 +74,7 @@ export class ChipSettings extends React.Component<ChipSettingProps, ChipSettings
 
             {this.props.requests.map((req, i) => {
                 return <tr key={i}>
-                    <td colSpan={2}>{this.props.es.getPlayer(req.player_id).username}</td>
+                    <td colSpan={2}>{findPlayer(req.player_id, this.props.players)?.username}</td>
                     <td>
                         <button onClick={this.sendChipsResponse.bind(this, req.player_id.toString())} className="btn-flat green lighten-2" type="button">
                             Approve

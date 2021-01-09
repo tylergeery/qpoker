@@ -1,18 +1,19 @@
 import * as React from "react";
 
 import { classNames } from "../utils";
-import { EventState } from "../objects/State";
 import { Game } from "../objects/Game";
-import { Settings } from "./sidebar/Settings";
+import { ManageButtonSettings, Settings } from "./sidebar/Settings";
 import { Chat } from "./sidebar/Chat";
 import { History } from "./sidebar/History";
 import { ConnectionHandler } from "../connection/ws";
+import { AnonymousPlayer } from "../objects/Player";
 
 type SideBarProps = {
-    es: EventState;
+    manageButtonSettings: ManageButtonSettings;
+    shouldRefreshHistory: boolean;
     game?: Game;
-    playerID: string;
-    playerToken: string;
+    players: AnonymousPlayer[];
+    playerID: number;
     conn: ConnectionHandler;
 }
 

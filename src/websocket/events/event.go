@@ -29,8 +29,9 @@ const (
 
 // Chat message
 type Chat struct {
-	PlayerID int64  `json:"player_id"`
-	Message  string `json:"message"`
+	PlayerID       int64  `json:"player_id"`
+	PlayerUsername string `json:"player_username"`
+	Message        string `json:"message"`
 }
 
 // PlayerEvent represents a player connection action
@@ -85,13 +86,15 @@ type MsgEvent struct {
 	GameID   int64
 	PlayerID int64
 	Value    string
+	Username string
 }
 
 // GetChat turns MsgEvent into Chat
 func (e MsgEvent) GetChat() Chat {
 	return Chat{
-		PlayerID: e.PlayerID,
-		Message:  e.Value,
+		PlayerID:       e.PlayerID,
+		Message:        e.Value,
+		PlayerUsername: e.Username,
 	}
 }
 

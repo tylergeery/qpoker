@@ -2,10 +2,24 @@ package gameplay
 
 import (
 	"fmt"
+	"qpoker/cards"
 	"qpoker/cards/games/hearts"
 	"qpoker/models"
 	"qpoker/websocket/events"
 )
+
+// HeartsGameState controls the game state returned to clients
+type HeartsGameState struct {
+	Manager *hearts.GameManager    `json:"manager"`
+	Cards   map[int64][]cards.Card `json:"cards"`
+}
+
+// NewHeartsGameState returns the game state for clients
+func NewHeartsGameState(manager *hearts.GameManager) HeartsGameState {
+	return HeartsGameState{
+		Manager: manager,
+	}
+}
 
 // HeartsGameController is the hearts implementation of GameController interface
 type HeartsGameController struct {
@@ -34,6 +48,11 @@ func (c *HeartsGameController) Start(broadcast func(int64)) {
 	c.advance(false, broadcast)
 }
 
+// Pause controls game pause state
+func (c *HeartsGameController) Pause(pause bool) {
+	// TODO
+}
+
 // UpdatePlayerChips updates players chips
 func (c *HeartsGameController) UpdatePlayerChips(playerID, amount int64) {
 	// unneccessary for hearts
@@ -49,7 +68,10 @@ func (c *HeartsGameController) AddPlayer(player *models.Player) interface{} {
 
 // GetState returns visible game state for updating players
 func (c *HeartsGameController) GetState(playerID int64) interface{} {
-	return nil
+	state := NewHeartsGameState(c.manager)
+	state.Cards = c.manager.GetVisibleCards(playerID)
+
+	return state
 }
 
 // GetTimedOutGameEvent gets a moved thats over time limit

@@ -1,26 +1,30 @@
-import { EventState } from "../objects/State";
+export enum EventType {
+    admin = 'admin',
+    game = 'game',
+    message = 'message',
+    video = 'video',
+}
+
+type GameEventHandler = (data: any) => any;
+type EventHandler = (action: any) => void;
+type Subscribers = Map<EventType, EventHandler[]>;
 
 export class ConnectionHandler {
     active: boolean;
     conn: WebSocket;
-    subscribers: {
-        [key: string]: ((action: any) => void)[];
-    }
+    subscribers: Subscribers;
     onDisconnect?: () => void;
-    queue: string[]
+    queue: string[];
     streak: number;
+    gameEventHandler: GameEventHandler;
 
-    constructor(conn: WebSocket) {
+    constructor(conn: WebSocket, gameEventHandler: GameEventHandler) {
         this.conn = conn;
         this.active = false;
         this.queue = [];
         this.streak = 0;
-        this.subscribers = {
-            'admin': [],
-            'message': [],
-            'game': [],
-            'video': [],
-        }
+        this.subscribers = this.initSubscribers();
+        this.gameEventHandler = gameEventHandler;
     }
 
     public init() {
@@ -47,12 +51,22 @@ export class ConnectionHandler {
         this.conn.onmessage = this.handleMessage.bind(this);
     }
 
-    public subscribe(type: string, fn: (action: any) => void) {
-        this.subscribers[type].push(fn);
+    public subscribe(type: EventType, fn: (action: any) => void) {
+        this.subscribers.get(type).push(fn);
     }
 
-    private publish(type: string, msg: any) {
-        this.subscribers[type].map((fn) => fn(msg));
+    private initSubscribers(): Subscribers {
+        let subscribers: Subscribers = new Map();
+
+        for (const eventType of Object.keys(EventType)) {
+            subscribers.set(eventType as EventType, []);
+        }
+
+        return subscribers;
+    }
+
+    private publish(type: EventType, msg: any) {
+        this.subscribers.get(type).map((fn) => fn(msg));
     }
 
     public send(msg: any) {
@@ -72,8 +86,8 @@ export class ConnectionHandler {
         let event = JSON.parse(message.data);
 
         switch(event.type) {
-            case 'game':
-                let state = EventState.FromObj(event.data);
+            case EventType.game:
+                let state = this.gameEventHandler(event.data);
 
                 this.publish(event.type, state);
                 break;
@@ -100,8 +114,8 @@ const getHost = (): string => {
     }
 }
 
-export function NewConnectionHandler(): ConnectionHandler {
+export function NewConnectionHandler(gameEventHandler: GameEventHandler): ConnectionHandler {
     const ws = new WebSocket(getHost());
 
-    return new ConnectionHandler(ws);
+    return new ConnectionHandler(ws, gameEventHandler);
 }

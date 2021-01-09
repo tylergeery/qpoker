@@ -8,6 +8,7 @@ import { LoginRequest } from "./requests/login";
 import { RegistrationRequest } from "./requests/registration";
 import { userStorage } from "./utils/storage";
 import { Player } from "./objects/Player";
+import { QPoker } from "./shared/entry";
 
 var registrationModal: RegistrationModal;
 var loginModal: LoginModal;
@@ -17,7 +18,7 @@ let completePlayerAuth = (player: Player) => {
     userStorage.setUser(player);
     nav.setState({ player });
 
-    window.QPoker.OnPlayerFound.map((fn: Function) => {
+    QPoker.OnPlayerFound.map((fn: Function) => {
         fn(player);
     });
 }
@@ -48,12 +49,12 @@ async function submitRegistration (loginData: object) {
     registrationModal.closeModal();
 }
 
-const onLoginClick = (event: any) => {
+const onLoginClick = () => {
     registrationModal.closeModal();
     loginModal.openModal();
 }
 
-const onRegisterClick = (event: any) => {
+const onRegisterClick = () => {
     loginModal.closeModal();
     registrationModal.openModal();
 }
@@ -85,7 +86,4 @@ ReactDOM.render(
     document.getElementById("nav-account")
 );
 
-// To communicate between entrypoints. TODO: move to a shared module for consistency
-window.QPoker.OnPlayerFound = window.QPoker.OnPlayerFound || [];
-window.QPoker.InitLogin = onLoginClick;
-
+QPoker.InitLogin = onLoginClick;

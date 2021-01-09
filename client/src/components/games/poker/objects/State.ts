@@ -1,18 +1,5 @@
-enum Suit {
-    BLANK = 'B',
-    CLUBS = 'C',
-    DIAMONDS = 'D',
-    HEARTS = 'H',
-    SPADES = 'S',
-}
-
-export class Card {
-    constructor(public value: string, public suit: string, public char: string) {}
-
-    public imageName(): string {
-        return `${this.char}${this.suit}`;
-    }
-}
+import { Card, Suit } from "../../../../objects/Card";
+import { findPlayer } from "../../../../objects/Player";
 
 type PlayerOptions = {
     [key: string]: boolean;
@@ -143,6 +130,7 @@ export class EventState {
     constructor(
         public manager: Manager,
         public cards: {[key: number]: Card[]},
+        public refreshHistory: boolean,
     ) {}
 
     public static FromObj(obj: any) {
@@ -158,7 +146,9 @@ export class EventState {
 
         return new EventState(
             Manager.FromObj(obj.manager),
-            obj.cards);
+            obj.cards,
+            obj.refresh_history,
+        );
     }
 
     public getPlayerCards(playerID: number): Card[] {
@@ -172,26 +162,8 @@ export class EventState {
         return this.cards[playerID];
     }
 
-    public getPlayer(playerID: string): GamePlayer {
-        if (!playerID) {
-            return null
-        }
-
-        for (let i=0; i < this.manager.state.table.players.length; i++) {
-            const player = this.manager.state.table.players[i];
-
-            if (!player) {
-                continue;
-            }
-
-            if (player.id.toString() !== playerID.toString()) {
-                continue;
-            }
-
-            return player;
-        }
-
-        return null;
+    public getPlayer(playerID: number): GamePlayer {
+        return findPlayer(playerID, this.manager.state.table.players);
     }
 }
 
@@ -216,5 +188,6 @@ export const defaultEventState = EventState.FromObj({
         "status": "init",
         "all_in": false,
     },
-    "cards": {}
+    "cards": {},
+    "refresh_history": false,
 });

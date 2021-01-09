@@ -1,6 +1,5 @@
 import * as React from "react";
 import { GamePlayer, Manager } from "../objects/State";
-import { Chip } from "../../common/Chip";
 import { ConnectionHandler } from "../../../../connection/ws";
 import { Card } from "../../../../objects/Card";
 import { Game } from "../../../../objects/Game";
@@ -185,7 +184,7 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
     }
 
     private countDown(seconds: number) {
-        if (seconds <= 0 || !this.isSelected() || this.props.manager.status === "paused") {
+        if (seconds <= 0 || !this.isSelected() || this.props.manager.status === 'paused') {
             this.interval = null;
             this.setState({timer: 0});
             return;
@@ -199,11 +198,6 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
         if (this.interval || !this.props.manager.state.table.activeAt) {
             return
         }
-
-        if (this.props.manager.status == "paused") {
-            return
-        }
-
         this.interval = 1;
 
         this.countDown(this.getCountdownTime());
@@ -214,15 +208,13 @@ export class Player extends React.Component<PlayerProps, PlayerState> {
             this.startTimer()
         }
 
-        const amount = this.props.manager.pot.playerBets[+this.props.player.id];
-
         return <div className={ `player table-pos-${this.props.index}` }>
             <video id={`player-video-${this.props.player.id}`} autoPlay></video>
             <small>{`${this.props.player.username} (${this.props.player.stack})` }</small>
             <Hand gameState={this.props.manager.state.state} cards={this.props.cards} />
             <HandActions {...this.props} />
             <HandTimer allIn={this.props.manager.allIn} timer={this.state.timer} decisionTime={this.props.game?.options.decision_time} />
-            <Chip amount={amount} color="red" />
+            <p>{this.props.manager.pot.playerBets[+this.props.player.id] || ''}</p>
             <PlayerSpotlight {...this.props} />
         </div>
     }
