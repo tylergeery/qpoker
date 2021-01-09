@@ -54,7 +54,7 @@ func (c *HoldemGameController) Start(broadcast func(int64)) {
 
 // Pause controls game pause state
 func (c *HoldemGameController) Pause(pause bool) {
-	fmt.Println("Pausing game: %s\n", pause)
+	fmt.Printf("Pausing game: %t\n", pause)
 	if pause {
 		c.manager.UpdateStatus(holdem.StatusPaused)
 	} else {
@@ -168,7 +168,7 @@ func (c *HoldemGameController) reloadPlayerStack(game *models.Game, player *hold
 		fmt.Printf("Found last player hand: %+v\n", playerHand)
 		player.Stack = playerHand.Starting
 		since = playerHand.UpdatedAt
-		if playerHand.CreatedAt != playerHand.UpdatedAt {
+		if playerHand.Ending > 0 || !playerHand.CreatedAt.Equal(playerHand.UpdatedAt) {
 			player.Stack = playerHand.Ending
 		}
 	}
@@ -180,7 +180,7 @@ func (c *HoldemGameController) reloadPlayerStack(game *models.Game, player *hold
 	}
 
 	if len(chipRequests) > 0 {
-		fmt.Printf("Found chip requests since last player hand: %+v\n", chipRequests[0])
+		fmt.Printf("Found (%d) chip requests since last player hand: %+v\n", len(chipRequests), chipRequests[0])
 		for i := range chipRequests {
 			player.Stack += chipRequests[i].Amount
 		}
