@@ -1,0 +1,123 @@
+@import '../card';
+
+.table-capacity-8 {
+    .table-pos-0 {
+        top: calc(15% - 30px);
+        left: calc(50% - #{$card_width});
+    
+        & > video {
+            bottom: 100%;
+            left: 10px;
+        }
+
+        & > .chip {
+            top: 100%;
+            left: calc(60px - 1.25em);
+        }
+    }
+    
+    .table-pos-1 {
+        top: calc(25% - 30px);
+        right: calc(25% - #{$card_width});
+    
+        & > video {
+            bottom: 75%;
+            left: 75%;
+        }
+
+        & > .chip {
+            top: 75%;
+            right: 75%;
+        }
+    }
+    
+    .table-pos-3 {
+        top: calc(75% - 30px);
+        right: calc(25% - #{$card_width});
+    
+        & > video {
+            top: 75%;
+            left: 75%;
+        }
+
+        & > .chip {
+            bottom: 75%;
+            right: 75%;
+        }
+    }
+
+    .table-pos-2 {
+        top: calc(50% - 30px);
+        right: calc(10% - #{$card_width});
+    
+        & > video {
+            top: 10px;
+            left: 100%;
+        }
+
+        & > .chip {
+            top: calc(60px - 1.25em);
+            right: 100%;
+        }
+    }
+
+    .table-pos-6 {
+        top: calc(50% - 30px);
+        right: calc(20% - #{$card_width});
+    
+        & > video {
+            top: 10px;
+            right: 100%;
+        }
+
+        & > .chip {
+            top: calc(60px - 1.25em);
+            left: 100%;
+        }
+    }
+    
+    .table-pos-5 {
+        bottom: calc(25% - 30px);
+        left: calc(25% - #{$card_width});
+    
+        & > video {
+            top: 75%;
+            right: 75%;
+        }
+
+        & > .chip {
+            bottom: 75%;
+            left: 75%;
+        }
+    }
+    
+    .table-pos-7 {
+        top: calc(25% - 30px);
+        left: calc(25% - #{$card_width});
+    
+        & > video {
+            top: 25%;
+            left: 15%;
+        }
+
+        & > .chip {
+            top: calc(60px - 1.25em);
+            right: 100%;
+        }
+    }
+
+    .table-pos-4{
+        bottom: calc(15% - 30px);
+        left: calc(50% - #{$card_width});
+    
+        & > video {
+            top: 100%;
+            left: 10px;
+        }
+
+        & > .chip {
+            left: calc(60px - 1.25em);
+            bottom: 100%;
+        }
+    }
+}

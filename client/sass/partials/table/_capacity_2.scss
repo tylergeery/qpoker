@@ -1,0 +1,33 @@
+@import '../card';
+
+.table-capacity-2 {
+    .table-pos-0 {
+        top: calc(15% - 30px);
+        left: calc(50% - #{$card_width});
+    
+        & > video {
+            bottom: 100%;
+            left: 10px;
+        }
+
+        & > .chip {
+            top: 100%;
+            left: calc(60px - 1.25em);
+        }
+    }
+
+    .table-pos-1 {
+        bottom: calc(15% - 30px);
+        left: calc(50% - #{$card_width});
+    
+        & > video {
+            top: 100%;
+            left: 10px;
+        }
+
+        & > .chip {
+            bottom: 100%;
+            left: calc(60px - 1.25em);
+        }
+    }
+}

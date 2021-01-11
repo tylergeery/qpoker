@@ -1,0 +1,124 @@
+@import '../card';
+
+.table-capacity-12 {
+    .table-pos-0 {
+        top: calc(15% - 30px);
+        left: calc(50% - #{$card_width});
+    
+        & > video {
+            bottom: 100%;
+            left: 10px;
+        }
+    }
+    
+    .table-pos-1 {
+        top: calc(20% - 30px);
+        right: calc(35% - #{$card_width});
+    
+        & > video {
+            bottom: 90%;
+            right: 15%;
+        }
+    }
+    
+    .table-pos-11 {
+        top: calc(20% - 30px);
+        left: calc(35% - #{$card_width});
+    
+        & > video {
+            bottom: 90%;
+            left: 15%;
+        }
+    }
+    
+    .table-pos-2 {
+        top: calc(30% - 30px);
+        right: calc(20% - #{$card_width});
+    
+        & > video {
+            bottom: 80%;
+            left: 50%;
+        }
+    }
+    
+    .table-pos-10 {
+        top: calc(30% - 30px);
+        left: calc(20% - #{$card_width});
+    
+        & > video {
+            bottom: 80%;
+            right: 50%;
+        }
+    }
+    
+    .table-pos-3 {
+        top: calc(50% - 30px);
+        right: calc(10% - #{$card_width});
+    
+        & > video {
+            top: 10px;
+            left: 100%;
+        }
+    }
+    
+    .table-pos-9 {
+        top: calc(50% - 30px);
+        left: calc(10% - #{$card_width});
+    
+        & > video {
+            top: 10px;
+            right: 100%;
+        }
+    }
+    
+    .table-pos-4 {
+        bottom: calc(30% - 30px);
+        right: calc(20% - #{$card_width});
+    
+        & > video {
+            top: 80%;
+            left: 50%;
+        }
+    }
+    
+    .table-pos-8 {
+        bottom: calc(30% - 30px);
+        left: calc(20% - #{$card_width});
+    
+        & > video {
+            top: 80%;
+            right: 50%;
+        }
+    }
+    
+    
+    .table-pos-5 {
+        bottom: calc(20% - 30px);
+        right: calc(35% - #{$card_width});
+    
+        & > video {
+            top: 90%;
+            left: 15%;
+        }
+    }
+    
+    .table-pos-7 {
+        bottom: calc(20% - 30px);
+        left: calc(35% - #{$card_width});
+    
+        & > video {
+            top: 90%;
+            right: 15%;
+        }
+    }
+    
+    .table-pos-6 {
+        bottom: calc(15% - 30px);
+        left: calc(50% - #{$card_width});
+    
+        & > video {
+            top: 100%;
+            left: 10px;
+        }
+    }
+}
